@@ -24,7 +24,7 @@ class Address(db.Model):
     city = Column(String(100), nullable=False)
     state = Column(String(100), nullable=False)
     zipcode = Column(String(20), nullable=False)
-    user_id = Column(String(36), ForeignKey("users.user_id"), nullable=False)
+    user_id = Column(String(36), ForeignKey("users.user_id", ondelete="CASCADE"), nullable=False)
     user = relationship("UserModel", back_populates="address")
 
     def __repr__(self):
