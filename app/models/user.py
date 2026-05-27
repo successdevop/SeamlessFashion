@@ -31,14 +31,14 @@ class Address(db.Model):
         return f"<Address(city:{self.city} | state:{self.state} | zipcode:{self.zipcode})>"
 
 
-class UserModel(db.Model):
+class UserModel(db.Model): 
     __tablename__ = "users"
     user_id = Column(String(36), primary_key=True, index=True, default=lambda : str(uuid.uuid4()))
     full_name = Column(String(255), nullable= False)
     email = Column(String(255), nullable=False, unique=True, index=True)
     password = Column(String(255), nullable=False)
     role = Column(Enum(UserRole), nullable=False, default=UserRole.CUSTOMER)
-    is_active = Column(Boolean, default=True, nullable=False)
+    is_verified = Column(Boolean, default=True, nullable=False)
     created_at = Column(DateTime, nullable=False, default=lambda : datetime.now(timezone.utc))
     address = relationship("Address", back_populates="user", lazy="dynamic", cascade="all, delete-orphan")
 
@@ -48,7 +48,7 @@ class UserModel(db.Model):
     }
 
     __table_args__ = (
-        Index('idx_user_role_active', 'role', 'is_active'),
+        Index('idx_user_role_verified', 'role', 'is_verified'),
         Index('idx_user_created', 'created_at'),
     )
 
