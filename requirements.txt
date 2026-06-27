@@ -1,7 +1,0 @@
-flask
-sqlalchemy
-flask-sqlalchemy
-python-dotenv
-celery
-redis
-marshmallow-sqlalchemy

@@ -1,1 +1,1 @@
-# Enterprise_Fashion_Management_Platform_-Flask-OOP-
+# SeamlessFashion
