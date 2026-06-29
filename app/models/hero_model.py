@@ -10,8 +10,8 @@ class Hero(SQLModel, table=True):
     age: Optional[int] = None
 
 
-sqlite_file_name = "../database/database.db"
-sqlite_url = f"sqlite:///{sqlite_file_name}"
+sqlite_file_name = "../database/my_database.db"
+sqlite_url = f"sqlite:///my_database.db"
 
 engine = create_engine(sqlite_url, echo=True)
 SQLModel.metadata.create_all(engine)
