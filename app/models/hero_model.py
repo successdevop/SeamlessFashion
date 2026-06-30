@@ -1,6 +1,6 @@
 from typing import Optional
 
-from sqlmodel import SQLModel, Field, create_engine, Session, select
+from sqlmodel import SQLModel, Field, create_engine, Session, select, col
 
 
 class Hero(SQLModel, table=True):
@@ -14,6 +14,7 @@ sqlite_file_name = "../database/database.db"
 sqlite_url = f"sqlite:///{sqlite_file_name}"
 
 engine = create_engine(sqlite_url, echo=True)
+
 
 def create_heroes():
     hero_1 = Hero(name="Deadpond", secret_name="Dive Wilson")
@@ -35,12 +36,13 @@ def create_heroes():
 
         session.commit()
 
+
 def select_heroes():
     with Session(engine) as session:
         statement = select(Hero).where(Hero.name == "Deadpond")
         result = session.exec(statement)
         heroes = result.all()
-        
+
         print(result)
         print(heroes)
 
@@ -49,14 +51,24 @@ def select_heroes():
                 print(hero)
 
 
+def select_one():
+    with Session(engine) as session:
+        result = session.exec(
+            select(Hero).where(col(Hero.age) > 32).offset(1).limit(2)
+        )
+        print(result.all())
+
+
+
 def create_db_and_tables():
     SQLModel.metadata.create_all(engine)
 
 
 def main():
-    create_db_and_tables()
-    create_heroes()
-    select_heroes()
+    # create_db_and_tables()
+    # create_heroes()
+    # select_heroes()
+    select_one()
 
 if __name__ == "__main__":
     main()
