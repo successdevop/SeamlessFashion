@@ -1,6 +1,15 @@
+from types import NoneType
 from typing import Optional
 
-from sqlmodel import SQLModel, Field, create_engine, Session, select, col
+from sqlmodel import SQLModel, Field, create_engine, Session, select, col, Relationship
+
+
+class Team(SQLModel, table=True):
+    id: int | None = Field(default=None, primary_key=True)
+    name: str = Field(index=True)
+    headquarters: str
+
+    heroes: list["Hero"] = Relationship(back_populates="team")
 
 
 class Hero(SQLModel, table=True):
@@ -8,6 +17,9 @@ class Hero(SQLModel, table=True):
     name: str = Field(index=True)
     secret_name: str
     age: Optional[int] = Field(default=None, index=True)
+
+    team_id: Optional[int] = Field(default=None, foreign_key="team.id")
+    team: Optional[Team] = Relationship(back_populates="heroes")
 
 
 sqlite_file_name = "../database/database.db"
@@ -21,24 +33,33 @@ def create_db_and_tables():
 
 
 def create_heroes():
-    hero_1 = Hero(name="Deadpond", secret_name="Dive Wilson")
-    hero_2 = Hero(name="Spider-Boy", secret_name="Pedro Parqueador")
-    hero_3 = Hero(name="Rusty-Man", secret_name="Tommy Sharp", age=48)
-    hero_4 = Hero(name="Tarantula", secret_name="Natalia Roman-on", age=32)
-    hero_5 = Hero(name="Black Lion", secret_name="Trevor Challa", age=35)
-    hero_6 = Hero(name="Dr. Weird", secret_name="Steve Weird", age=36)
-    hero_7 = Hero(name="Captain North America", secret_name="Esteban Rogelios", age=93)
-
     with Session(engine) as session:
-        session.add(hero_1)
-        session.add(hero_2)
-        session.add(hero_3)
-        session.add(hero_4)
-        session.add(hero_5)
-        session.add(hero_6)
-        session.add(hero_7)
+        team_preventers = Team(name="Preventers", headquarters="Sharp Towers")
+        team_z_force = Team(name="Z-Force", headquarters="Sister Margaret's Bar")
 
-        session.commit()
+        hero_deadpond = Hero(name="Deadpond", secret_name="Dive Wilson", team_id=team_z_force.id)
+        hero_rusty_man = Hero(name="Rusty-Man", secret_name="Tommy Sharp", age=48, team_id=team_preventers.id)
+        hero_spider_boy = Hero(name="Spider Boy", secret_name="Pedro Parqueador")
+
+        team = hero_deadpond.team.name
+        print(team)
+
+        # session.add(team_preventers)
+        # session.add(team_z_force)
+        # session.commit()
+
+        # session.add(hero_deadpond)
+        # session.add(hero_rusty_man)
+        # session.add(hero_spider_boy)
+        # session.commit()
+        #
+        # session.refresh(hero_deadpond)
+        # session.refresh(hero_rusty_man)
+        # session.refresh(hero_spider_boy)
+        #
+        # print("Created hero: ", hero_deadpond)
+        # print("Created hero: ", hero_rusty_man)
+        # print("Created hero: ", hero_spider_boy)
 
 
 def select_one():
@@ -97,13 +118,80 @@ def delete_heroes():
             print("There's no hero named Spider-Youngster")
 
 
+def select_heroes_with_joint_table():
+    with Session(engine) as session:
+        # result = session.exec(
+        #     select(Hero, Team).where(Hero.team_id == Team.id)
+        # )
+        #
+        # for hero, team in result:
+        #     print("Hero: ", hero, "|| Team: ", team)
+
+        rslt = session.exec(
+            select(Hero, Team).join(Team, isouter=True)
+        )
+
+        for hero, team in rslt:
+            print("Hero: ", hero, "|| Team: ", team)
+
+
+def update_hero_with_joint_table():
+    with Session(engine) as session:
+        obj = session.exec(
+            select(Hero, Team).join(Team, isouter=True)
+        ).all()
+
+        hero_list = []
+        team_list = []
+
+        if obj is not None:
+            for hero, team in obj:
+                if not isinstance(hero, NoneType) and hero.name == "Spider Boy":
+                    if len(hero_list) < 1:
+                        hero_list.append(hero)
+                if not isinstance(team, NoneType) and team.name == "Preventers":
+                    if len(team_list) < 1:
+                        team_list.append(team)
+                if len(hero_list) == 1 and len(team_list) == 1:
+                    break
+
+        hero_1 = hero_list[0]
+        team_1 = team_list[0]
+        hero_1.team_id = team_1.id
+
+        session.add(hero_1)
+        session.commit()
+        session.refresh(hero_1)
+
+
+def remove_hero_with_joint_table():
+    with Session(engine) as session:
+        obj = session.exec(
+            select(Hero, Team).join(Team, isouter=True)
+        ).all()
+
+        if obj is not None:
+            for hero, _ in obj:
+                if not isinstance(hero, NoneType) and hero.name == "Spider Boy":
+                    hero.team_id = None
+                    session.add(hero)
+                    session.commit()
+                    session.refresh(hero)
+                    break
+
+
+
+
 
 def main():
-    create_db_and_tables()
+    # create_db_and_tables()
     create_heroes()
-    select_one()
-    update_heroes()
-    delete_heroes()
+    # select_one()
+    # update_heroes()
+    # delete_heroes()
+    # select_heroes_with_joint_table()
+    # update_hero_with_joint_table()
+    # remove_hero_with_joint_table()
 
 
 if __name__ == "__main__":
