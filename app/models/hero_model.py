@@ -56,11 +56,36 @@ def create_heroes():
 
 
 def select_one():
+    # with Session(engine) as session:
+    #     result = session.exec(
+    #         select(Hero).where(col(Hero.age) > 32).offset(1).limit(2)
+    #     )
+    #     print(result.all())
     with Session(engine) as session:
-        result = session.exec(
-            select(Hero).where(col(Hero.age) > 32).offset(1).limit(2)
-        )
-        print(result.all())
+        hero = session.exec(
+            select(Hero).where(Hero.name == "Spider Boy")
+        ).one()
+        print("================")
+        print(hero)
+        print("================")
+
+        print("Spider Boy team: ", hero.team)
+
+        team = session.exec(
+            select(Team).where(Team.name == "Preventers")
+        ).one()
+
+        print("Team heroes: ", team.heroes)
+
+        hero.team = team
+        session.add(hero)
+        session.commit()
+        session.refresh(hero)
+
+        hero.team = None
+        session.add(hero)
+        session.commit()
+        session.refresh(hero)
 
 
 def update_heroes():
@@ -178,8 +203,8 @@ def remove_hero_with_joint_table():
 
 def main():
     # create_db_and_tables()
-    create_heroes()
-    # select_one()
+    # create_heroes()
+    select_one()
     # update_heroes()
     # delete_heroes()
     # select_heroes_with_joint_table()
