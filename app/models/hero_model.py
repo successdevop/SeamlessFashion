@@ -1,7 +1,12 @@
 from types import NoneType
 from typing import Optional
 
-from sqlmodel import SQLModel, Field, create_engine, Session, select, col, Relationship
+from sqlmodel import SQLModel, Field, create_engine, Session, select, col, Relationship, text
+
+
+class HeroTeamLink(SQLModel, table=True):
+    hero_id: Optional[int] = Field(default=None, foreign_key="hero.id", primary_key=True)
+    team_id: Optional[int] = Field(default=None, foreign_key="team.id", primary_key=True)
 
 
 class Team(SQLModel, table=True):
@@ -9,7 +14,7 @@ class Team(SQLModel, table=True):
     name: str = Field(index=True)
     headquarters: str
 
-    heroes: list["Hero"] = Relationship(back_populates="team", cascade_delete=True)
+    heroes: list["Hero"] = Relationship(back_populates="teams", link_model=HeroTeamLink)
 
 
 class Hero(SQLModel, table=True):
@@ -18,8 +23,7 @@ class Hero(SQLModel, table=True):
     secret_name: str
     age: Optional[int] = Field(default=None, index=True)
 
-    team_id: Optional[int] = Field(default=None, foreign_key="team.id", ondelete="CASCADE")
-    team: Optional[Team] = Relationship(back_populates="heroes")
+    teams: list[Team] = Relationship(back_populates="heroes", link_model=HeroTeamLink)
 
 
 sqlite_file_name = "../database/database.db"
@@ -30,6 +34,8 @@ engine = create_engine(sqlite_url, echo=True)
 
 def create_db_and_tables():
     SQLModel.metadata.create_all(engine)
+    with engine.connect() as connection:
+        connection.execute(text("PRAGMA foreign_keys=ON"))
 
 
 def create_heroes():
@@ -147,13 +153,13 @@ def update_heroes():
 
 def delete_heroes():
     with Session(engine) as session:
-        team = session.exec(
-            select(Team).where(Team.name == "Wakaland")
-        ).one()
+        hero = session.exec(
+            select(Hero).where(Hero.team_id == 3)
+        ).first()
 
-        session.delete(team)
+        session.delete(hero)
         session.commit()
-        print("Deleted team: ", team)
+        print("Deleted team: ", hero)
 
 
 def select_heroes_with_joint_table():
