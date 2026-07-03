@@ -1,4 +1,4 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException, status
 from contextlib import asynccontextmanager
 
 from sqlmodel import Session, select
@@ -31,7 +31,7 @@ app = FastAPI(
 )
 
 
-@app.post("/heroes", response_model=HeroPublic)
+@app.post("/heroes", response_model=HeroPublic, status_code=status.HTTP_200_OK)
 def create_heroes(hero: HeroCreate):
     with Session(engine) as session:
         db_hero = Hero.model_validate(hero)
@@ -41,7 +41,7 @@ def create_heroes(hero: HeroCreate):
         return db_hero
 
 
-@app.get("/heroes", response_model=list[HeroPublic])
+@app.get("/heroes", response_model=list[HeroPublic], status_code=status.HTTP_200_OK)
 def get_heroes():
     with Session(engine) as session:
         all_heroes = session.exec(
@@ -49,4 +49,13 @@ def get_heroes():
         ).all()
 
         return all_heroes
+
+
+@app.get("/heroes/{hero_id}", response_model=HeroPublic, status_code=status.HTTP_200_OK)
+def get_hero(hero_id: int):
+    with Session(engine) as session:
+        hero = session.get(Hero, hero_id)
+        if not hero:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Not found")
+        return hero
 
