@@ -1,4 +1,4 @@
-from fastapi import FastAPI, HTTPException, status
+from fastapi import FastAPI, HTTPException, status, Query
 from contextlib import asynccontextmanager
 
 from sqlmodel import Session, select
@@ -42,17 +42,17 @@ def create_heroes(hero: HeroCreate):
 
 
 @app.get("/heroes", response_model=list[HeroPublic], status_code=status.HTTP_200_OK)
-def get_heroes():
+def read_heroes(offset: int = 0, limit: int = Query(default=100, le=100)):
     with Session(engine) as session:
         all_heroes = session.exec(
-            select(Hero)
+            select(Hero).offset(offset).limit(limit)
         ).all()
 
         return all_heroes
 
 
 @app.get("/heroes/{hero_id}", response_model=HeroPublic, status_code=status.HTTP_200_OK)
-def get_hero(hero_id: int):
+def read_hero(hero_id: int):
     with Session(engine) as session:
         hero = session.get(Hero, hero_id)
         if not hero:
