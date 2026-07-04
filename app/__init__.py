@@ -4,11 +4,11 @@ from contextlib import asynccontextmanager
 from sqlmodel import Session, select
 
 from app.models.hero_model import create_db_and_tables, engine, Hero
-from app.schemas.hero_schema import HeroPublic, HeroCreate
+from app.schemas.hero_schema import HeroPublic, HeroCreate, HeroUpdate
 
 
 @asynccontextmanager
-async def lifespan(app: FastAPI):
+async def lifespan(my_app: FastAPI):
     print("==============================")
     print("Server is starting.....")
     print("==============================")
@@ -30,11 +30,15 @@ app = FastAPI(
     lifespan=lifespan
 )
 
+def hash_password(password: str):
+    return f"not really hashed {password} hehehe"
+
 
 @app.post("/heroes", response_model=HeroPublic, status_code=status.HTTP_200_OK)
 def create_heroes(hero: HeroCreate):
+    hashed_password = hash_password(hero.password)
     with Session(engine) as session:
-        db_hero = Hero.model_validate(hero)
+        db_hero = Hero.model_validate(hero, update={"hashed_password": hashed_password})
         session.add(db_hero)
         session.commit()
         session.refresh(db_hero)
@@ -58,4 +62,27 @@ def read_hero(hero_id: int):
         if not hero:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Not found")
         return hero
+
+
+@app.patch("/heroes/{hero_id}", response_model=HeroPublic, status_code=status.HTTP_200_OK)
+def update_hero(hero_id: int, hero: HeroUpdate):
+    with Session(engine) as session:
+        db_hero = session.get(Hero, hero_id)
+        if not db_hero:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Not found")
+
+        new_db_hero = hero.model_dump(exclude_unset=True)
+
+        extra_data = {}
+        if "password" in new_db_hero:
+           extra_data["hashed_password"] = hash_password(new_db_hero["password"])
+        new_db_hero.update(extra_data)
+
+        for k, v in new_db_hero.items():
+            setattr(db_hero, k, v)
+
+        session.add(db_hero)
+        session.commit()
+        session.refresh(db_hero)
+        return db_hero
 

@@ -1,6 +1,6 @@
 from typing import Optional
 
-from sqlmodel import SQLModel, Field, create_engine, Session, select, col, Relationship, text
+from sqlmodel import SQLModel, Field, create_engine, text
 
 
 class HeroBase(SQLModel):
@@ -11,6 +11,7 @@ class HeroBase(SQLModel):
 
 class Hero(HeroBase, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
+    hashed_password: str = Field()
 
 
 __sqlite_file_name = "database.db"
