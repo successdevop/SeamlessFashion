@@ -1,4 +1,4 @@
-from fastapi import FastAPI, HTTPException, status, Query
+from fastapi import FastAPI, HTTPException, status, Query, Depends
 from contextlib import asynccontextmanager
 
 from sqlmodel import Session, select
@@ -30,59 +30,72 @@ app = FastAPI(
     lifespan=lifespan
 )
 
+
+def get_db_session():
+    with Session(engine) as session:
+        yield session
+
+
 def hash_password(password: str):
     return f"not really hashed {password} hehehe"
 
 
 @app.post("/heroes", response_model=HeroPublic, status_code=status.HTTP_200_OK)
-def create_heroes(hero: HeroCreate):
+def create_heroes(*, session: Session = Depends(get_db_session), hero: HeroCreate):
     hashed_password = hash_password(hero.password)
-    with Session(engine) as session:
-        db_hero = Hero.model_validate(hero, update={"hashed_password": hashed_password})
-        session.add(db_hero)
-        session.commit()
-        session.refresh(db_hero)
-        return db_hero
+
+    db_hero = Hero.model_validate(hero, update={"hashed_password": hashed_password})
+    session.add(db_hero)
+    session.commit()
+    session.refresh(db_hero)
+    return db_hero
 
 
 @app.get("/heroes", response_model=list[HeroPublic], status_code=status.HTTP_200_OK)
-def read_heroes(offset: int = 0, limit: int = Query(default=100, le=100)):
-    with Session(engine) as session:
-        all_heroes = session.exec(
-            select(Hero).offset(offset).limit(limit)
-        ).all()
+def read_heroes(*, session: Session = Depends(get_db_session), offset: int = 0, limit: int = Query(default=100, le=100)):
+    all_heroes = session.exec(
+        select(Hero).offset(offset).limit(limit)
+    ).all()
 
-        return all_heroes
+    return all_heroes
 
 
 @app.get("/heroes/{hero_id}", response_model=HeroPublic, status_code=status.HTTP_200_OK)
-def read_hero(hero_id: int):
-    with Session(engine) as session:
-        hero = session.get(Hero, hero_id)
-        if not hero:
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Not found")
-        return hero
+def read_hero(*, session: Session = Depends(get_db_session), hero_id: int):
+    hero = session.get(Hero, hero_id)
+    if not hero:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Not found")
+    return hero
 
 
 @app.patch("/heroes/{hero_id}", response_model=HeroPublic, status_code=status.HTTP_200_OK)
-def update_hero(hero_id: int, hero: HeroUpdate):
-    with Session(engine) as session:
-        db_hero = session.get(Hero, hero_id)
-        if not db_hero:
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Not found")
+def update_hero(*, session: Session = Depends(get_db_session), hero_id: int, hero: HeroUpdate):
+    db_hero = session.get(Hero, hero_id)
+    if not db_hero:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Not found")
 
-        new_db_hero = hero.model_dump(exclude_unset=True)
+    new_db_hero = hero.model_dump(exclude_unset=True)
 
-        extra_data = {}
-        if "password" in new_db_hero:
-           extra_data["hashed_password"] = hash_password(new_db_hero["password"])
-        new_db_hero.update(extra_data)
+    extra_data = {}
+    if "password" in new_db_hero:
+       extra_data["hashed_password"] = hash_password(new_db_hero["password"])
+    new_db_hero.update(extra_data)
 
-        for k, v in new_db_hero.items():
-            setattr(db_hero, k, v)
+    for k, v in new_db_hero.items():
+        setattr(db_hero, k, v)
 
-        session.add(db_hero)
-        session.commit()
-        session.refresh(db_hero)
-        return db_hero
+    session.add(db_hero)
+    session.commit()
+    session.refresh(db_hero)
+    return db_hero
 
+
+@app.delete("/heroes/{hero_id}", response_model=dict[str, str], status_code=status.HTTP_200_OK)
+def delete_hero(*, session: Session = Depends(get_db_session), hero_id: int):
+    db_hero = session.get(Hero, hero_id)
+    if not db_hero:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Not found")
+
+    session.delete(db_hero)
+    session.commit()
+    return {"detail": "Deleted successfully"}
