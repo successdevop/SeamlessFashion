@@ -1,17 +1,22 @@
-from typing import Optional
+from typing import Optional, TYPE_CHECKING
+from sqlmodel import SQLModel, Field, create_engine, text, Relationship
 
-from sqlmodel import SQLModel, Field, create_engine, text
+if TYPE_CHECKING:
+    from app.models import Team
 
 
 class HeroBase(SQLModel):
     name: str = Field(index=True)
     secret_name: str
     age: Optional[int] = Field(default=None, index=True)
+    team_id: int | None = Field(default=None, foreign_key="team.id", ondelete="CASCADE")
 
 
 class Hero(HeroBase, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
     hashed_password: str = Field()
+
+    team: "Team" = Relationship(back_populates="heroes")
 
 
 __sqlite_file_name = "database.db"

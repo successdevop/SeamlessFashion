@@ -3,8 +3,9 @@ from contextlib import asynccontextmanager
 
 from sqlmodel import Session, select
 
-from app.models.hero_model import create_db_and_tables, engine, Hero
-from app.schemas.hero_schema import HeroPublic, HeroCreate, HeroUpdate
+from app.models import Team, Hero
+from app.models.hero_model import create_db_and_tables, engine
+from app.schemas.hero_schema import HeroPublic, HeroCreate, HeroUpdate, TeamPublic, TeamCreate, TeamUpdate
 
 
 @asynccontextmanager
@@ -40,7 +41,7 @@ def hash_password(password: str):
     return f"not really hashed {password} hehehe"
 
 
-@app.post("/heroes", response_model=HeroPublic, status_code=status.HTTP_200_OK)
+@app.post("/heroes", response_model=HeroPublic, status_code=status.HTTP_201_CREATED)
 def create_heroes(*, session: Session = Depends(get_db_session), hero: HeroCreate):
     hashed_password = hash_password(hero.password)
 
@@ -99,3 +100,57 @@ def delete_hero(*, session: Session = Depends(get_db_session), hero_id: int):
     session.delete(db_hero)
     session.commit()
     return {"detail": "Deleted successfully"}
+
+
+@app.post("/teams", response_model=TeamPublic, status_code=status.HTTP_201_CREATED)
+def create_team(*, session: Session = Depends(get_db_session), team: TeamCreate):
+    db_team = Team.model_validate(team)
+    session.add(db_team)
+    session.commit()
+    session.refresh(db_team)
+    return db_team
+
+
+@app.get("/teams", response_model=list[TeamPublic], status_code=status.HTTP_200_OK)
+def read_teams(*, session: Session = Depends(get_db_session), offset: int = 0, limit: int = Query(default=100, le=100)):
+    all_teams = session.exec(
+        select(Team).offset(offset).limit(limit)
+    ).all()
+
+    return all_teams
+
+
+@app.get("/teams/{team_id}", response_model=HeroPublic, status_code=status.HTTP_200_OK)
+def read_team(*, session: Session = Depends(get_db_session), team_id: int):
+    db_team = session.get(Team, team_id)
+    if not db_team:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Not found")
+    return db_team
+
+
+@app.patch("/teams/{team_id}", response_model=HeroPublic, status_code=status.HTTP_200_OK)
+def update_team(team_id: int, team_req: TeamUpdate, session: Session = Depends(get_db_session)):
+    db_team = session.get(Team, team_id)
+    if not db_team:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Not found")
+
+    team_data = team_req.model_dump(exclude_unset=True)
+    for k, v in team_data.items():
+        setattr(db_team, k, v)
+
+    session.add(db_team)
+    session.commit()
+    session.refresh(db_team)
+    return db_team
+
+
+@app.delete("/teams/{team_id}", response_model=dict[str, bool], status_code=status.HTTP_200_OK)
+def delete_team(team_id: int, session: Session = Depends(get_db_session)):
+    db_team = session.get(Team, team_id)
+    if not db_team:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Not found")
+
+    session.delete(db_team)
+    session.commit()
+
+    return {"deleted": True}
