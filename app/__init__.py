@@ -5,7 +5,8 @@ from sqlmodel import Session, select
 
 from app.models import Team, Hero
 from app.models.hero_model import create_db_and_tables, engine
-from app.schemas.hero_schema import HeroPublic, HeroCreate, HeroUpdate, TeamPublic, TeamCreate, TeamUpdate
+from app.schemas.hero_schema import HeroPublic, HeroCreate, HeroUpdate, TeamPublic, TeamCreate, TeamUpdate, \
+    HeroPublicWithTeam, TeamPublicWithHeroes
 
 
 @asynccontextmanager
@@ -61,7 +62,7 @@ def read_heroes(*, session: Session = Depends(get_db_session), offset: int = 0, 
     return all_heroes
 
 
-@app.get("/heroes/{hero_id}", response_model=HeroPublic, status_code=status.HTTP_200_OK)
+@app.get("/heroes/{hero_id}", response_model=HeroPublicWithTeam, status_code=status.HTTP_200_OK)
 def read_hero(*, session: Session = Depends(get_db_session), hero_id: int):
     hero = session.get(Hero, hero_id)
     if not hero:
@@ -120,7 +121,7 @@ def read_teams(*, session: Session = Depends(get_db_session), offset: int = 0, l
     return all_teams
 
 
-@app.get("/teams/{team_id}", response_model=HeroPublic, status_code=status.HTTP_200_OK)
+@app.get("/teams/{team_id}", response_model=TeamPublicWithHeroes, status_code=status.HTTP_200_OK)
 def read_team(*, session: Session = Depends(get_db_session), team_id: int):
     db_team = session.get(Team, team_id)
     if not db_team:
@@ -128,7 +129,7 @@ def read_team(*, session: Session = Depends(get_db_session), team_id: int):
     return db_team
 
 
-@app.patch("/teams/{team_id}", response_model=HeroPublic, status_code=status.HTTP_200_OK)
+@app.patch("/teams/{team_id}", response_model=TeamPublic, status_code=status.HTTP_200_OK)
 def update_team(team_id: int, team_req: TeamUpdate, session: Session = Depends(get_db_session)):
     db_team = session.get(Team, team_id)
     if not db_team:

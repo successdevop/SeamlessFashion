@@ -30,3 +30,11 @@ class TeamCreate(TeamBase):
 class TeamUpdate(SQLModel):
     name: str | None = None
     headquarters: str | None = None
+
+
+class HeroPublicWithTeam(HeroPublic):
+    team: TeamPublic | None = None
+
+
+class TeamPublicWithHeroes(TeamPublic):
+    heroes: list[HeroPublic] = []
