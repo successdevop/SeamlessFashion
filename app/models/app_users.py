@@ -1,4 +1,4 @@
-import uuid
+from uuid import UUID, uuid4
 from datetime import datetime, timezone
 
 from sqlmodel import SQLModel, Field, Relationship
@@ -25,7 +25,7 @@ class Address(AddressBase, table=True):
 
 
 class User(SQLModel):
-    user_id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
+    id: UUID = Field(default_factory=lambda : uuid4(), primary_key=True)
     username: str = Field(ge=3, le=12)
     email: str = Field(index=True, unique=True)
     email_verified: bool = False
