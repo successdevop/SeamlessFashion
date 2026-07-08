@@ -167,6 +167,7 @@
 #     return f"Hello {name}"
 #
 # print(say_hello())
+from enum import Enum
 
 from fastapi import FastAPI
 
@@ -174,6 +175,23 @@ from fastapi import FastAPI
 app = FastAPI()
 
 
-@app.get("/")
-async def root():
-    return {"message":"Hello world"}
+class ModelName(str, Enum):
+    AlexNet = "alexnet"
+    ResNet = "resnet"
+    LeNet = "lenet"
+
+
+@app.get("/models/{model_name}")
+async def root(model_nam: ModelName):
+    if model_nam is model_nam.AlexNet:
+        return {"model_name": model_nam, "message":"Deep Learning FTW!"}
+
+    if model_nam.value == "lenet":
+        return {"model_name": model_nam, "message":"LeCNN all the images"}
+
+    return {"model_name":model_nam, "message":"Have some residuals"}
+
+
+@app.get("/files/{file_path:path}")
+async def read_file(file_path: str):
+    return {"file_path": file_path}
