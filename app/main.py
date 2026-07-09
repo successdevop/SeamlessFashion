@@ -1,7 +1,7 @@
 from typing import Annotated, Literal
 
 from fastapi import FastAPI, Path
-from fastapi.params import Query
+from fastapi.params import Query, Body
 from pydantic import BaseModel, Field
 
 app = FastAPI()
@@ -13,6 +13,34 @@ class FilterParams(BaseModel):
     tags: list[str] = []
 
     model_config = {"extra":"forbid"}
+
+
+class Item(BaseModel):
+    name: str
+    description: str | None = None
+    price: float
+    tax: float | None = None
+
+
+class User(BaseModel):
+    username: str
+    full_name: str | None = None
+
+
+@app.put("/items/{item_id}")
+def read_data(item_id: int, item: Item, user: User):
+    result = {"item_id": item_id, "item_data": item, "user_data": user}
+    return result
+
+
+@app.put("/item/{item_id}")
+def read_item(item_id: Annotated[int, Path(title="Item ID")], q: str | None = None, item: Item | None = None):
+    result = {"item_id": item_id}
+    if q:
+        result.update({"q":q})
+    if item:
+        result.update({"item": item})
+    return result
 
 
 @app.get("/item")
@@ -33,3 +61,14 @@ def read_items(*, item_id: Annotated[int, Path(title="The ID of the item to get"
     return result
 
 
+@app.post("/items/{id}")
+def create(id: Annotated[int, Path()], item: Item, user: User, importance: Annotated[int, Body()]):
+    return {"id": id, "item_data": item, "user_data": user, "importance": importance}
+
+
+@app.put("/update/{item_id}")
+def update_data(item_id: int, item: Item, user: User, importance: Annotated[int, Body()], q: str | None = None):
+    results = {"item_id": item_id, "item": item, "user": user, "importance": importance}
+    if q:
+        results.update({"q": q})
+    return results
