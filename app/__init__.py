@@ -1,260 +1,323 @@
-# from fastapi import FastAPI, HTTPException, status, Query, Depends
-# from contextlib import asynccontextmanager
+# # from fastapi import FastAPI, HTTPException, status, Query, Depends
+# # from contextlib import asynccontextmanager
+# #
+# # from sqlmodel import Session, select
+# #
+# # from app.models import Team, Hero
+# # from app.models.hero_model import create_db_and_tables, engine
+# # from app.schemas.hero_schema import HeroPublic, HeroCreate, HeroUpdate, TeamPublic, TeamCreate, TeamUpdate, \
+# #     HeroPublicWithTeam, TeamPublicWithHeroes
+# #
+# #
+# # @asynccontextmanager
+# # async def lifespan(my_app: FastAPI):
+# #     print("==============================")
+# #     print("Server is starting.....")
+# #     print("==============================")
+# #     create_db_and_tables()
+# #     print("==============================")
+# #     print("Database created.....")
+# #     print("==============================")
+# #     yield
+# #     print("==============================")
+# #     print("Server has been stopped.....")
+# #     print("==============================")
+# #     engine.dispose()
+# #     print("==============================")
+# #     print("Server connection closed")
+# #     print("==============================")
+# #
+# #
+# # app = FastAPI(
+# #     lifespan=lifespan
+# # )
+# #
+# #
+# # def get_db_session():
+# #     with Session(engine) as session:
+# #         yield session
+# #
+# #
+# # def hash_password(password: str):
+# #     return f"not really hashed {password} hehehe"
+# #
+# #
+# # @app.post("/heroes", response_model=HeroPublic, status_code=status.HTTP_201_CREATED)
+# # def create_heroes(*, session: Session = Depends(get_db_session), hero: HeroCreate):
+# #     hashed_password = hash_password(hero.password)
+# #
+# #     db_hero = Hero.model_validate(hero, update={"hashed_password": hashed_password})
+# #     session.add(db_hero)
+# #     session.commit()
+# #     session.refresh(db_hero)
+# #     return db_hero
+# #
+# #
+# # @app.get("/heroes", response_model=list[HeroPublic], status_code=status.HTTP_200_OK)
+# # def read_heroes(*, session: Session = Depends(get_db_session), offset: int = 0, limit: int = Query(default=100, le=100)):
+# #     all_heroes = session.exec(
+# #         select(Hero).offset(offset).limit(limit)
+# #     ).all()
+# #
+# #     return all_heroes
+# #
+# #
+# # @app.get("/heroes/{hero_id}", response_model=HeroPublicWithTeam, status_code=status.HTTP_200_OK)
+# # def read_hero(*, session: Session = Depends(get_db_session), hero_id: int):
+# #     hero = session.get(Hero, hero_id)
+# #     if not hero:
+# #         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Not found")
+# #     return hero
+# #
+# #
+# # @app.patch("/heroes/{hero_id}", response_model=HeroPublic, status_code=status.HTTP_200_OK)
+# # def update_hero(*, session: Session = Depends(get_db_session), hero_id: int, hero: HeroUpdate):
+# #     db_hero = session.get(Hero, hero_id)
+# #     if not db_hero:
+# #         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Not found")
+# #
+# #     new_db_hero = hero.model_dump(exclude_unset=True)
+# #
+# #     extra_data = {}
+# #     if "password" in new_db_hero:
+# #        extra_data["hashed_password"] = hash_password(new_db_hero["password"])
+# #     new_db_hero.update(extra_data)
+# #
+# #     for k, v in new_db_hero.items():
+# #         setattr(db_hero, k, v)
+# #
+# #     session.add(db_hero)
+# #     session.commit()
+# #     session.refresh(db_hero)
+# #     return db_hero
+# #
+# #
+# # @app.delete("/heroes/{hero_id}", response_model=dict[str, str], status_code=status.HTTP_200_OK)
+# # def delete_hero(*, session: Session = Depends(get_db_session), hero_id: int):
+# #     db_hero = session.get(Hero, hero_id)
+# #     if not db_hero:
+# #         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Not found")
+# #
+# #     session.delete(db_hero)
+# #     session.commit()
+# #     return {"detail": "Deleted successfully"}
+# #
+# #
+# # @app.post("/teams", response_model=TeamPublic, status_code=status.HTTP_201_CREATED)
+# # def create_team(*, session: Session = Depends(get_db_session), team: TeamCreate):
+# #     db_team = Team.model_validate(team)
+# #     session.add(db_team)
+# #     session.commit()
+# #     session.refresh(db_team)
+# #     return db_team
+# #
+# #
+# # @app.get("/teams", response_model=list[TeamPublic], status_code=status.HTTP_200_OK)
+# # def read_teams(*, session: Session = Depends(get_db_session), offset: int = 0, limit: int = Query(default=100, le=100)):
+# #     all_teams = session.exec(
+# #         select(Team).offset(offset).limit(limit)
+# #     ).all()
+# #
+# #     return all_teams
+# #
+# #
+# # @app.get("/teams/{team_id}", response_model=TeamPublicWithHeroes, status_code=status.HTTP_200_OK)
+# # def read_team(*, session: Session = Depends(get_db_session), team_id: int):
+# #     db_team = session.get(Team, team_id)
+# #     if not db_team:
+# #         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Not found")
+# #     return db_team
+# #
+# #
+# # @app.patch("/teams/{team_id}", response_model=TeamPublic, status_code=status.HTTP_200_OK)
+# # def update_team(team_id: int, team_req: TeamUpdate, session: Session = Depends(get_db_session)):
+# #     db_team = session.get(Team, team_id)
+# #     if not db_team:
+# #         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Not found")
+# #
+# #     team_data = team_req.model_dump(exclude_unset=True)
+# #     for k, v in team_data.items():
+# #         setattr(db_team, k, v)
+# #
+# #     session.add(db_team)
+# #     session.commit()
+# #     session.refresh(db_team)
+# #     return db_team
+# #
+# #
+# # @app.delete("/teams/{team_id}", response_model=dict[str, bool], status_code=status.HTTP_200_OK)
+# # def delete_team(team_id: int, session: Session = Depends(get_db_session)):
+# #     db_team = session.get(Team, team_id)
+# #     if not db_team:
+# #         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Not found")
+# #
+# #     session.delete(db_team)
+# #     session.commit()
+# #
+# #     return {"deleted": True}
+# # from typing import Annotated
+# #
+# #
+# # def get_full_name(firstname: str, lastname: str):
+# #     fullname = firstname.title() + " " + lastname.title()
+# #     return fullname
+# # print(get_full_name("2", "doe"))
+# #
+# # def say_hello(name: Annotated[str, "This is just metadata"]) -> str:
+# #     return f"Hello {name}"
+# #
+# # print(say_hello())
+# from enum import Enum
+# from typing import Any, Annotated
 #
-# from sqlmodel import Session, select
-#
-# from app.models import Team, Hero
-# from app.models.hero_model import create_db_and_tables, engine
-# from app.schemas.hero_schema import HeroPublic, HeroCreate, HeroUpdate, TeamPublic, TeamCreate, TeamUpdate, \
-#     HeroPublicWithTeam, TeamPublicWithHeroes
-#
-#
-# @asynccontextmanager
-# async def lifespan(my_app: FastAPI):
-#     print("==============================")
-#     print("Server is starting.....")
-#     print("==============================")
-#     create_db_and_tables()
-#     print("==============================")
-#     print("Database created.....")
-#     print("==============================")
-#     yield
-#     print("==============================")
-#     print("Server has been stopped.....")
-#     print("==============================")
-#     engine.dispose()
-#     print("==============================")
-#     print("Server connection closed")
-#     print("==============================")
+# # class ModelName(str, Enum):
+# #     AlexNet = "alexnet"
+# #     ResNet = "resnet"
+# #     LeNet = "lenet"
+# #
+# #
+# # @app.get("/models/{model_name}")
+# # async def root(model_nam: ModelName):
+# #     if model_nam is model_nam.AlexNet:
+# #         return {"model_name": model_nam, "message":"Deep Learning FTW!"}
+# #
+# #     if model_nam.value == "lenet":
+# #         return {"model_name": model_nam, "message":"LeCNN all the images"}
+# #
+# #     return {"model_name":model_nam, "message":"Have some residuals"}
+# #
+# #
+# # @app.get("/files/{file_path:path}")
+# # async def read_file(file_path: str):
+# #     return {"file_path": file_path}
 #
 #
-# app = FastAPI(
-#     lifespan=lifespan
-# )
+# # from fastapi import FastAPI
+# #
+# #
+# # app = FastAPI()
+# #
+# # fake_items_db = [{"item_name": "Foo"}, {"item_name": "Bar"}, {"item_name": "Baz"}]
+# #
+# #
+# # @app.get("/")
+# # def read_items(skip: int = 0, limit: int = 10):
+# #     return fake_items_db[skip : skip + limit]
+# #
+# #
+# # @app.get("/item/{item_id}")
+# # def read_item(item_id: str, q: str | None = None, short: bool = False)-> dict[str, int | str | None]:
+# #     item = {"item_id": item_id}
+# #     if q:
+# #         item.update({"q": q})
+# #
+# #     if short:
+# #         item.update({"description":"This is an amazing item that has a long description"})
+# #
+# #     return item
+# #
+# #
+# # @app.get("/users/{user_id}/item/{item_id}")
+# # def read_user_item(user_id: int, item_id: int, q: str | None = None, short: bool = False) -> dict[str, int | str | None]:
+# #     item = {"item_id": item_id, "owner_id": user_id}
+# #     if q:
+# #         item.update({"q": q})
+# #     if short:
+# #         item.update({"description":"This is an amazing item that has a long description"})
+# #
+# #     return item
 #
+# # from fastapi import FastAPI
+# # from fastapi.params import Query
+# # from pydantic import BaseModel
+# #
+# # app = FastAPI()
+# #
+# # class Item(BaseModel):
+# #     name: str
+# #     description: str | None = None
+# #     price: float
+# #     tax: float | None = None
+# #
+# #
+# # @app.post("/items", response_model=dict[str, Any], status_code=200)
+# # def create_item(item: Item) -> dict[str, Any]:
+# #     item_dict = item.model_dump()
+# #     if item.tax:
+# #         price_with_tax = item.tax + item.price
+# #         item_dict.update({"price_with_tax": price_with_tax})
+# #     return item_dict
+# #
+# #
+# # @app.patch("/items/{item_id}")
+# # def update_item(item_id: int, item: Item, q: str | None = None):
+# #     item_dict = item.model_dump()
+# #     if item.tax:
+# #         price_with_tax = item.tax + item.price
+# #         item_dict.update({"price_with_tax":price_with_tax})
+# #     if q:
+# #         item_dict.update({"q": q})
+# #     return {"item_id": item_id, **item_dict}
+# #     # return {"item_id": item_id, **item.model_dump()}
+# #
+# #
+# # @app.get("/item/{item_id}")
+# # def get_item(item_id: int,
+# #              q: Annotated[
+# #                  str|None,
+# #                  Query(min_length=3, max_length=20, title="query item",
+# #                        description="query item for searching a match in the database", alias="item-query")] = None):
+# #     item = {"item_id": item_id}
+# #     if q:
+# #         item.update({"q": q})
+# #     return item
+# #
+# #
+# # @app.get("/items")
+# # def read_item(q: Annotated[list[str] | None, Query()] = None):
+# #     return {"q": q}
+# import random
 #
-# def get_db_session():
-#     with Session(engine) as session:
-#         yield session
-#
-#
-# def hash_password(password: str):
-#     return f"not really hashed {password} hehehe"
-#
-#
-# @app.post("/heroes", response_model=HeroPublic, status_code=status.HTTP_201_CREATED)
-# def create_heroes(*, session: Session = Depends(get_db_session), hero: HeroCreate):
-#     hashed_password = hash_password(hero.password)
-#
-#     db_hero = Hero.model_validate(hero, update={"hashed_password": hashed_password})
-#     session.add(db_hero)
-#     session.commit()
-#     session.refresh(db_hero)
-#     return db_hero
-#
-#
-# @app.get("/heroes", response_model=list[HeroPublic], status_code=status.HTTP_200_OK)
-# def read_heroes(*, session: Session = Depends(get_db_session), offset: int = 0, limit: int = Query(default=100, le=100)):
-#     all_heroes = session.exec(
-#         select(Hero).offset(offset).limit(limit)
-#     ).all()
-#
-#     return all_heroes
-#
-#
-# @app.get("/heroes/{hero_id}", response_model=HeroPublicWithTeam, status_code=status.HTTP_200_OK)
-# def read_hero(*, session: Session = Depends(get_db_session), hero_id: int):
-#     hero = session.get(Hero, hero_id)
-#     if not hero:
-#         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Not found")
-#     return hero
-#
-#
-# @app.patch("/heroes/{hero_id}", response_model=HeroPublic, status_code=status.HTTP_200_OK)
-# def update_hero(*, session: Session = Depends(get_db_session), hero_id: int, hero: HeroUpdate):
-#     db_hero = session.get(Hero, hero_id)
-#     if not db_hero:
-#         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Not found")
-#
-#     new_db_hero = hero.model_dump(exclude_unset=True)
-#
-#     extra_data = {}
-#     if "password" in new_db_hero:
-#        extra_data["hashed_password"] = hash_password(new_db_hero["password"])
-#     new_db_hero.update(extra_data)
-#
-#     for k, v in new_db_hero.items():
-#         setattr(db_hero, k, v)
-#
-#     session.add(db_hero)
-#     session.commit()
-#     session.refresh(db_hero)
-#     return db_hero
-#
-#
-# @app.delete("/heroes/{hero_id}", response_model=dict[str, str], status_code=status.HTTP_200_OK)
-# def delete_hero(*, session: Session = Depends(get_db_session), hero_id: int):
-#     db_hero = session.get(Hero, hero_id)
-#     if not db_hero:
-#         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Not found")
-#
-#     session.delete(db_hero)
-#     session.commit()
-#     return {"detail": "Deleted successfully"}
-#
-#
-# @app.post("/teams", response_model=TeamPublic, status_code=status.HTTP_201_CREATED)
-# def create_team(*, session: Session = Depends(get_db_session), team: TeamCreate):
-#     db_team = Team.model_validate(team)
-#     session.add(db_team)
-#     session.commit()
-#     session.refresh(db_team)
-#     return db_team
-#
-#
-# @app.get("/teams", response_model=list[TeamPublic], status_code=status.HTTP_200_OK)
-# def read_teams(*, session: Session = Depends(get_db_session), offset: int = 0, limit: int = Query(default=100, le=100)):
-#     all_teams = session.exec(
-#         select(Team).offset(offset).limit(limit)
-#     ).all()
-#
-#     return all_teams
-#
-#
-# @app.get("/teams/{team_id}", response_model=TeamPublicWithHeroes, status_code=status.HTTP_200_OK)
-# def read_team(*, session: Session = Depends(get_db_session), team_id: int):
-#     db_team = session.get(Team, team_id)
-#     if not db_team:
-#         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Not found")
-#     return db_team
-#
-#
-# @app.patch("/teams/{team_id}", response_model=TeamPublic, status_code=status.HTTP_200_OK)
-# def update_team(team_id: int, team_req: TeamUpdate, session: Session = Depends(get_db_session)):
-#     db_team = session.get(Team, team_id)
-#     if not db_team:
-#         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Not found")
-#
-#     team_data = team_req.model_dump(exclude_unset=True)
-#     for k, v in team_data.items():
-#         setattr(db_team, k, v)
-#
-#     session.add(db_team)
-#     session.commit()
-#     session.refresh(db_team)
-#     return db_team
-#
-#
-# @app.delete("/teams/{team_id}", response_model=dict[str, bool], status_code=status.HTTP_200_OK)
-# def delete_team(team_id: int, session: Session = Depends(get_db_session)):
-#     db_team = session.get(Team, team_id)
-#     if not db_team:
-#         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Not found")
-#
-#     session.delete(db_team)
-#     session.commit()
-#
-#     return {"deleted": True}
-# from typing import Annotated
-#
-#
-# def get_full_name(firstname: str, lastname: str):
-#     fullname = firstname.title() + " " + lastname.title()
-#     return fullname
-# print(get_full_name("2", "doe"))
-#
-# def say_hello(name: Annotated[str, "This is just metadata"]) -> str:
-#     return f"Hello {name}"
-#
-# print(say_hello())
-from enum import Enum
-from typing import Any
-
-# class ModelName(str, Enum):
-#     AlexNet = "alexnet"
-#     ResNet = "resnet"
-#     LeNet = "lenet"
-#
-#
-# @app.get("/models/{model_name}")
-# async def root(model_nam: ModelName):
-#     if model_nam is model_nam.AlexNet:
-#         return {"model_name": model_nam, "message":"Deep Learning FTW!"}
-#
-#     if model_nam.value == "lenet":
-#         return {"model_name": model_nam, "message":"LeCNN all the images"}
-#
-#     return {"model_name":model_nam, "message":"Have some residuals"}
-#
-#
-# @app.get("/files/{file_path:path}")
-# async def read_file(file_path: str):
-#     return {"file_path": file_path}
-
-
 # from fastapi import FastAPI
-#
+# from fastapi.params import Query
+# from pydantic import AfterValidator
 #
 # app = FastAPI()
 #
-# fake_items_db = [{"item_name": "Foo"}, {"item_name": "Bar"}, {"item_name": "Baz"}]
 #
-#
-# @app.get("/")
-# def read_items(skip: int = 0, limit: int = 10):
-#     return fake_items_db[skip : skip + limit]
-#
-#
-# @app.get("/item/{item_id}")
-# def read_item(item_id: str, q: str | None = None, short: bool = False)-> dict[str, int | str | None]:
-#     item = {"item_id": item_id}
+# @app.get("/items")
+# def read_items(q: Annotated[str | None, Query(
+#     alias="item-query", title="Query string", min_length=3, max_length=50, pattern="^fixedquery$", deprecated=True,
+#     description="Query string for the items to search in the database that have a good match"
+# )] = None):
+#     result = {"items": [{"item_id": "Foo"}, {"item_id": "Bar"}]}
 #     if q:
-#         item.update({"q": q})
-#
-#     if short:
-#         item.update({"description":"This is an amazing item that has a long description"})
-#
-#     return item
+#         result.update({"q":q})
+#     return result
 #
 #
-# @app.get("/users/{user_id}/item/{item_id}")
-# def read_user_item(user_id: int, item_id: int, q: str | None = None, short: bool = False) -> dict[str, int | str | None]:
-#     item = {"item_id": item_id, "owner_id": user_id}
+# data = {
+#     "isbn-9781529046137": "The Hitchhiker's Guide to the Galaxy",
+#     "imdb-tt0371724": "The Hitchhiker's Guide to the Galaxy",
+#     "isbn-9781439512982": "Isaac Asimov: The Complete Stories, Vol. 2",
+# }
+#
+# def check_valid_id(id: str):
+#     if not id.startswith(("isbn-", "imdb-")):
+#         raise ValueError("Invalid ID format, it must start with 'isbn-' or 'imdb-'")
+#     return id
+#
+# @app.get("/item")
+# def read_items(q: Annotated[str|None, AfterValidator(check_valid_id)] = None):
 #     if q:
-#         item.update({"q": q})
-#     if short:
-#         item.update({"description":"This is an amazing item that has a long description"})
+#         item = data[q]
+#         print("===============")
+#         print(item)
+#         print("===============")
+#     else:
+#         q, item = random.choice(list(data.items()))
+#         print("===============")
+#         print(q, item)
+#         print("===============")
 #
-#     return item
-
-from fastapi import FastAPI
-from pydantic import BaseModel
-
-app = FastAPI()
-
-class Item(BaseModel):
-    name: str
-    description: str | None = None
-    price: float
-    tax: float | None = None
-
-
-@app.post("/items", response_model=dict[str, Any], status_code=200)
-def create_item(item: Item) -> dict[str, Any]:
-    item_dict = item.model_dump()
-    if item.tax:
-        price_with_tax = item.tax + item.price
-        item_dict.update({"price_with_tax": price_with_tax})
-    return item_dict
-
-
-@app.patch("/items/{item_id}")
-def update_item(item_id: int, item: Item, q: str | None = None):
-    item_dict = item.model_dump()
-    if item.tax:
-        price_with_tax = item.tax + item.price
-        item_dict.update({"price_with_tax":price_with_tax})
-    if q:
-        item_dict.update({"q": q})
-    return {"item_id": item_id, **item_dict}
-    # return {"item_id": item_id, **item.model_dump()}
+#     return {"id": q, "item": item}
