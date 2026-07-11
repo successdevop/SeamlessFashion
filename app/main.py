@@ -119,11 +119,31 @@
 #
 from typing import Annotated
 
-from fastapi import FastAPI, Header
+from fastapi import FastAPI, Header, Cookie
+from pydantic import BaseModel
 
 app = FastAPI()
 
 
-@app.get("/items")
-def get_items(user_agent: Annotated[str|None, Header()] = None):
-    return {"User-Agent": user_agent}
+class Cookies(BaseModel):
+    session_id: str
+    fatebook_tracker: str | None = None
+    googall_tracker: str | None = None
+
+
+class CommonHeaders(BaseModel):
+    host: str
+    save_data: bool
+    if_modified_since: str | None = None
+    traceparent: str | None = None
+    x_tags: list[str] = []
+
+
+@app.get("/cookies")
+def read_items(cookies: Annotated[Cookies, Cookie()]):
+    return {"cookies": cookies}
+
+
+@app.get("/headers")
+def get_items(headers: Annotated[CommonHeaders, Header()]):
+    return {"headers": headers}
