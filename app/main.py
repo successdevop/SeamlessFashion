@@ -181,6 +181,30 @@ class User(BaseUser):
     password: str
 
 
+class UserPublic(BaseUser):
+    pass
+
+
+class UserInDB(BaseUser):
+    hash_password: str
+
+
+def fake_password_hasher(raw_password: str) -> str:
+    return f"supersecret {raw_password}"
+
+
+def fake_save_user(user_data: User):
+    hashed_password = fake_password_hasher(user_data.password)
+    new_user = UserInDB(**user_data.model_dump(), hash_password=hashed_password)
+    print("User saved! ...")
+    return new_user
+
+
+@app.post("/user/register", response_model=UserPublic)
+def create_user(user: User):
+    return fake_save_user(user_data=user)
+
+
 @app.post("/user")
 def create_user(user: User) -> BaseUser:
     return user
@@ -227,3 +251,33 @@ def read_item_name(item_id: str):
 @app.get("/items/{item_id}/public", response_model=Items, response_model_exclude={"tax"})
 def get_public(item_id: str):
     return items[item_id]
+
+
+class BaseItem(BaseModel):
+    description: str
+    type: str
+
+
+class CarItem(BaseItem):
+    type: str = "car"
+
+
+class PlaneItem(BaseItem):
+    type: str = "plane"
+    size: int
+
+
+items_1 = {
+    "item1": {"description": "All my friends drive a low rider", "type": "car"},
+    "item2": {
+        "description": "Music is my aeroplane, it's my aeroplane",
+        "type": "plane",
+        "size": 5,
+    },
+}
+
+
+@app.get("/baseitem/{item_id}", response_model=PlaneItem|CarItem)
+def get_base_item(item_id: str):
+    return items_1[item_id]
+
