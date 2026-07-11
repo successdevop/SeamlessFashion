@@ -117,10 +117,11 @@
 # #     result = {"item_id": item_id, "item_data": item}
 # #     return result
 #
-from typing import Annotated
+from typing import Annotated, Any
 
-from fastapi import FastAPI, Header, Cookie
-from pydantic import BaseModel
+from fastapi import FastAPI, Header, Cookie, Response
+from pydantic import BaseModel, Field, EmailStr
+from starlette.responses import RedirectResponse, JSONResponse
 
 app = FastAPI()
 
@@ -139,11 +140,90 @@ class CommonHeaders(BaseModel):
     x_tags: list[str] = []
 
 
+class Item(BaseModel):
+    name: str = Field(examples=['LG TV'])
+    description: str | None = Field(default=None, examples=['LG TV is the always the best'])
+    price: float= Field(examples=[40.015])
+    tax: float | None = Field(default=None, examples=[12.63])
+    tags: list[str] = Field(default=None, examples=[["foo", "doe", "john"]])
+
+
+@app.post("/items", response_model=Item)
+def create_items(item: Item):
+    return item
+
+
+@app.get("/items", response_model=list[Item])
+def get_items():
+    return [
+        Item(name="Plate", price=34.5),
+        Item(name="Cooking gas", price=90.12)
+    ]
+
+
 @app.get("/cookies")
-def read_items(cookies: Annotated[Cookies, Cookie()]):
+def get_cookies(cookies: Annotated[Cookies, Cookie()]):
     return {"cookies": cookies}
 
 
 @app.get("/headers")
-def get_items(headers: Annotated[CommonHeaders, Header()]):
+def get_headers(headers: Annotated[CommonHeaders, Header()]):
     return {"headers": headers}
+
+
+class BaseUser(BaseModel):
+    username: str
+    email: EmailStr
+    full_name: str | None = None
+
+
+class User(BaseUser):
+    password: str
+
+
+@app.post("/user")
+def create_user(user: User) -> BaseUser:
+    return user
+
+
+@app.get("/portal", response_model=None)
+def get_portal(teleport: bool = False) -> Response | dict:
+    if teleport:
+        return RedirectResponse(url="https://www.youtube.com/watch?v=dQw4w9WgXcQ")
+    # return JSONResponse(content={"message":"Here is your dimensional portal"})
+    return {"message": "Here is your dimensional portal"}
+
+
+@app.get("/teleport")
+def get_teleport() -> RedirectResponse:
+    return RedirectResponse(url="https://www.youtube.com/watch?v=dQw4w9WgXcQ")
+
+
+class Items(BaseModel):
+    name: str
+    description: str | None = None
+    price: float
+    tax: float = 10.5
+    tags: list[str] = []
+
+
+items = {
+    "foo": {"name": "Foo", "price": 50.2},
+    "bar": {"name": "Bar", "description": "The bartenders", "price": 62, "tax": 20.2},
+    "baz": {"name": "Baz", "description": None, "price": 50.2, "tax": 10.5, "tags": []},
+}
+
+
+@app.get("/items/{item_id}", response_model=Items, response_model_exclude_unset=True)
+def get_item(item_id: str):
+    return items[item_id]
+
+
+@app.get("/items/{item_id}/name", response_model=Items, response_model_include={"name", "description"})
+def read_item_name(item_id: str):
+    return items[item_id]
+
+
+@app.get("/items/{item_id}/public", response_model=Items, response_model_exclude={"tax"})
+def get_public(item_id: str):
+    return items[item_id]
