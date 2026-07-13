@@ -119,9 +119,9 @@
 #
 from typing import Annotated, Any
 
-from fastapi import FastAPI, Header, Cookie, Response
+from fastapi import FastAPI, Header, Cookie, Response, Form, File, UploadFile
 from pydantic import BaseModel, Field, EmailStr
-from starlette.responses import RedirectResponse, JSONResponse
+from starlette.responses import RedirectResponse, JSONResponse, HTMLResponse
 
 app = FastAPI()
 
@@ -281,3 +281,59 @@ items_1 = {
 def get_base_item(item_id: str):
     return items_1[item_id]
 
+
+@app.post("/login", response_model=dict[str, str], response_model_exclude_unset=True, status_code=200)
+def login_user(username: Annotated[str, Form(alias="user-name", min_length=8)], password: Annotated[str, Form(min_length=8)]):
+    if not username or not password:
+        return {"detail":"user not found"}
+    return {"detail":"login successful"}
+
+class FormData(BaseModel):
+    username: str
+    password: str | None = None
+
+    model_config = {"extra": "forbid"}
+
+
+@app.post("/login_", response_model=dict[str, str], status_code=200)
+def login_user(login_info: Annotated[FormData, Form()]):
+    if not login_info.password or not login_info.username:
+        return {"details": "Login failed"}
+    return {"details": "Login successful"}
+
+
+@app.post("/files/")
+def create_file(info: Annotated[list[bytes], File(description="A file read by bytes")]):
+    return {"file_size": [len(info) for info in info]}
+
+
+@app.post("/upload_files/")
+def create_upload_file(info: Annotated[list[UploadFile], File(description="A file read by upload file")]):
+    return {"file_name": [info.filename for info in info]}
+
+
+@app.get("/")
+def main():
+    content = """
+    <body>
+    <form action="/files/" enctype="multipart/form-data" method="POST">
+    <input name="info" type="file" multiple>
+    <input name="info" type="file" multiple>
+    <input type="submit">
+    </form>
+    <form action="/upload_files/" enctype="multipart/form-data" method="POST">
+    <input name="info" type="file" multiple>
+    <input type="submit">
+    </form>
+    </body>
+    """
+    return HTMLResponse(content=content)
+
+
+@app.post("/files")
+def upload_form(file: Annotated[bytes, File()], uploadfile: Annotated[UploadFile, File()], username: Annotated[str, Form()]):
+    return {
+        "file_size": len(file),
+        "file_mediatype": uploadfile.content_type,
+        "username": username.upper()
+    }
