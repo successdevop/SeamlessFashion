@@ -334,6 +334,6 @@ def main():
 def upload_form(file: Annotated[bytes, File()], uploadfile: Annotated[UploadFile, File()], username: Annotated[str, Form()]):
     return {
         "file_size": len(file),
-        "file_mediatype": uploadfile.content_type,
+        "file_content_type": uploadfile.content_type,
         "username": username.upper()
     }
