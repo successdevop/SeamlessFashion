@@ -363,7 +363,7 @@ def unicorn_exception_handler(request: Request, exc: UnicornException):
         content={"message":f"Oops! {exc.name} did something. There goes a rainbow..."}
     )
 
-@app.get("/unicorns/{name}")
+@app.get("/unicorns/{name}", deprecated=True)
 def read_unicorns(name: str):
     if name == "yolo":
         raise UnicornException(name=name)
@@ -382,7 +382,8 @@ def validation_exception_handler(request, exc: RequestValidationError):
         message += f"\nField: {error['loc']}, Error: {error['msg']}"
     return PlainTextResponse(message, status_code=400)
 
-@app.get("/exceptions/{e_id}")
+@app.get("/exceptions/{e_id}", tags=["item"],
+         description="this is used to check for id and return it if it exists", response_description="Item retrieved")
 def read_excep(e_id: int):
     if e_id == 3:
         raise HTTPException(detail=f"Nope! I don't like {e_id}", status_code=418)
