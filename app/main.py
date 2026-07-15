@@ -119,9 +119,13 @@
 #
 from typing import Annotated, Any
 
-from fastapi import FastAPI, Header, Cookie, Response, Form, File, UploadFile
+from fastapi import FastAPI, Header, Cookie, Response, Form, File, UploadFile, HTTPException
+from fastapi.exceptions import RequestValidationError
+from fastapi.responses import PlainTextResponse
 from pydantic import BaseModel, Field, EmailStr
+from starlette.requests import Request
 from starlette.responses import RedirectResponse, JSONResponse, HTMLResponse
+from starlette.exceptions import HTTPException as StarletteHTTPException
 
 app = FastAPI()
 
@@ -337,3 +341,49 @@ def upload_form(file: Annotated[bytes, File()], uploadfile: Annotated[UploadFile
         "file_content_type": uploadfile.content_type,
         "username": username.upper()
     }
+
+
+item = {"foo": "The Foo Wrestlers"}
+
+@app.get("/exception/{e_id}")
+def raise_item_exception(e_id: str):
+    if e_id not in item:
+        raise HTTPException(status_code=404, detail="Not found", headers={"X-Error":"There goes my error"})
+    return {"item": item[e_id]}
+
+
+class UnicornException(Exception):
+    def __init__(self, name):
+        self.name = name
+
+@app.exception_handler(UnicornException)
+def unicorn_exception_handler(request: Request, exc: UnicornException):
+    return JSONResponse(
+        status_code=418,
+        content={"message":f"Oops! {exc.name} did something. There goes a rainbow..."}
+    )
+
+@app.get("/unicorns/{name}")
+def read_unicorns(name: str):
+    if name == "yolo":
+        raise UnicornException(name=name)
+    return {"unicorn_name": name}
+
+
+@app.exception_handler(StarletteHTTPException)
+def http_exception_handler(request, exc):
+    return PlainTextResponse(str(exc.detail), status_code=exc.status_code)
+
+
+@app.exception_handler(RequestValidationError)
+def validation_exception_handler(request, exc: RequestValidationError):
+    message = "Validations errors"
+    for error in exc.errors():
+        message += f"\nField: {error['loc']}, Error: {error['msg']}"
+    return PlainTextResponse(message, status_code=400)
+
+@app.get("/exceptions/{e_id}")
+def read_excep(e_id: int):
+    if e_id == 3:
+        raise HTTPException(detail=f"Nope! I don't like {e_id}", status_code=418)
+    return {"e_id": e_id}
