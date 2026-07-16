@@ -63,16 +63,107 @@ app = FastAPI()
 # async def read_query(query_or_default: Annotated[str|None, Depends(query_or_cookie_extractor)]):
 #     return {"query_or_default": query_or_default}
 
-def verify_token(x_token: Annotated[str, Header()]):
-    if x_token != "fake_super_secret_token":
-        raise HTTPException(detail="X-Token Header invalid", status_code=400)
+# def verify_token(x_token: Annotated[str, Header()]):
+#     if x_token != "fake_super_secret_token":
+#         raise HTTPException(detail="X-Token Header invalid", status_code=400)
+#
+# def verify_key(x_key: Annotated[str, Header()]):
+#     if x_key != "fake_super_secret_key":
+#         raise HTTPException(detail="X-Key Header invalid", status_code=400)
+#     return x_key
+#
+#
+# @app.get("/items/", dependencies=[Depends(verify_token), Depends(verify_key)])
+# async def read_items():
+#     return [{"item":"Foo"}, {"item":"Bar"}]
 
-def verify_key(x_key: Annotated[str, Header()]):
-    if x_key != "fake_super_secret_key":
-        raise HTTPException(detail="X-Key Header invalid", status_code=400)
-    return x_key
+# class DBSession:
+#     def close(self):
+#         pass
+#
+#
+# async def get_db():
+#     db = DBSession()
+#     try:
+#         yield db
+#     finally:
+#         db.close()
+#
+#
+# def generate_dep_a()-> str:
+#     return "dependency_a"
+#
+#
+# async def dependency_a():
+#     db = generate_dep_a()
+#     try:
+#         yield db
+#     finally:
+#         db.close()
+#
+#
+# def generate_dep_b():
+#     return "dependency_b"
+#
+#
+# async def dependency_b(dep_a: Annotated[str, Depends(dependency_a)]):
+#     db = generate_dep_b()
+#     try:
+#         yield db
+#     finally:
+#         db.close(dep_a)
+#
+#
+# def generate_dep_c():
+#     return "dependency_c"
+#
+#
+# async def dependency_c(dep_b: Annotated[str, Depends(dependency_b)]):
+#     db = generate_dep_c()
+#     try:
+#         yield db
+#     finally:
+#         db.close(dep_b)
 
 
-@app.get("/items/", dependencies=[Depends(verify_token), Depends(verify_key)])
-async def read_items():
-    return [{"item":"Foo"}, {"item":"Bar"}]
+# class OwnerError(Exception):
+#     pass
+#
+#
+# def get_username():
+#     try:
+#         yield "Rick"
+#     except OwnerError as e:
+#         raise HTTPException(status_code=400, detail=f"Owner Error | {str(e)}")
+#
+# @app.get("/item/{item_id}")
+# async def get_item(item_id: str, username: Annotated[str, Depends(get_username)]):
+#     if item_id not in data:
+#         raise HTTPException(status_code=404, detail="Item not found")
+#     item = data[item_id]
+#     if item["owner"] != username:
+#         raise OwnerError(username)
+#     return item
+
+data = {
+    "plumbus": {"description": "Freshly pickled plumbus", "owner": "Morty"},
+    "portal-gun": {"description": "Gun to create portals", "owner": "Rick"}
+}
+
+
+class InternalError(Exception):
+    pass
+
+def get_username():
+    try:
+        yield "Rick"
+    except InternalError as e:
+        raise HTTPException(status_code=400, detail=f"Oops, we didn't raise again, Britney 😱 || {str(e)}")
+
+@app.get("/item/{item_id}")
+async def get_item(item_id: str, username: Annotated[str, Depends(get_username)]):
+    if item_id == "portal-gun":
+        raise InternalError(f"The portal gun is too dangerous to be owned by {username}")
+    if item_id != "plumbus":
+        raise HTTPException(status_code=400, detail="Item not found")
+    return item_id
