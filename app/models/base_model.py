@@ -29,6 +29,7 @@ class UserInfoMixin(SQLModel):
     avatar: bytes | None = None
     gender: str | None = None
     date_of_birth: str | None = None
+    national_id_no: str | None = None
     is_active: bool = False
     is_verified: bool = False
     password_hash: str
@@ -36,6 +37,7 @@ class UserInfoMixin(SQLModel):
 
 class LoginInfoMixin(SQLModel):
     last_login: datetime = Field()
+    failed_login_attempt: int = 0
 
 
 class SoftDeleteMixin(SQLModel):
