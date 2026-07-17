@@ -1,7 +1,8 @@
+import uuid
 from uuid import UUID, uuid4
 from datetime import datetime, timezone
 
-from sqlmodel import SQLModel, Field, Relationship
+from sqlmodel import SQLModel, Field
 
 
 class AddressBase(SQLModel):
@@ -14,14 +15,6 @@ class AddressBase(SQLModel):
     state: str
     zipcode: str = Field(ge=6, le=6)
 
-
-class Address(AddressBase, table=True):
-    customer: list["Customer"] = Relationship(back_populates="address")
-    employee: list["Employee"] = Relationship(back_populates="address")
-    org_owner: list["Employee"] = Relationship(back_populates="address")
-    warehouse_staff: list["Employee"] = Relationship(back_populates="address")
-    delivery_partner: list["Employee"] = Relationship(back_populates="address")
-    plt_owner: list["Employee"] = Relationship(back_populates="address")
 
 
 class User(SQLModel):
@@ -36,34 +29,3 @@ class User(SQLModel):
     created_at: datetime = Field(
         default_factory=lambda : datetime.now(tz=timezone.utc)
     )
-
-
-class Customer(User, table=True):
-    address: Address | None = Relationship(back_populates="customer")
-    role: str = "customer"
-
-
-class OrganisationOwner(User, table=True):
-    address: Address | None = Relationship(back_populates="org_owner")
-    role: str = "organisation_owner"
-
-
-class Employee(User, table=True):
-    address: Address | None = Relationship(back_populates="employee")
-    role: str = "employee"
-    organisation_role: str | None = None
-
-
-class WarehouseStaff(User, table=True):
-    address: Address | None = Relationship(back_populates="warehouse_staff")
-    role: str = "warehouse_staff"
-
-
-class DeliveryPartner(User, table=True):
-    address: Address | None = Relationship(back_populates="delivery_partner")
-    role: str = "delivery_partner"
-
-
-class PlatformOwner(User, table=True):
-    address: Address | None = Relationship(back_populates="plt_owner")
-    role: str = "platform_owner"
