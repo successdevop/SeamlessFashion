@@ -11,7 +11,7 @@ class UUIDPrimaryKeyMixin(SQLModel):
         primary_key=True
     )
 
-    created_at: datetime = Field(
+    _created_at: datetime = Field(
         sa_column=Column(
             DateTime(timezone=True),
             server_default=func.now(),
@@ -25,24 +25,19 @@ class UserInfoMixin(SQLModel):
     last_name: str | None = None
     username: str = Field(min_length=4, max_length=10, unique=True, index=True)
     email: str = Field(unique=True, index=True)
-    phone_number: str
+    _phone_number: str
     avatar: bytes | None = None
-    gender: str | None = None
-    date_of_birth: str | None = None
-    national_id_no: str | None = None
-    is_active: bool = False
-    is_verified: bool = False
-    password_hash: str
-
-
-class LoginInfoMixin(SQLModel):
-    last_login: datetime = Field()
-    failed_login_attempt: int = 0
+    _gender: str | None = None
+    _date_of_birth: str | None = None
+    _national_id_no: str | None = None
+    _is_active: bool = False
+    _is_verified: bool = False
+    _password_hash: str
 
 
 class SoftDeleteMixin(SQLModel):
-    is_deleted: bool = False
-    deleted_at: datetime = Field(
+    _is_deleted: bool = False
+    _deleted_at: datetime | None = Field(
         sa_column=Column(
             DateTime(timezone=True),
             server_default=func.now(),

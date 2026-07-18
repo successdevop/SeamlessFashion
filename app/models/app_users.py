@@ -3,9 +3,9 @@ from uuid import UUID
 
 from sqlalchemy import Column, DateTime, func
 
-from app.models.base_model import UUIDPrimaryKeyMixin, UserInfoMixin, LoginInfoMixin, SoftDeleteMixin
+from app.models.base_model import UUIDPrimaryKeyMixin, UserInfoMixin, SoftDeleteMixin
 
-from sqlmodel import SQLModel, Field
+from sqlmodel import SQLModel, Field, Relationship
 
 
 class Address(UUIDPrimaryKeyMixin, SQLModel):
@@ -13,9 +13,9 @@ class Address(UUIDPrimaryKeyMixin, SQLModel):
     city: str
     state: str
     country: str
-    zip_postal_code: str = Field(ge=6, le=6)
-    latitude: str
-    longitude: str
+    zip_postal_code: str | None = Field(default=None, min_length=6, max_length=6)
+    latitude: float | None = None
+    longitude: float | None = None
 
 
 class UserAddress(SQLModel, table=True):
@@ -81,6 +81,34 @@ class RolePermission(SQLModel, table=True):
     )
 
 
-class User(UUIDPrimaryKeyMixin, UserInfoMixin, LoginInfoMixin, SoftDeleteMixin, SQLModel, table=True):
-    pass
+class User(UUIDPrimaryKeyMixin, UserInfoMixin, SoftDeleteMixin, SQLModel, table=True):
+    login_timelines: list["LoginEventInfo"] = Relationship(back_populates="user", cascade_delete=True)
 
+    update_events: list["UserEventUpdate"] = Relationship(back_populates="user", cascade_delete=True)
+
+
+
+class LoginEventInfo(SQLModel, table=True):
+    _last_login: datetime = Field(
+        sa_column=Column(
+            DateTime(timezone=True),
+            server_default=func.now(),
+            nullable=False
+        )
+    )
+    _failed_login_attempt: int = 0
+
+    user_id: UUID = Field(foreign_key="user.id", ondelete="CASCADE")
+    user: "User" = Relationship(back_populates="login_timelines")
+
+
+class UserEventUpdate(SQLModel, table=True):
+    first_name: str | None = None
+    last_name: str | None = None
+    email: str = Field(primary_key=True,unique=True)
+    _phone_number: str
+    avatar: bytes | None = None
+    _password_hash: str
+
+    user_id: UUID = Field(foreign_key="user.id", ondelete="CASCADE")
+    user: "User" = Relationship(back_populates="update_events")
