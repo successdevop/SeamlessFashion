@@ -1,12 +1,17 @@
 from datetime import datetime
+from typing import TYPE_CHECKING
 from uuid import UUID
 
 from sqlalchemy import Column, DateTime, func
 
 from app.enums.user_enums import UserRoleEnum, AddressTypeEnum
-from app.models.base_model import UUIDPrimaryKeyMixin, UserInfoMixin, SoftDeleteMixin, TimestampMixin
+from app.models.base_models import UUIDPrimaryKeyMixin, UserInfoMixin, SoftDeleteMixin, TimestampMixin
 
 from sqlmodel import SQLModel, Field, Relationship
+
+if TYPE_CHECKING:
+    from app.models.base_tables import Address
+    from app.models.app_organisations import OrganisationMember
 
 
 class IdentityVerification(UUIDPrimaryKeyMixin, TimestampMixin, SQLModel, table=True):
@@ -33,19 +38,6 @@ class UserAddress(SQLModel, table=True):
 
     user: "User" = Relationship(back_populates="address")
     address: "Address" = Relationship(back_populates="user")
-
-
-class Address(UUIDPrimaryKeyMixin, TimestampMixin, SQLModel, table=True):
-    street: str
-    city: str
-    state: str
-    country: str
-    zip_postal_code: str | None = Field(default=None, min_length=6, max_length=6)
-    latitude: float | None = None
-    longitude: float | None = None
-
-    # an address can have multiple users(User-Address relationship)
-    user: list[UserAddress] = Relationship(back_populates="address")
 
 
 class UserRole(SQLModel, table=True):
@@ -103,7 +95,7 @@ class Permission(UUIDPrimaryKeyMixin, TimestampMixin, SQLModel, table=True):
     description: str | None = None
 
     # a permission can have many roles performing it(Role-Permission relationship)
-    roles: list["Role"] = Relationship(back_populates="permissions", link_model=RolePermission)
+    roles: list[Role] = Relationship(back_populates="permissions", link_model=RolePermission)
 
 
 class User(UUIDPrimaryKeyMixin, UserInfoMixin, TimestampMixin, SoftDeleteMixin, SQLModel, table=True):
@@ -121,6 +113,9 @@ class User(UUIDPrimaryKeyMixin, UserInfoMixin, TimestampMixin, SoftDeleteMixin, 
 
     # keeps record of all user profile updates
     update_events: list["User"]
+
+    # one user can belong to many organization(Organisation-User relationship)
+    organisations: list["OrganisationMember"] = Relationship(back_populates="user")
 
 
 class LoginEventInfo(UUIDPrimaryKeyMixin, SQLModel, table=True):

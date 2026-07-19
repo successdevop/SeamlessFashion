@@ -48,7 +48,8 @@ class TimestampMixin(SQLModel):
         sa_column=Column(
             DateTime(timezone=True),
             server_default=func.now(),
-            nullable=False
+            nullable=False,
+            index=True
         )
     )
 
@@ -56,7 +57,7 @@ class TimestampMixin(SQLModel):
         default=None,
         sa_column=Column(
             DateTime(timezone=True),
-            server_default=func.now(),
+            onupdate=func.now(),
             nullable=False
         )
     )
