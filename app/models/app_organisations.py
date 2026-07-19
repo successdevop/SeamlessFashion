@@ -18,6 +18,8 @@ class OrganisationMember(SQLModel, table=True):
     organisation_id: UUID = Field(foreign_key="organisation.id", primary_key=True)
     user_id: UUID = Field(foreign_key="user.id", primary_key=True)
     role: OrganisationRoleEnum
+    employee_email: str
+
     joined_date: datetime = Field(
         sa_column=Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
     )
@@ -40,19 +42,30 @@ class Organisation(UUIDPrimaryKeyMixin, TimestampMixin, SQLModel, table=True):
 
     # an organization can have many users (Organisation-User relationship)
     users: list[OrganisationMember] = Relationship(back_populates="organisation")
-
-    stores: list["Store"] | None = Relationship(back_populates="organisation")
+    # an organization can have many stores(Organisation-Store relationship)
+    stores: list["Store"] = Relationship(back_populates="organisation")
+    # an organization can have many warehouses(Organisation-Warehouse relationship)
+    warehouses: list["Store"] = Relationship(back_populates="organisation")
 
 
 class Store(UUIDPrimaryKeyMixin, TimestampMixin, SQLModel, table=True):
     currency: CurrencyEnum
-    timezone: timezone
+    time_zone: timezone
 
     address_id: UUID = Field(foreign_key="address.id")
     address: "Address" = Relationship(back_populates="organisation_store")
 
-    inventory: str-----
-    employees: str-----
-
     organisation_id: UUID = Field(foreign_key="organisation.id")
     organisation: Organisation = Relationship(back_populates="stores")
+
+
+class WareHouse(UUIDPrimaryKeyMixin, TimestampMixin, SQLModel, table=True):
+    name: str
+    capacity: float
+    manager: UUID
+
+    address_id: UUID = Field(foreign_key="address.id")
+    address: "Address" = Relationship(back_populates="organisation_warehouse")
+
+    organisation_id: UUID = Field(foreign_key="organisation.id")
+    organisation: Organisation = Relationship(back_populates="warehouses")

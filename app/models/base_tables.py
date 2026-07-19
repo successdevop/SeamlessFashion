@@ -2,12 +2,11 @@ from typing import TYPE_CHECKING
 
 from sqlmodel import SQLModel, Relationship, Field
 
-from app.models.app_organisations import Store
 from app.models.base_models import UUIDPrimaryKeyMixin, TimestampMixin
 
 if TYPE_CHECKING:
     from app.models.app_users import UserAddress
-    from app.models.app_organisations import Organisation
+    from app.models.app_organisations import Organisation, WareHouse, Store
 
 
 class Address(UUIDPrimaryKeyMixin, TimestampMixin, SQLModel, table=True):
@@ -25,3 +24,5 @@ class Address(UUIDPrimaryKeyMixin, TimestampMixin, SQLModel, table=True):
     organisation_address: "Organisation" = Relationship(back_populates="address")
     # organization_store address(Store-Address relationship)
     organisation_store: "Store" = Relationship(back_populates="address")
+    # organization_warehouse address(Warehouse-Address relationship)
+    organisation_warehouse: "WareHouse" = Relationship(back_populates="address")
