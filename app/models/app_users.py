@@ -4,9 +4,17 @@ from uuid import UUID
 from sqlalchemy import Column, DateTime, func
 
 from app.enums.user_enums import UserRoleEnum, AddressTypeEnum
-from app.models.base_model import UUIDPrimaryKeyMixin, UserInfoMixin, SoftDeleteMixin
+from app.models.base_model import UUIDPrimaryKeyMixin, UserInfoMixin, SoftDeleteMixin, TimestampMixin
 
 from sqlmodel import SQLModel, Field, Relationship
+
+
+class IdentityVerification(UUIDPrimaryKeyMixin, TimestampMixin, SQLModel, table=True):
+    national_identification_no: str
+    bank_verification_no: str | None = None
+
+    user_id: UUID = Field(foreign_key="user.id")
+    user: "User" = Relationship(back_populates="national_id_no")
 
 
 class UserAddress(SQLModel, table=True):
@@ -27,7 +35,7 @@ class UserAddress(SQLModel, table=True):
     address: "Address" = Relationship(back_populates="user")
 
 
-class Address(UUIDPrimaryKeyMixin, SQLModel, table=True):
+class Address(UUIDPrimaryKeyMixin, TimestampMixin, SQLModel, table=True):
     street: str
     city: str
     state: str
@@ -51,7 +59,7 @@ class UserRole(SQLModel, table=True):
         primary_key=True
     )
 
-    assigned_by: "user.id"
+    assigned_by: UUID
     assigned_at: datetime = Field(
         sa_column=Column(
             DateTime(timezone=True),
@@ -64,7 +72,7 @@ class UserRole(SQLModel, table=True):
     role: "Role" = Relationship(back_populates="users")
 
 
-class RolePermission(SQLModel, table=True):
+class RolePermission(TimestampMixin, SQLModel, table=True):
     role_id: UUID = Field(
         foreign_key="role.id",
         primary_key=True
@@ -75,16 +83,8 @@ class RolePermission(SQLModel, table=True):
         primary_key=True
     )
 
-    created_at: datetime = Field(
-        sa_column=Column(
-            DateTime(timezone=True),
-            server_default=func.now(),
-            nullable=False
-        )
-    )
 
-
-class Role(UUIDPrimaryKeyMixin, SQLModel, table=True):
+class Role(UUIDPrimaryKeyMixin, TimestampMixin, SQLModel, table=True):
     name: UserRoleEnum
     description: str | None = None
     is_system: bool = False
@@ -96,7 +96,7 @@ class Role(UUIDPrimaryKeyMixin, SQLModel, table=True):
     permissions: list["Permission"] = Relationship(back_populates="roles", link_model=RolePermission)
 
 
-class Permission(UUIDPrimaryKeyMixin, SQLModel, table=True):
+class Permission(UUIDPrimaryKeyMixin, TimestampMixin, SQLModel, table=True):
     name: str
     resource: str
     action: str
@@ -106,7 +106,10 @@ class Permission(UUIDPrimaryKeyMixin, SQLModel, table=True):
     roles: list["Role"] = Relationship(back_populates="permissions", link_model=RolePermission)
 
 
-class User(UUIDPrimaryKeyMixin, UserInfoMixin, SoftDeleteMixin, SQLModel, table=True):
+class User(UUIDPrimaryKeyMixin, UserInfoMixin, TimestampMixin, SoftDeleteMixin, SQLModel, table=True):
+
+    national_id_no: IdentityVerification = Relationship(back_populates="user")
+
     # a user can perform many roles/have many roles assigned to it(User-Role relationship)
     roles: list[UserRole] = Relationship(back_populates="user")
 
@@ -114,33 +117,25 @@ class User(UUIDPrimaryKeyMixin, UserInfoMixin, SoftDeleteMixin, SQLModel, table=
     address: list[UserAddress] = Relationship(back_populates="user")
 
     # keeps record of all login information
-    login_timelines: list["LoginEventInfo"] = Relationship(back_populates="user", cascade_delete=True)
+    login_timelines: list["LoginEventInfo"] = Relationship(back_populates="user")
 
     # keeps record of all user profile updates
-    update_events: list["UserEventUpdate"] = Relationship(back_populates="user", cascade_delete=True)
+    update_events: list["User"]
 
 
-class LoginEventInfo(SQLModel, table=True):
-    last_login: datetime = Field(
+class LoginEventInfo(UUIDPrimaryKeyMixin, SQLModel, table=True):
+    login_time: datetime = Field(
         sa_column=Column(
             DateTime(timezone=True),
             server_default=func.now(),
             nullable=False
         )
     )
-    failed_login_attempt: int = 0
+    ip_address: str
+    device: str
+    browser: str
+    location: str
+    successful: bool = False
 
-    user_id: UUID = Field(foreign_key="user.id", ondelete="CASCADE")
+    user_id: UUID = Field(foreign_key="user.id")
     user: "User" = Relationship(back_populates="login_timelines")
-
-
-class UserEventUpdate(SQLModel, table=True):
-    first_name: str | None = None
-    last_name: str | None = None
-    email: str = Field(primary_key=True,unique=True)
-    phone_number: str
-    avatar_url: str | None = None
-    password_hash: str
-
-    user_id: UUID = Field(foreign_key="user.id", ondelete="CASCADE")
-    user: "User" = Relationship(back_populates="update_events")
