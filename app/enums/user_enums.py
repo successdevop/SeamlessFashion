@@ -16,3 +16,9 @@ class AddressTypeEnum(str, Enum):
 class GenderEnum(str, Enum):
     MALE = "male"
     FEMALE = "female"
+
+
+class VerificationEnum(str, Enum):
+    PENDING = "pending"
+    PROCESSING = "processing"
+    VERIFIED = "verified"

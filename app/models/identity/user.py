@@ -4,14 +4,15 @@ from uuid import UUID
 
 from sqlalchemy import Column, DateTime, func
 
-from app.enums.user_enums import AddressTypeEnum, VerificationEnum
-from app.models.base_models import UUIDPrimaryKeyMixin, UserInfoMixin, SoftDeleteMixin, TimestampMixin
-
 from sqlmodel import SQLModel, Field, Relationship
 
+from app.enums.user_enums import AddressTypeEnum, VerificationEnum
+from app.models.base_models.base_models import UUIDPrimaryKeyMixin, TimestampMixin, UserInfoMixin, SoftDeleteMixin
+
 if TYPE_CHECKING:
-    from app.models.base_tables import Address, Role
-    from app.models.app_organisations import OrganisationMember
+    from app.models.base_models.base_tables import Address
+    from app.models.identity.role import Role
+    from app.models.organization.organisation import OrganisationMember
 
 
 class IdentityVerification(UUIDPrimaryKeyMixin, TimestampMixin, SQLModel, table=True):
@@ -26,7 +27,7 @@ class IdentityVerification(UUIDPrimaryKeyMixin, TimestampMixin, SQLModel, table=
     user: "User" = Relationship(back_populates="national_id_no")
 
 
-class UserAddresses(SQLModel, table=True):
+class UserAddress(SQLModel, table=True):
     user_id: UUID = Field(
         foreign_key="user.id",
         primary_key=True
@@ -44,7 +45,7 @@ class UserAddresses(SQLModel, table=True):
     address: "Address" = Relationship(back_populates="user")
 
 
-class UserRoles(SQLModel, table=True):
+class UserRole(SQLModel, table=True):
     user_id: UUID = Field(
         foreign_key="user.id",
         primary_key=True
@@ -73,10 +74,10 @@ class User(UUIDPrimaryKeyMixin, UserInfoMixin, TimestampMixin, SoftDeleteMixin, 
     national_id_no: IdentityVerification = Relationship(back_populates="user")
 
     # a user can perform many roles/have many roles assigned to it(User-Role relationship)
-    roles: list[UserRoles] = Relationship(back_populates="user")
+    roles: list[UserRole] = Relationship(back_populates="user")
 
     # a user can have more than one address(User-Address relationship)
-    address: list[UserAddresses] = Relationship(back_populates="user")
+    address: list[UserAddress] = Relationship(back_populates="user")
 
     # keeps record of all login information
     login_timelines: list["LoginEventInfo"] = Relationship(back_populates="user")
@@ -106,4 +107,4 @@ class LoginEventInfo(UUIDPrimaryKeyMixin, SQLModel, table=True):
 
     # loginEvent-User relationship
     user_id: UUID = Field(foreign_key="user.id")
-    user: "User" = Relationship(back_populates="login_timelines")
+    user: User = Relationship(back_populates="login_timelines")

@@ -10,3 +10,4 @@ class OrganisationRoleEnum(str, Enum):
     CUSTOMER_SUPPORT = "customer_support"
     SALES_REPRESENTATIVE = "sales_representative"
     ORGANISATION_OWNER = "organisation_owner"
+    
