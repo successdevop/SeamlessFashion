@@ -22,13 +22,13 @@ class Address(UUIDPrimaryKeyMixin, TimestampMixin, SQLModel, table=True):
     longitude: Decimal | None = None
 
     # an address can have multiple users(User-Address relationship)
-    user: list["UserAddress"] = Relationship(back_populates="address")
+    users: list["UserAddress"] = Relationship(back_populates="address")
     # organization address(Organisation-Address relationship)
-    organisations: "Organisation" = Relationship(back_populates="address")
+    organisations: list["Organisation"] = Relationship(back_populates="address")
     # organization_store address(Store-Address relationship)
-    stores: "Store" = Relationship(back_populates="address")
+    stores: list["Store"] = Relationship(back_populates="address")
     # organization_warehouse address(Warehouse-Address relationship)
-    warehouses: "WareHouse" = Relationship(back_populates="address")
+    warehouses: list["WareHouse"] = Relationship(back_populates="address")
 
 
 

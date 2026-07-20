@@ -19,12 +19,14 @@ class IdentityVerification(UUIDPrimaryKeyMixin, TimestampMixin, SQLModel, table=
     national_identification_no: str
     bank_verification_no: str | None = None
     verification_status: VerificationEnum
-    verified_at: datetime
+    verified_at: datetime | None = None
     verified_by: UUID = Field(foreign_key="user.id")
     document_type: str
+    passport: str | None = None
+    driver_license: str | None = None
 
     user_id: UUID | None = Field(default=None, foreign_key="user.id")
-    user: "User" = Relationship(back_populates="national_id_no")
+    user: "User" = Relationship(back_populates="user_national_ID")
 
 
 class UserAddress(SQLModel, table=True):
@@ -41,8 +43,9 @@ class UserAddress(SQLModel, table=True):
     address_type: AddressTypeEnum
     is_default: bool = False
 
-    user: "User" = Relationship(back_populates="address")
-    address: "Address" = Relationship(back_populates="user")
+    # linkTable for User-Address Relationship
+    user: "User" = Relationship(back_populates="user_addresses")
+    address: "Address" = Relationship(back_populates="users")
 
 
 class UserRole(SQLModel, table=True):
@@ -56,7 +59,7 @@ class UserRole(SQLModel, table=True):
         primary_key=True
     )
 
-    assigned_by: UUID
+    assigned_by: UUID = Field(foreign_key="user.id")
     assigned_at: datetime = Field(
         sa_column=Column(
             DateTime(timezone=True),
@@ -65,25 +68,25 @@ class UserRole(SQLModel, table=True):
         )
     )
 
-    user: "User" = Relationship(back_populates="roles")
+    user: "User" = Relationship(back_populates="user_roles")
     role: "Role" = Relationship(back_populates="users")
 
 
 class User(UUIDPrimaryKeyMixin, UserInfoMixin, TimestampMixin, SoftDeleteMixin, SQLModel, table=True):
 
-    national_id_no: IdentityVerification = Relationship(back_populates="user")
+    user_national_ID: IdentityVerification = Relationship(back_populates="user")
 
     # a user can perform many roles/have many roles assigned to it(User-Role relationship)
-    roles: list[UserRole] = Relationship(back_populates="user")
+    user_roles: list[UserRole] = Relationship(back_populates="user")
 
     # a user can have more than one address(User-Address relationship)
-    address: list[UserAddress] = Relationship(back_populates="user")
+    user_addresses: list[UserAddress] = Relationship(back_populates="user")
 
     # keeps record of all login information
-    login_timelines: list["LoginEventInfo"] = Relationship(back_populates="user")
+    user_login_timelines: list["LoginEventInfo"] = Relationship(back_populates="user")
 
     # one user can belong to many organization(Organisation-User relationship)
-    organisations: list["OrganisationMember"] = Relationship(back_populates="user")
+    user_organisations: list["OrganisationMember"] = Relationship(back_populates="user")
 
 
 class LoginEventInfo(UUIDPrimaryKeyMixin, SQLModel, table=True):
@@ -107,4 +110,4 @@ class LoginEventInfo(UUIDPrimaryKeyMixin, SQLModel, table=True):
 
     # loginEvent-User relationship
     user_id: UUID = Field(foreign_key="user.id")
-    user: User = Relationship(back_populates="login_timelines")
+    user: User = Relationship(back_populates="user_login_timelines")

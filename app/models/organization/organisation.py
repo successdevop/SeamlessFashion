@@ -12,11 +12,13 @@ if TYPE_CHECKING:
     from app.models.base_models.base_tables import Address
     from app.models.identity.user import User
     from app.models.organization.store import Store
+    from app.models.organization.warehouse import WareHouse
 
 
-class OrganisationRoles(SQLModel, table=True):
+class OrganisationRole(SQLModel, table=True):
     employee_id: UUID = Field(foreign_key="organisationmember.user_id", primary_key=True)
     organisation_id: UUID = Field(foreign_key="organisation.id", primary_key=True)
+    role: str
 
     assigned_by: UUID = Field(foreign_key="organisationmember.user_id")
     assigned_at: datetime = Field(
@@ -28,8 +30,8 @@ class OrganisationRoles(SQLModel, table=True):
     )
 
     # linkTable for organisationMember-Organisation relationship
-    employee: "OrganisationMember" = Relationship(back_populates="emp_organisation")
-    organisation: "Organisation" = Relationship(back_populates="employee")
+    org_employee: "OrganisationMember" = Relationship(back_populates="organisation_roles")
+    organisation: "Organisation" = Relationship(back_populates="roles")
 
 
 class OrganisationMember(SQLModel, table=True):
@@ -42,11 +44,11 @@ class OrganisationMember(SQLModel, table=True):
     )
 
     # linkTable for User-Organisation relation
-    user: "User" = Relationship(back_populates="organisations")
+    user: "User" = Relationship(back_populates="user_organisations")
     organisation: "Organisation" = Relationship(back_populates="users")
 
     # one employee can have more than one role in an organization(OrganisationMember-Organisation relationship)
-    emp_organisation: list[OrganisationRoles] = Relationship(back_populates="employee")
+    organisation_roles: list[OrganisationRole] = Relationship(back_populates="org_employee")
 
 
 class Organisation(UUIDPrimaryKeyMixin, TimestampMixin, SQLModel, table=True):
@@ -67,11 +69,11 @@ class Organisation(UUIDPrimaryKeyMixin, TimestampMixin, SQLModel, table=True):
     address_id: UUID = Field(foreign_key="address.id")
     address: "Address" = Relationship(back_populates="organisations")
 
-    # an organization can have many users (Organisation-User relationship)
+    # an organization can have more than one or many users (Organisation-User relationship)
     users: list[OrganisationMember] = Relationship(back_populates="organisation")
-    # an organization can have many stores(Organisation-Store relationship)
+    # an organization can have more than one or many stores(Organisation-Store relationship)
     stores: list["Store"] = Relationship(back_populates="organisation")
-    # an organization can have many warehouses(Organisation-Warehouse relationship)
-    warehouses: list["Store"] = Relationship(back_populates="organisation")
-    # an organization can have an employee with many roles(OrganisationMember-Organisation relationship)
-    employee: list[OrganisationRoles] = Relationship(back_populates="emp_organisation")
+    # an organization can have more than one or  many warehouses(Organisation-Warehouse relationship)
+    warehouses: list["WareHouse"] = Relationship(back_populates="organisation")
+    # an organization can have an employee with more than one or many roles(OrganisationMember-Organisation relationship)
+    roles: list[OrganisationRole] = Relationship(back_populates="organisation")

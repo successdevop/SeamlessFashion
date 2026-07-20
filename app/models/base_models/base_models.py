@@ -26,8 +26,10 @@ class UserInfoMixin(SQLModel):
     is_active: bool = Field(default=False, index=True)
     is_verified: bool = False
     password_hash: str
-    last_login: datetime
-    failed_login_attempt: int = 0
+    last_login: datetime | None
+    failed_login_attempts: int = 0
+    login_count: int = 0
+    login_method: str | None = None
 
 
 class SoftDeleteMixin(SQLModel):
@@ -37,7 +39,7 @@ class SoftDeleteMixin(SQLModel):
         default=None,
         sa_column=Column(
             DateTime(timezone=True),
-            nullable=False
+            nullable=True
         )
     )
 
@@ -57,12 +59,6 @@ class TimestampMixin(SQLModel):
         sa_column=Column(
             DateTime(timezone=True),
             onupdate=func.now(),
-            nullable=False
+            nullable=True
         )
     )
-
-
-class AuditMixin(SQLModel):
-    created_by: UUID = Field(foreign_key="user.id")
-    updated_by: UUID = Field(foreign_key="user.id")
-
