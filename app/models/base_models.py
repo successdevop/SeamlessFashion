@@ -37,7 +37,6 @@ class SoftDeleteMixin(SQLModel):
         default=None,
         sa_column=Column(
             DateTime(timezone=True),
-            server_default=func.now(),
             nullable=False
         )
     )
@@ -64,6 +63,6 @@ class TimestampMixin(SQLModel):
 
 
 class AuditMixin(SQLModel):
-    created_by: UUID
-    updated_by: UUID
+    created_by: UUID = Field(foreign_key="user.id")
+    updated_by: UUID = Field(foreign_key="user.id")
 

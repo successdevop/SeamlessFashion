@@ -4,25 +4,29 @@ from uuid import UUID
 
 from sqlalchemy import Column, DateTime, func
 
-from app.enums.user_enums import UserRoleEnum, AddressTypeEnum
+from app.enums.user_enums import AddressTypeEnum, VerificationEnum
 from app.models.base_models import UUIDPrimaryKeyMixin, UserInfoMixin, SoftDeleteMixin, TimestampMixin
 
 from sqlmodel import SQLModel, Field, Relationship
 
 if TYPE_CHECKING:
-    from app.models.base_tables import Address
+    from app.models.base_tables import Address, Role
     from app.models.app_organisations import OrganisationMember
 
 
 class IdentityVerification(UUIDPrimaryKeyMixin, TimestampMixin, SQLModel, table=True):
     national_identification_no: str
     bank_verification_no: str | None = None
+    verification_status: VerificationEnum
+    verified_at: datetime
+    verified_by: UUID = Field(foreign_key="user.id")
+    document_type: str
 
-    user_id: UUID = Field(foreign_key="user.id")
+    user_id: UUID | None = Field(default=None, foreign_key="user.id")
     user: "User" = Relationship(back_populates="national_id_no")
 
 
-class UserAddress(SQLModel, table=True):
+class UserAddresses(SQLModel, table=True):
     user_id: UUID = Field(
         foreign_key="user.id",
         primary_key=True
@@ -40,7 +44,7 @@ class UserAddress(SQLModel, table=True):
     address: "Address" = Relationship(back_populates="user")
 
 
-class UserRole(SQLModel, table=True):
+class UserRoles(SQLModel, table=True):
     user_id: UUID = Field(
         foreign_key="user.id",
         primary_key=True
@@ -64,55 +68,18 @@ class UserRole(SQLModel, table=True):
     role: "Role" = Relationship(back_populates="users")
 
 
-class RolePermission(TimestampMixin, SQLModel, table=True):
-    role_id: UUID = Field(
-        foreign_key="role.id",
-        primary_key=True
-    )
-
-    permission_id: UUID = Field(
-        foreign_key="permission.id",
-        primary_key=True
-    )
-
-
-class Role(UUIDPrimaryKeyMixin, TimestampMixin, SQLModel, table=True):
-    name: UserRoleEnum
-    description: str | None = None
-    is_system: bool = False
-
-    # a single role can have many users assigned to it(User-Role relationship)
-    users: list[UserRole] = Relationship(back_populates="role")
-
-    # a single role can have many permissions assigned to it to perform (Role-Permission relationship)
-    permissions: list["Permission"] = Relationship(back_populates="roles", link_model=RolePermission)
-
-
-class Permission(UUIDPrimaryKeyMixin, TimestampMixin, SQLModel, table=True):
-    name: str
-    resource: str
-    action: str
-    description: str | None = None
-
-    # a permission can have many roles performing it(Role-Permission relationship)
-    roles: list[Role] = Relationship(back_populates="permissions", link_model=RolePermission)
-
-
 class User(UUIDPrimaryKeyMixin, UserInfoMixin, TimestampMixin, SoftDeleteMixin, SQLModel, table=True):
 
     national_id_no: IdentityVerification = Relationship(back_populates="user")
 
     # a user can perform many roles/have many roles assigned to it(User-Role relationship)
-    roles: list[UserRole] = Relationship(back_populates="user")
+    roles: list[UserRoles] = Relationship(back_populates="user")
 
     # a user can have more than one address(User-Address relationship)
-    address: list[UserAddress] = Relationship(back_populates="user")
+    address: list[UserAddresses] = Relationship(back_populates="user")
 
     # keeps record of all login information
     login_timelines: list["LoginEventInfo"] = Relationship(back_populates="user")
-
-    # keeps record of all user profile updates
-    update_events: list["User"]
 
     # one user can belong to many organization(Organisation-User relationship)
     organisations: list["OrganisationMember"] = Relationship(back_populates="user")
@@ -130,7 +97,13 @@ class LoginEventInfo(UUIDPrimaryKeyMixin, SQLModel, table=True):
     device: str
     browser: str
     location: str
+    operating_system: str
+    country: str
+    city: str
+    user_agent: str
+    session_id: str
     successful: bool = False
 
+    # loginEvent-User relationship
     user_id: UUID = Field(foreign_key="user.id")
     user: "User" = Relationship(back_populates="login_timelines")
