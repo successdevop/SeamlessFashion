@@ -17,7 +17,7 @@ class UUIDPrimaryKeyMixin(SQLModel):
 class UserInfoMixin(SQLModel):
     first_name: str | None = None
     last_name: str | None = None
-    username: str = Field(min_length=4, max_length=30, unique=True, index=True)
+    username: str = Field(unique=True, index=True)
     email: str = Field(unique=True, index=True)
     phone_number: str = Field(index=True)
     avatar_url: str | None = None

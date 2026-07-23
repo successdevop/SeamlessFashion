@@ -16,17 +16,26 @@ if TYPE_CHECKING:
 
 
 class IdentityVerification(UUIDPrimaryKeyMixin, TimestampMixin, SQLModel, table=True):
-    national_identification_no: str
-    bank_verification_no: str | None = None
+    user_id: UUID = Field(foreign_key="user.id", primary_key=True)
+    verification_id: UUID = Field(foreign_key="identitydocuments.id", primary_key=True)
+
     verification_status: VerificationEnum
     verified_at: datetime | None = None
     verified_by: UUID = Field(foreign_key="user.id")
-    document_type: str
+
+    user: "User" = Relationship(back_populates="identity_verification")
+    documents: "IdentityDocuments" = Relationship(back_populates="user")
+
+
+class IdentityDocuments(UUIDPrimaryKeyMixin, table=True):
+    national_identification_no: str
+    bank_verification_no: str | None = None
     passport: str | None = None
     driver_license: str | None = None
+    document_type: str
+    document_url: str
 
-    user_id: UUID | None = Field(default=None, foreign_key="user.id")
-    user: "User" = Relationship(back_populates="user_national_ID")
+    user: IdentityVerification = Relationship(back_populates="documents")
 
 
 class UserAddress(SQLModel, table=True):
@@ -74,7 +83,7 @@ class UserRole(SQLModel, table=True):
 
 class User(UUIDPrimaryKeyMixin, UserInfoMixin, TimestampMixin, SoftDeleteMixin, SQLModel, table=True):
 
-    user_national_ID: IdentityVerification = Relationship(back_populates="user")
+    identity_verification: IdentityVerification = Relationship(back_populates="user")
 
     # a user can perform many roles/have many roles assigned to it(User-Role relationship)
     user_roles: list[UserRole] = Relationship(back_populates="user")
