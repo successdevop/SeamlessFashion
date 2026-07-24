@@ -11,6 +11,15 @@ if TYPE_CHECKING:
     from app.models.identity.permission import Permission
 
 
+class RoleAssignment(SQLModel, table=True):
+    user_id: UUID = Field(foreign_key="user.id")
+    role_id: UUID = Field(foreign_key="role.id")
+    organisation_id: UUID = Field(foreign_key="Organisation.id")
+
+    # linkTable for User-Role-Organisation Relationship
+    
+
+
 class RolePermission(TimestampMixin, SQLModel, table=True):
     role_id: UUID = Field(
         foreign_key="role.id",

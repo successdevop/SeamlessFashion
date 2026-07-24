@@ -12,7 +12,7 @@ if TYPE_CHECKING:
     from app.models.base_models.base_tables import Address
     from app.models.identity.user import User
     from app.models.organization.store import Store
-    from app.models.organization.warehouse import WareHouse
+    from app.models.organization.warehouse import Warehouse
 
 
 class OrganisationRole(SQLModel, table=True):
@@ -45,7 +45,7 @@ class OrganisationMember(SQLModel, table=True):
 
     # linkTable for User-Organisation relation
     user: "User" = Relationship(back_populates="user_organisations")
-    organisation: "Organisation" = Relationship(back_populates="users")
+    organisation: "Organisation" = Relationship(back_populates="employees")
 
     # one employee can have more than one role in an organization(OrganisationMember-Organisation relationship)
     organisation_roles: list[OrganisationRole] = Relationship(back_populates="org_employee")
@@ -70,10 +70,10 @@ class Organisation(UUIDPrimaryKeyMixin, TimestampMixin, SQLModel, table=True):
     address: "Address" = Relationship(back_populates="organisations")
 
     # an organization can have more than one or many users (Organisation-User relationship)
-    users: list[OrganisationMember] = Relationship(back_populates="organisation")
+    employees: list[OrganisationMember] = Relationship(back_populates="organisation")
     # an organization can have more than one or many stores(Organisation-Store relationship)
     stores: list["Store"] = Relationship(back_populates="organisation")
     # an organization can have more than one or  many warehouses(Organisation-Warehouse relationship)
-    warehouses: list["WareHouse"] = Relationship(back_populates="organisation")
+    warehouses: list["Warehouse"] = Relationship(back_populates="organisation")
     # an organization can have an employee with more than one or many roles(OrganisationMember-Organisation relationship)
     roles: list[OrganisationRole] = Relationship(back_populates="organisation")

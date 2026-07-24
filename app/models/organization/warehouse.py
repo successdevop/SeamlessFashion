@@ -11,7 +11,7 @@ if TYPE_CHECKING:
     from app.models.organization.organisation import Organisation
 
 
-class WareHouse(UUIDPrimaryKeyMixin, TimestampMixin, SQLModel, table=True):
+class Warehouse(UUIDPrimaryKeyMixin, TimestampMixin, SQLModel, table=True):
     name: str
     warehouse_code: str
     max_storage_units: Decimal

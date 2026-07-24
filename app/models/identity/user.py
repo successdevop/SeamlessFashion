@@ -18,6 +18,7 @@ if TYPE_CHECKING:
 
 class IdentityVerification(UUIDPrimaryKeyMixin, TimestampMixin, SQLModel, table=True):
     verification_status: VerificationStatuEnum
+
     verified_at: datetime | None = Field(default=None, sa_column=Column(DateTime(timezone=True), nullable=True))
     submitted_at: datetime | None = Field(default=None, sa_column=Column(DateTime(timezone=True), nullable=True))
 
@@ -43,7 +44,7 @@ class IdentityDocument(UUIDPrimaryKeyMixin, table=True):
     document_number_encrypted: str
     document_url: str
 
-    verification_id: UUID = Field(foreign_key="identityverification.id")
+    verification_id: UUID = Field(foreign_key="identityverification.id", ondelete="CASCADE")
     verification: IdentityVerification = Relationship(back_populates="documents")
 
 
@@ -86,7 +87,15 @@ class UserRole(SQLModel, table=True):
         )
     )
 
-    user: "User" = Relationship(back_populates="user_roles")
+    user: "User" = Relationship(
+        back_populates="user_roles",
+        sa_relationship_kwargs={"foreign_keys":"[UserRole.user_id]"}
+    ),
+
+    assigned_by_user: "User" = Relationship(
+        sa_relationship_kwargs={"foreign_keys":"[UserRole.assigned_by]"}
+    )
+
     role: "Role" = Relationship(back_populates="users")
 
 
