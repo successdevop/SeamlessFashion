@@ -6,7 +6,8 @@ from sqlalchemy import Column, DateTime, func
 
 from sqlmodel import SQLModel, Field, Relationship
 
-from app.enums.user_enums import AddressTypeEnum, VerificationEnum
+from app.enums.id_verification import VerificationStatuEnum, DocumentTypeEnum
+from app.enums.user_enums import AddressTypeEnum
 from app.models.base_models.base_models import UUIDPrimaryKeyMixin, TimestampMixin, UserInfoMixin, SoftDeleteMixin
 
 if TYPE_CHECKING:
@@ -16,26 +17,34 @@ if TYPE_CHECKING:
 
 
 class IdentityVerification(UUIDPrimaryKeyMixin, TimestampMixin, SQLModel, table=True):
-    user_id: UUID = Field(foreign_key="user.id", primary_key=True)
-    verification_id: UUID = Field(foreign_key="identitydocuments.id", primary_key=True)
+    verification_status: VerificationStatuEnum
+    verified_at: datetime | None = Field(default=None, sa_column=Column(DateTime(timezone=True), nullable=True))
+    submitted_at: datetime | None = Field(default=None, sa_column=Column(DateTime(timezone=True), nullable=True))
 
-    verification_status: VerificationEnum
-    verified_at: datetime | None = None
-    verified_by: UUID = Field(foreign_key="user.id")
+    verification_notes: str | None = None
+    rejection_reason: str | None = None
 
-    user: "User" = Relationship(back_populates="identity_verification")
-    documents: "IdentityDocuments" = Relationship(back_populates="user")
+    user_id: UUID = Field(foreign_key="user.id", unique=True, nullable=False)
+    user: "User" = Relationship(
+        back_populates="identity_verification",
+        sa_relationship_kwargs={"foreign_keys":"[IdentityVerification.user_id]"}
+    )
+
+    verified_by: UUID | None = Field(default=None, foreign_key="user.id")
+    verifier: "User" = Relationship(
+        sa_relationship_kwargs={"foreign_keys":"[IdentityVerification.verified_by]"}
+    )
+
+    documents: list["IdentityDocument"] = Relationship(back_populates="verification", cascade_delete=True)
 
 
-class IdentityDocuments(UUIDPrimaryKeyMixin, table=True):
-    national_identification_no: str
-    bank_verification_no: str | None = None
-    passport: str | None = None
-    driver_license: str | None = None
-    document_type: str
+class IdentityDocument(UUIDPrimaryKeyMixin, table=True):
+    document_type: DocumentTypeEnum
+    document_number_encrypted: str
     document_url: str
 
-    user: IdentityVerification = Relationship(back_populates="documents")
+    verification_id: UUID = Field(foreign_key="identityverification.id")
+    verification: IdentityVerification = Relationship(back_populates="documents")
 
 
 class UserAddress(SQLModel, table=True):

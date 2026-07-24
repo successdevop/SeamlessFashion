@@ -1,20 +1,10 @@
 from datetime import date, datetime
-from decimal import Decimal
 from uuid import UUID
 
 from pydantic import BaseModel, Field, EmailStr, AnyHttpUrl, ConfigDict
 
 from app.enums.user_enums import GenderEnum, UserRoleEnum, AddressTypeEnum
-
-
-class AddressData(BaseModel):
-    street: str
-    city: str
-    state: str
-    country: str
-    zip_postal_code: str | None = None
-    latitude: Decimal | None = None
-    longitude: Decimal | None = None
+from app.schemas.base_or_shared.common import AddressData
 
 
 class UserAddressResponse(BaseModel):
