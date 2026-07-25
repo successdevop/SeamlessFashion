@@ -4,20 +4,24 @@ from uuid import UUID
 
 from sqlmodel import SQLModel, Field, Relationship
 
+from app.enums.org_enums import WarehouseStatusEnum
 from app.models.base_models.base_models import UUIDPrimaryKeyMixin, TimestampMixin
 
 if TYPE_CHECKING:
-    from app.models.base_models.base_tables import Address
-    from app.models.organization.organisation import Organisation
+    from app.models import User, Address, Organisation
 
 
 class Warehouse(UUIDPrimaryKeyMixin, TimestampMixin, SQLModel, table=True):
     name: str
     warehouse_code: str
     max_storage_units: Decimal
-    status: str
+    status: WarehouseStatusEnum
+
     created_by: UUID = Field(foreign_key="organisationmember.user_id")
     manager_id: UUID = Field(foreign_key="organisationmember.user_id")
+
+    created_by_user: "User" = Relationship(sa_relationship_kwargs={"foreign_keys":"[Warehouse.created_by]"})
+    manager: "User" = Relationship(sa_relationship_kwargs={"foreign_keys":"[Warehouse.manager_id]"})
 
     # warehouse-address relationship
     address_id: UUID = Field(foreign_key="address.id")

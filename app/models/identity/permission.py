@@ -5,8 +5,7 @@ from sqlmodel import SQLModel, Relationship
 from app.models.base_models.base_models import UUIDPrimaryKeyMixin, TimestampMixin
 
 if TYPE_CHECKING:
-    from app.models.identity.role import Role
-    from app.models.identity.role_permission import RolePermission
+    from app.models import RolePermission
 
 
 class Permission(UUIDPrimaryKeyMixin, TimestampMixin, SQLModel, table=True):
@@ -16,5 +15,7 @@ class Permission(UUIDPrimaryKeyMixin, TimestampMixin, SQLModel, table=True):
     action: str
     description: str | None = None
 
+    scope_type: str = "ANY" # "ANY", "OWN", "SPECIFIC"
+
     # a permission can have many roles performing it(Role-Permission relationship)
-    roles: list["Role"] = Relationship(back_populates="permissions", link_model=RolePermission)
+    roles: list["RolePermission"] = Relationship(back_populates="permission")

@@ -78,6 +78,7 @@ class UserResponse(UserBase):
     id: UUID
     is_active: bool = False
     is_verified: bool = False
+    last_login: datetime | None
 
     user_addresses: list[UserAddressResponse] = Field(default_factory=list)
     user_roles: list[UserRoleResponse] = Field(default_factory=list)
@@ -87,7 +88,6 @@ class UserResponse(UserBase):
 
 
 class UserAdminResponse(UserResponse):
-    last_login: datetime | None
     failed_login_attempts: int = 0
     login_count: int = 0
     login_method: str | None = None

@@ -1,13 +1,11 @@
 from typing import TYPE_CHECKING
 
-from sqlmodel import SQLModel, Relationship
+from sqlmodel import SQLModel, Relationship, Field
 
 from app.models.base_models.base_models import TimestampMixin, UUIDPrimaryKeyMixin
 
 if TYPE_CHECKING:
-    from app.models.identity.role_permission import RolePermission
-    from app.models.identity.role_assignmt import RoleAssignment
-    from app.models.identity.permission import Permission
+    from app.models import RolePermission, RoleAssignment
 
 
 class RoleScope(SQLModel):
@@ -19,12 +17,16 @@ class Role(UUIDPrimaryKeyMixin, TimestampMixin, SQLModel, table=True):
     name: str
     description: str | None = None
     scope: RoleScope
-    level: int  # Hierarchy level (1 = highest)
+
+    level: int = 10  # Hierarchy level (1 = highest)
     is_system_role: bool = False
-    is_assignable: bool
+    is_assignable_role: bool = True
+
+    # For organization-scoped roles, if they can be created by users
+    is_custom: bool = Field(default=False)
 
     # a single role can have many permissions assigned to it to perform (Role-Permission relationship)
-    permissions: list["Permission"] = Relationship(back_populates="roles", link_model=RolePermission)
+    permissions: list["RolePermission"] = Relationship(back_populates="role")
 
     # a single role can have many users assigned to it(User-Role relationship)
     role_assignments: list["RoleAssignment"] = Relationship(back_populates="role")

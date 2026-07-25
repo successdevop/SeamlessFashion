@@ -26,22 +26,12 @@ class UserInfoMixin(SQLModel):
     is_active: bool = Field(default=False, index=True)
     is_verified: bool = False
     password_hash: str
-    last_login: datetime | None
-    failed_login_attempts: int = 0
-    login_count: int = 0
-    login_method: str | None = None
 
 
 class SoftDeleteMixin(SQLModel):
     is_deleted: bool = Field(default=False, index=True)
 
-    deleted_at: datetime | None = Field(
-        default=None,
-        sa_column=Column(
-            DateTime(timezone=True),
-            nullable=True
-        )
-    )
+    deleted_at: datetime | None = None
 
 
 class TimestampMixin(SQLModel):

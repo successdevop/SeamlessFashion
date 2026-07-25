@@ -1,18 +1,16 @@
 from datetime import datetime
-from typing import TYPE_CHECKING, Literal
+from typing import TYPE_CHECKING
 from uuid import UUID
 
 from sqlalchemy import Column, DateTime, func
 from sqlmodel import SQLModel, Field, Relationship
 
 from app.enums.currency import CurrencyEnum
+from app.enums.org_enums import SubscriptionStatusEnum, SubscriptionPlanEnum
 from app.models.base_models.base_models import UUIDPrimaryKeyMixin, TimestampMixin
 
 if TYPE_CHECKING:
-    from app.models.base_models.base_tables import Address
-    from app.models.organization.store import Store
-    from app.models.organization.warehouse import Warehouse
-    from app.models.identity.role_assignmt import RoleAssignment
+    from app.models import User, Address, Store, Warehouse, RoleAssignment
 
 
 class OrganisationMember(SQLModel, table=True):
@@ -36,6 +34,9 @@ class OrganisationMember(SQLModel, table=True):
 
     default_role_id: UUID | None = Field(foreign_key="role.id")
 
+    user: "User" = Relationship(back_populates="user_organisations")
+    organisation: "Organisation" = Relationship(back_populates="employees")
+
 
 class Organisation(UUIDPrimaryKeyMixin, TimestampMixin, SQLModel, table=True):
     organisation_name: str
@@ -48,8 +49,8 @@ class Organisation(UUIDPrimaryKeyMixin, TimestampMixin, SQLModel, table=True):
     website: str | None = None
     industry: str | None = None
     description: str | None = None
-    subscription_plan: str | None = None
-    subscription_status: str
+    subscription_plan: SubscriptionPlanEnum
+    subscription_status: SubscriptionStatusEnum
 
     # organisation-address relationship
     address_id: UUID = Field(foreign_key="address.id")

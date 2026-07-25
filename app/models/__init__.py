@@ -1,27 +1,32 @@
 from sqlmodel import SQLModel
 from base_models.base_tables import Address
-from identity.user import (IdentityVerification, UserAddress, UserRole, User, LoginEventInfo)
-from identity.role import RolePermission, Role
+from identity.identity_verification import IdentityDocument, IdentityVerification
+from identity.role_assignmt import RoleAssignment
+from identity.role_permission import RolePermission
+from identity.user import (UserAddress, User, LoginEventInfo, UserLoginSecurity)
+from identity.role import Role
 from identity.permission import Permission
-from organization.organisation import (OrganisationRole, OrganisationMember, Organisation)
+from organization.organisation import (OrganisationMember, Organisation)
 from organization.store import Store
-from organization.warehouse import WareHouse
+from organization.warehouse import Warehouse
 
 
 __all__ = [
     "SQLModel",
     "Address",
     "IdentityVerification",
+    "IdentityDocument",
     "UserAddress",
-    "UserRole",
     "User",
     "LoginEventInfo",
+    "UserLoginSecurity",
     "RolePermission",
     "Role",
     "Permission",
-    "OrganisationRole",
+    "RoleAssignment",
     "OrganisationMember",
     "Organisation",
     "Store",
-    "WareHouse"
+    "Warehouse"
 ]
+

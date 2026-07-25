@@ -6,10 +6,7 @@ from sqlmodel import SQLModel, Relationship
 from app.models.base_models.base_models import UUIDPrimaryKeyMixin, TimestampMixin
 
 if TYPE_CHECKING:
-    from app.models.identity.user import UserAddress
-    from app.models.organization.organisation import Organisation
-    from app.models.organization.store import Store
-    from app.models.organization.warehouse import WareHouse
+    from app.models import UserAddress, Organisation, Store, Warehouse
 
 
 class Address(UUIDPrimaryKeyMixin, TimestampMixin, SQLModel, table=True):
@@ -28,7 +25,7 @@ class Address(UUIDPrimaryKeyMixin, TimestampMixin, SQLModel, table=True):
     # organization_store address(Store-Address relationship)
     stores: list["Store"] = Relationship(back_populates="address")
     # organization_warehouse address(Warehouse-Address relationship)
-    warehouses: list["WareHouse"] = Relationship(back_populates="address")
+    warehouses: list["Warehouse"] = Relationship(back_populates="address")
 
 
 

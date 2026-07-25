@@ -1,11 +1,15 @@
+from typing import TYPE_CHECKING
 from uuid import UUID
 
-from sqlmodel import SQLModel, Field
+from sqlmodel import SQLModel, Field, Relationship
 
 from app.models.base_models.base_models import TimestampMixin
 
+if TYPE_CHECKING:
+    from app.models import Permission, Role
 
-class RolePermission(SQLModel, table=True):
+
+class RolePermission(TimestampMixin, SQLModel, table=True):
     role_id: UUID = Field(
         foreign_key="role.id",
         primary_key=True
@@ -16,5 +20,13 @@ class RolePermission(SQLModel, table=True):
         primary_key=True
     )
 
+    assigned_by: UUID | None = Field(
+        default=None,
+        foreign_key="user.id"
+    )
+
     is_allowed: bool = True
+
     # linkTable for Role-RolePermission Relationship
+    role: "Role" = Relationship(back_populates="permissions")
+    permission: "Permission" = Relationship(back_populates="roles")
