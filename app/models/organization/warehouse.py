@@ -17,7 +17,7 @@ class Warehouse(UUIDPrimaryKeyMixin, TimestampMixin, SQLModel, table=True):
     max_storage_units: Decimal
     status: str
     created_by: UUID = Field(foreign_key="organisationmember.user_id")
-    manager: UUID = Field(foreign_key="organisationmember.user_id")
+    manager_id: UUID = Field(foreign_key="organisationmember.user_id")
 
     # warehouse-address relationship
     address_id: UUID = Field(foreign_key="address.id")

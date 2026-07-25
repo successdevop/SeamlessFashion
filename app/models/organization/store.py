@@ -16,6 +16,8 @@ class Store(UUIDPrimaryKeyMixin, TimestampMixin, SQLModel, table=True):
     currency: CurrencyEnum
     timezone: str
     status: str
+    inventory: str
+    
     created_by: UUID = Field(foreign_key="organisationmember.user_id")
     updated_by: UUID = Field(foreign_key="organisationmember.user_id")
 

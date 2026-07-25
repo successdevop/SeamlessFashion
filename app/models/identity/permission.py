@@ -5,7 +5,8 @@ from sqlmodel import SQLModel, Relationship
 from app.models.base_models.base_models import UUIDPrimaryKeyMixin, TimestampMixin
 
 if TYPE_CHECKING:
-    from app.models.identity.role import Role, RolePermission
+    from app.models.identity.role import Role
+    from app.models.identity.role_permission import RolePermission
 
 
 class Permission(UUIDPrimaryKeyMixin, TimestampMixin, SQLModel, table=True):
