@@ -21,14 +21,14 @@ class IdentityVerification(UUIDPrimaryKeyMixin, TimestampMixin, SQLModel, table=
     verification_notes: str | None = None
     rejection_reason: str | None = None
 
-    user_id: UUID | None = Field(default=None, foreign_key="user.id", unique=True)
+    user_id: UUID = Field(foreign_key="user.id", unique=True, nullable=False)
     user: "User" = Relationship(
         back_populates="identity_verification",
         sa_relationship_kwargs={"foreign_keys":"[IdentityVerification.user_id]"}
     )
 
-    verified_by_id: UUID | None = Field(default=None, foreign_key="user.id")
-    verifier: "User" = Relationship(
+    verified_by: UUID | None = Field(default=None, foreign_key="user.id")
+    verifier: "User | None" = Relationship(
         sa_relationship_kwargs={"foreign_keys":"[IdentityVerification.verified_by]"}
     )
 
@@ -38,7 +38,8 @@ class IdentityVerification(UUIDPrimaryKeyMixin, TimestampMixin, SQLModel, table=
 class IdentityDocument(UUIDPrimaryKeyMixin, table=True):
     document_type: DocumentTypeEnum
     document_number_encrypted: str
-    document_url: str #Only certain roles should view
+    document_number_hash: str = Field(index=True)
+    document_storage_key_url: str # Only certain roles should view / and also a short_lived signed url
 
     verification_id: UUID = Field(foreign_key="identityverification.id", ondelete="CASCADE")
     verification: IdentityVerification = Relationship(back_populates="documents")

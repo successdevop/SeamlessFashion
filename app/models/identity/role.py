@@ -1,3 +1,4 @@
+from enum import Enum
 from typing import TYPE_CHECKING
 
 from sqlmodel import SQLModel, Relationship, Field
@@ -8,7 +9,7 @@ if TYPE_CHECKING:
     from app.models import RolePermission, RoleAssignment
 
 
-class RoleScope(SQLModel):
+class RoleScope(str, Enum):
     PLATFORM = "platform"
     ORGANISATION = "organisation"
 
@@ -19,6 +20,7 @@ class Role(UUIDPrimaryKeyMixin, TimestampMixin, SQLModel, table=True):
     scope: RoleScope
 
     level: int = 10  # Hierarchy level (1 = highest)
+    
     is_system_role: bool = False
     is_assignable_role: bool = True
 

@@ -24,3 +24,11 @@ class WarehouseStatusEnum(str, Enum):
     ACTIVE = "active"
     INACTIVE = "inactive"
     MAINTENANCE = "maintenance"
+
+
+class MembershipStatus(str, Enum):
+    INVITED = "invited"
+    ACTIVE = "active"
+    SUSPENDED = "suspended"
+    LEFT = "left"
+    REMOVED = "removed"

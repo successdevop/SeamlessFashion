@@ -18,14 +18,14 @@ class Store(UUIDPrimaryKeyMixin, TimestampMixin, SQLModel, table=True):
     status: StoreStatusEnum
 
     created_by: UUID = Field(foreign_key="organisationmember.user_id")
-    manger_id: UUID = Field(foreign_key="organisationmember.user_id")
+    manager_id: UUID = Field(foreign_key="organisationmember.user_id")
 
-    created_by_user: "User" = Field(sa_column_kwargs={"foreign_keys":"[Store.created_by]"})
-    manager: "User" = Field(sa_column_kwargs={"foreign_keys":"[Store.manager_id]"})
+    created_by_user: "User" = Relationship(sa_relationship_kwargs={"foreign_keys":"[Store.created_by]"})
+    manager: "User" = Relationship(sa_relationship_kwargs={"foreign_keys":"[Store.manager_id]"})
 
     # store-address relationship
-    address_id: UUID = Field(foreign_key="address.id")
-    address: "Address" = Relationship(back_populates="stores")
+    address_id: UUID = Field(foreign_key="address.id", unique=True)
+    address: "Address" = Relationship(back_populates="store")
 
     # store-organisation relationship
     organisation_id: UUID = Field(foreign_key="organisation.id")

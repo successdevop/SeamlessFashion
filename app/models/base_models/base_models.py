@@ -24,7 +24,9 @@ class UserInfoMixin(SQLModel):
     gender: GenderEnum | None = None
     date_of_birth: date | None = None
     is_active: bool = Field(default=False, index=True)
-    is_verified: bool = False
+    email_verified: bool = False
+    phone_verified: bool = False
+    identity_verified: bool = False
     password_hash: str
 
 

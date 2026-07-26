@@ -24,9 +24,7 @@ class RolePermission(TimestampMixin, SQLModel, table=True):
         default=None,
         foreign_key="user.id"
     )
-
-    is_allowed: bool = True
-
+    
     # linkTable for Role-RolePermission Relationship
     role: "Role" = Relationship(back_populates="permissions")
     permission: "Permission" = Relationship(back_populates="roles")

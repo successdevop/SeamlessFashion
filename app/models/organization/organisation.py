@@ -6,7 +6,7 @@ from sqlalchemy import Column, DateTime, func
 from sqlmodel import SQLModel, Field, Relationship
 
 from app.enums.currency import CurrencyEnum
-from app.enums.org_enums import SubscriptionStatusEnum, SubscriptionPlanEnum
+from app.enums.org_enums import SubscriptionStatusEnum, SubscriptionPlanEnum, MembershipStatus
 from app.models.base_models.base_models import UUIDPrimaryKeyMixin, TimestampMixin
 
 if TYPE_CHECKING:
@@ -27,12 +27,10 @@ class OrganisationMember(SQLModel, table=True):
     employee_email: str
 
     # User's status within the organization
-    is_active: bool = True
+    status: MembershipStatus
     joined_date: datetime = Field(
         sa_column=Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
     )
-
-    default_role_id: UUID | None = Field(foreign_key="role.id")
 
     user: "User" = Relationship(back_populates="user_organisations")
     organisation: "Organisation" = Relationship(back_populates="employees")
@@ -53,8 +51,8 @@ class Organisation(UUIDPrimaryKeyMixin, TimestampMixin, SQLModel, table=True):
     subscription_status: SubscriptionStatusEnum
 
     # organisation-address relationship
-    address_id: UUID = Field(foreign_key="address.id")
-    address: "Address" = Relationship(back_populates="organisations")
+    address_id: UUID = Field(foreign_key="address.id", unique=True)
+    address: "Address" = Relationship(back_populates="organisation")
 
     # an organization can have more than one or many employees/organization member (Organisation-User relationship)
     employees: list[OrganisationMember] = Relationship(back_populates="organisation")

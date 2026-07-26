@@ -5,11 +5,13 @@ from uuid import UUID
 from sqlalchemy import Column, DateTime, func
 from sqlmodel import SQLModel, Field, Relationship
 
+from base_models.base_models import UUIDPrimaryKeyMixin, TimestampMixin
+
 if TYPE_CHECKING:
     from app.models import User, Role, Organisation
 
 
-class RoleAssignment(SQLModel, table=True):
+class RoleAssignment(UUIDPrimaryKeyMixin, TimestampMixin, SQLModel, table=True):
     user_id: UUID = Field(
         foreign_key="user.id",
         primary_key=True

@@ -21,11 +21,11 @@ class Address(UUIDPrimaryKeyMixin, TimestampMixin, SQLModel, table=True):
     # an address can have multiple users(User-Address relationship)
     users: list["UserAddress"] = Relationship(back_populates="address")
     # organization address(Organisation-Address relationship)
-    organisations: list["Organisation"] = Relationship(back_populates="address")
+    organisation: "Organisation" = Relationship(back_populates="address")
     # organization_store address(Store-Address relationship)
-    stores: list["Store"] = Relationship(back_populates="address")
+    store: "Store" = Relationship(back_populates="address")
     # organization_warehouse address(Warehouse-Address relationship)
-    warehouses: list["Warehouse"] = Relationship(back_populates="address")
+    warehouse: "Warehouse" = Relationship(back_populates="address")
 
 
 

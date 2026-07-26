@@ -40,7 +40,10 @@ class User(UUIDPrimaryKeyMixin, UserInfoMixin, TimestampMixin, SoftDeleteMixin, 
     user_addresses: list[UserAddress] = Relationship(back_populates="user")
 
     # keeps record of all login information
-    login_timelines: list["LoginEventInfo"] = Relationship(back_populates="user")
+    login_events: list["LoginEventInfo"] = Relationship(back_populates="user")
+
+    # keeps record of all login security information
+    login_security: list["LoginSecurityInfo"] = Relationship(back_populates="user")
 
     # one user can belong to many organization(Organisation-User relationship)
     user_organisations: list["OrganisationMember"] = Relationship(back_populates="user")
@@ -49,7 +52,7 @@ class User(UUIDPrimaryKeyMixin, UserInfoMixin, TimestampMixin, SoftDeleteMixin, 
     role_assignments: list["RoleAssignment"] = Relationship(back_populates="user")
 
 
-class LoginEventInfo(UUIDPrimaryKeyMixin, TimestampMixin, SQLModel, table=True):
+class LoginSecurityInfo(UUIDPrimaryKeyMixin, TimestampMixin, SQLModel, table=True):
     login_time: datetime = Field(
         sa_column=Column(
             DateTime(timezone=True),
@@ -65,25 +68,22 @@ class LoginEventInfo(UUIDPrimaryKeyMixin, TimestampMixin, SQLModel, table=True):
     locked_until: datetime | None = None
     password_changed_at: datetime | None = None
 
-    # keeps record of all login security information
-    login_security: list["UserLoginSecurity"] = Relationship(back_populates="user")
-
     # loginEvent-User relationship
     user_id: UUID = Field(foreign_key="user.id")
     user: User = Relationship(back_populates="login_timelines")
 
 
-class UserLoginSecurity(UUIDPrimaryKeyMixin, SQLModel, table=True):
-    ip_address: str
-    device: str
-    browser: str
-    operating_system: str
-    country: str
-    city: str
-    user_agent: str
-    session_id_hash: str  # should be encrypted
+class LoginEventInfo(UUIDPrimaryKeyMixin, SQLModel, table=True):
+    ip_address: str | None = None
+    device: str | None = None
+    browser: str | None = None
+    operating_system: str | None = None
+    country: str | None = None
+    city: str | None = None
+    user_agent: str | None = None
+    session_id_hash: str | None = None
     is_successful: bool = False
 
     # UserLogin-Security
-    login_event_info_id: UUID = Field(foreign_key="logineventinfo.id")
-    login_event_info: LoginEventInfo = Relationship(back_populates="login_security")
+    user_id: UUID = Field(foreign_key="user.id")
+    user: User = Relationship(back_populates="login_security")
