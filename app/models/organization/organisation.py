@@ -14,6 +14,8 @@ if TYPE_CHECKING:
 
 
 class OrganisationMember(SQLModel, table=True):
+    __tablename__ = "organisation_member"
+
     organisation_id: UUID = Field(
         foreign_key="organisation.id",
         primary_key=True
@@ -34,6 +36,7 @@ class OrganisationMember(SQLModel, table=True):
 
     user: "User" = Relationship(back_populates="user_organisations")
     organisation: "Organisation" = Relationship(back_populates="employees")
+    role_assignments: list["RoleAssignment"] = Relationship(back_populates="membership")
 
 
 class Organisation(UUIDPrimaryKeyMixin, TimestampMixin, SQLModel, table=True):
@@ -60,5 +63,3 @@ class Organisation(UUIDPrimaryKeyMixin, TimestampMixin, SQLModel, table=True):
     stores: list["Store"] = Relationship(back_populates="organisation")
     # an organization can have more than one or  many warehouses(Organisation-Warehouse relationship)
     warehouses: list["Warehouse"] = Relationship(back_populates="organisation")
-    # an organization can assign more than one role to an employee(OrganisationMember-Organisation role relationship)
-    role_assignments: list["RoleAssignment"] = Relationship(back_populates="organisation")
