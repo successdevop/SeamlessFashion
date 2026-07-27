@@ -5,14 +5,13 @@ from uuid import UUID
 from sqlalchemy import Column, DateTime, func, ForeignKeyConstraint
 from sqlmodel import SQLModel, Field, Relationship
 
-from app.models import OrganisationMember
-from base_models.base_models import UUIDPrimaryKeyMixin, TimestampMixin
+from base_models.base_models import UUIDPrimaryKeyMixin
 
 if TYPE_CHECKING:
-    from app.models import User, Role, Organisation
+    from app.models import Role, User, OrganisationMember
 
 
-class RoleAssignment(SQLModel, table=True):
+class RoleAssignment(UUIDPrimaryKeyMixin, SQLModel, table=True):
     user_id: UUID = Field(
         primary_key=True
     )
@@ -23,7 +22,7 @@ class RoleAssignment(SQLModel, table=True):
     )
 
     # For organisation scoped roles
-    organisation_id: UUID = Field(
+    organisation_id: UUID | None = Field(
         primary_key=True
     )
 
@@ -69,3 +68,12 @@ class RoleAssignment(SQLModel, table=True):
     )
 
     role: "Role" = Relationship(back_populates="role_assignments")
+
+    user: "User" = Relationship(
+        back_populates="role_assignments",
+        sa_relationship_kwargs={"foreign_keys":"[RoleAssignment.user_id]"}
+    )
+
+    assigned_by_user: "User" = Relationship(
+        sa_relationship_kwargs={"foreign_keys":"[RoleAssignment.assigned_by]"}
+    )

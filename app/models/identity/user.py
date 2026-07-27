@@ -43,17 +43,20 @@ class User(UUIDPrimaryKeyMixin, UserInfoMixin, TimestampMixin, SoftDeleteMixin, 
     login_events: list["LoginEventInfo"] = Relationship(back_populates="user")
 
     # keeps record of all login security information
-    login_security: list["LoginSecurityInfo"] = Relationship(back_populates="user")
+    login_security: "UserSecurity | None" = Relationship(back_populates="user")
 
     # one user can belong to many organization(Organisation-User relationship)
     user_organisations: list["OrganisationMember"] = Relationship(back_populates="user")
 
     # a user can perform many roles/have many roles assigned to it(User-Role relationship)
-    role_assignments: list["RoleAssignment"] = Relationship(back_populates="user")
+    role_assignments: list["RoleAssignment"] = Relationship(
+        back_populates="user",
+        sa_relationship_kwargs={"foreign_keys":"[RoleAssignment.user_id]"}
+    )
 
 
-class LoginSecurityInfo(UUIDPrimaryKeyMixin, TimestampMixin, SQLModel, table=True):
-    login_time: datetime = Field(
+class UserSecurity(UUIDPrimaryKeyMixin, TimestampMixin, SQLModel, table=True):
+    last_login: datetime= Field(
         sa_column=Column(
             DateTime(timezone=True),
             server_default=func.now(),
@@ -61,7 +64,6 @@ class LoginSecurityInfo(UUIDPrimaryKeyMixin, TimestampMixin, SQLModel, table=Tru
         )
     )
 
-    last_login: datetime | None = None
     failed_login_attempts: int = 0
     login_count: int = 0
     login_method: str | None = None
@@ -69,8 +71,8 @@ class LoginSecurityInfo(UUIDPrimaryKeyMixin, TimestampMixin, SQLModel, table=Tru
     password_changed_at: datetime | None = None
 
     # loginEvent-User relationship
-    user_id: UUID = Field(foreign_key="user.id")
-    user: User = Relationship(back_populates="login_timelines")
+    user_id: UUID = Field(foreign_key="user.id", unique=True, nullable=False)
+    user: User = Relationship(back_populates="login_security")
 
 
 class LoginEventInfo(UUIDPrimaryKeyMixin, SQLModel, table=True):
@@ -86,4 +88,4 @@ class LoginEventInfo(UUIDPrimaryKeyMixin, SQLModel, table=True):
 
     # UserLogin-Security
     user_id: UUID = Field(foreign_key="user.id")
-    user: User = Relationship(back_populates="login_security")
+    user: User = Relationship(back_populates="login_events")

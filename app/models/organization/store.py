@@ -24,7 +24,7 @@ class Store(UUIDPrimaryKeyMixin, TimestampMixin, SQLModel, table=True):
     manager: "User" = Relationship(sa_relationship_kwargs={"foreign_keys":"[Store.manager_id]"})
 
     # store-address relationship
-    address_id: UUID = Field(foreign_key="address.id", unique=True)
+    address_id: UUID | None= Field(foreign_key="address.id", unique=True)
     address: "Address" = Relationship(back_populates="store")
 
     # store-organisation relationship

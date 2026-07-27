@@ -26,7 +26,7 @@ class OrganisationMember(SQLModel, table=True):
         primary_key=True
     )
 
-    employee_email: str
+    employee_email: str | None = None
 
     # User's status within the organization
     status: MembershipStatus
@@ -54,7 +54,7 @@ class Organisation(UUIDPrimaryKeyMixin, TimestampMixin, SQLModel, table=True):
     subscription_status: SubscriptionStatusEnum
 
     # organisation-address relationship
-    address_id: UUID = Field(foreign_key="address.id", unique=True)
+    address_id: UUID | None = Field(foreign_key="address.id", unique=True)
     address: "Address" = Relationship(back_populates="organisation")
 
     # an organization can have more than one or many employees/organization member (Organisation-User relationship)
