@@ -32,8 +32,8 @@ class UserInfoMixin(SQLModel):
 
 class SoftDeleteMixin(SQLModel):
     is_deleted: bool = Field(default=False, index=True)
-
     deleted_at: datetime | None = None
+    deleted_by: UUID | None = None
 
 
 class TimestampMixin(SQLModel):

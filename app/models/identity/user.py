@@ -2,7 +2,7 @@ from datetime import datetime
 from typing import TYPE_CHECKING
 from uuid import UUID
 
-from sqlalchemy import Column, DateTime, func
+from sqlalchemy import Column, DateTime, func, Index
 
 from sqlmodel import SQLModel, Field, Relationship
 
@@ -43,7 +43,7 @@ class User(UUIDPrimaryKeyMixin, UserInfoMixin, TimestampMixin, SoftDeleteMixin, 
     login_events: list["LoginEventInfo"] = Relationship(back_populates="user", cascade_delete=True)
 
     # keeps record of all login security information
-    login_security: "UserSecurity | None" = Relationship(back_populates="user", cascade_delete=True)
+    login_security: "UserSecurityProfile | None" = Relationship(back_populates="user", cascade_delete=True)
 
     # one user can belong to many organization(Organisation-User relationship)
     user_organisations: list["OrganisationMember"] = Relationship(back_populates="user")
@@ -55,7 +55,7 @@ class User(UUIDPrimaryKeyMixin, UserInfoMixin, TimestampMixin, SoftDeleteMixin, 
     )
 
 
-class UserSecurity(UUIDPrimaryKeyMixin, TimestampMixin, SQLModel, table=True):
+class UserSecurityProfile(UUIDPrimaryKeyMixin, TimestampMixin, SQLModel, table=True):
     last_login: datetime= Field(
         sa_column=Column(
             DateTime(timezone=True),
@@ -97,3 +97,9 @@ class LoginEventInfo(UUIDPrimaryKeyMixin, SQLModel, table=True):
     # UserLogin-Security
     user_id: UUID = Field(foreign_key="user.id", ondelete="CASCADE")
     user: User = Relationship(back_populates="login_events")
+
+    __table_args__ = (
+        Index("idx_login_user_time", "user_id", "occurred_at"),
+        Index("idx_login_success", "is_successful", "occurred_at"),
+        Index("idx_login_ip", "ip_address"),
+    )

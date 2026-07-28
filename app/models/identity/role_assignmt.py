@@ -2,7 +2,7 @@ from datetime import datetime
 from typing import TYPE_CHECKING
 from uuid import UUID
 
-from sqlalchemy import Column, DateTime, func, ForeignKeyConstraint
+from sqlalchemy import Column, DateTime, func, ForeignKeyConstraint, Index, UniqueConstraint
 from sqlmodel import SQLModel, Field, Relationship
 
 from base_models.base_models import UUIDPrimaryKeyMixin
@@ -12,19 +12,14 @@ if TYPE_CHECKING:
 
 
 class RoleAssignment(UUIDPrimaryKeyMixin, SQLModel, table=True):
-    user_id: UUID = Field(
-        primary_key=True
-    )
+    user_id: UUID
 
     role_id: UUID = Field(
         foreign_key="role.id",
-        primary_key=True
     )
 
     # For organisation scoped roles
-    organisation_id: UUID | None = Field(
-        primary_key=True
-    )
+    organisation_id: UUID | None
 
     # Audit fields
     assigned_by: UUID = Field(foreign_key="user.id")
@@ -50,19 +45,6 @@ class RoleAssignment(UUIDPrimaryKeyMixin, SQLModel, table=True):
     # Status
     is_active: bool = True
 
-    __table_args__ = (
-        ForeignKeyConstraint(
-            [
-                "user_id", "organisation_id"
-            ],
-            [
-                "organisation_member.user_id", "organisation_member.organisation_id"
-            ],
-            name="fk_role_assignment_membership",
-            ondelete="CASCADE"
-        ),
-    )
-
     # Relationships
     membership: "OrganisationMember" = Relationship(
         back_populates="role_assignments",
@@ -77,4 +59,24 @@ class RoleAssignment(UUIDPrimaryKeyMixin, SQLModel, table=True):
 
     assigned_by_user: "User" = Relationship(
         sa_relationship_kwargs={"foreign_keys":"[RoleAssignment.assigned_by]"}
+    )
+
+    __table_args__ = (
+        UniqueConstraint("user_id", "role_id", "organisation_id",
+                         name="uq_role_assignment"
+        ),
+
+        ForeignKeyConstraint(
+            [
+                "user_id", "organisation_id"
+            ],
+            [
+                "organisation_member.user_id", "organisation_member.organisation_id"
+            ],
+            name="fk_role_assignment_membership",
+            ondelete="CASCADE"
+        ),
+
+        Index("idx_role_assign_active", "user_id", "is_active"),
+        Index("idx_role_assign_valid", "valid_from", "valid_until"),
     )

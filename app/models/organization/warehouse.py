@@ -18,8 +18,8 @@ class Warehouse(UUIDPrimaryKeyMixin, TimestampMixin, SQLModel, table=True):
     max_storage_units: Decimal
     status: WarehouseStatusEnum
 
-    created_by: UUID = Field(foreign_key="organisation_member.user_id")
-    manager_id: UUID = Field(foreign_key="organisation_member.user_id")
+    created_by: UUID
+    manager_id: UUID
 
     created_by_user: "OrganisationMember" = Relationship(
         back_populates="warehouses_created",

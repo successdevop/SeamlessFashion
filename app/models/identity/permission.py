@@ -1,6 +1,6 @@
 from typing import TYPE_CHECKING
 
-from sqlmodel import SQLModel, Relationship
+from sqlmodel import SQLModel, Relationship, Field
 
 from app.models.base_models.base_models import UUIDPrimaryKeyMixin, TimestampMixin
 
@@ -9,7 +9,7 @@ if TYPE_CHECKING:
 
 
 class Permission(UUIDPrimaryKeyMixin, TimestampMixin, SQLModel, table=True):
-    name: str
+    code: str = Field(unique=True, index=True)
     module: str
     resource: str
     action: str

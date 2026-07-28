@@ -5,7 +5,7 @@ from uuid import UUID
 from sqlalchemy import Column, DateTime
 from sqlmodel import SQLModel, Field, Relationship
 
-from app.enums.id_verification import VerificationStatuEnum, DocumentTypeEnum
+from app.enums.user_enums import VerificationStatusEnum, DocumentTypeEnum
 from app.models.base_models.base_models import UUIDPrimaryKeyMixin, TimestampMixin
 
 if TYPE_CHECKING:
@@ -13,7 +13,7 @@ if TYPE_CHECKING:
 
 
 class IdentityVerification(UUIDPrimaryKeyMixin, TimestampMixin, SQLModel, table=True):
-    verification_status: VerificationStatuEnum
+    verification_status: VerificationStatusEnum
 
     verified_at: datetime | None = Field(default=None, sa_column=Column(DateTime(timezone=True), nullable=True))
     submitted_at: datetime | None = Field(default=None, sa_column=Column(DateTime(timezone=True), nullable=True))
@@ -21,7 +21,7 @@ class IdentityVerification(UUIDPrimaryKeyMixin, TimestampMixin, SQLModel, table=
     verification_notes: str | None = None
     rejection_reason: str | None = None
 
-    user_id: UUID = Field(foreign_key="user.id", unique=True, nullable=False)
+    user_id: UUID = Field(foreign_key="user.id", unique=True, nullable=False, index=True)
     user: "User" = Relationship(
         back_populates="identity_verification",
         sa_relationship_kwargs={"foreign_keys":"[IdentityVerification.user_id]"}
@@ -39,7 +39,10 @@ class IdentityDocument(UUIDPrimaryKeyMixin, table=True):
     document_type: DocumentTypeEnum
     document_number_encrypted: str
     document_number_hash: str = Field(index=True)
-    document_storage_key_url: str # Only certain roles should view / and also a short_lived signed url
+    storage_key: str # Only certain roles should view / and also a short_lived signed url
+
+    file_size: int | None = None
+    file_hash: str | None = None  # For integrity verification
 
     verification_id: UUID = Field(foreign_key="identityverification.id", ondelete="CASCADE")
     verification: IdentityVerification = Relationship(back_populates="documents")

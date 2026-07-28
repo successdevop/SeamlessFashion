@@ -1,6 +1,7 @@
 from decimal import Decimal
 from typing import TYPE_CHECKING
 
+from sqlalchemy import Index, CheckConstraint
 from sqlmodel import SQLModel, Relationship
 
 from app.models.base_models.base_models import UUIDPrimaryKeyMixin, TimestampMixin
@@ -26,5 +27,13 @@ class Address(UUIDPrimaryKeyMixin, TimestampMixin, SQLModel, table=True):
     store: "Store | None" = Relationship(back_populates="address")
     # organization_warehouse address(Warehouse-Address relationship)
     warehouse: "Warehouse | None" = Relationship(back_populates="address")
+
+    __table_args__ = (
+        CheckConstraint("latitude >= -90 AND latitude <= 90", name="check_latitude"),
+        CheckConstraint("longitude >= -180 AND longitude <= 180", name="check_longitude"),
+        CheckConstraint("LENGTH(zip_postal_code) <= 20", name="check_zip_length"),
+        Index("idx_address_city_state", "city", "state"),
+        Index("idx_address_country_zip", "country", "zip_postal_code"),
+    )
 
 

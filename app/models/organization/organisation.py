@@ -2,7 +2,7 @@ from datetime import datetime
 from typing import TYPE_CHECKING
 from uuid import UUID
 
-from sqlalchemy import Column, DateTime, func
+from sqlalchemy import Column, DateTime, func, Index
 from sqlmodel import SQLModel, Field, Relationship
 
 from app.enums.currency import CurrencyEnum
@@ -55,6 +55,12 @@ class OrganisationMember(SQLModel, table=True):
         sa_relationship_kwargs={"foreign_keys":"[Warehouse.created_by]"}
     )
 
+    __table_args__ = (
+        Index("idx_org_member_status", "organisation_id", "status"),
+        Index("idx_org_member_user_status", "user_id", "status"),
+        Index("idx_org_member_joined", "joined_date"),
+    )
+
 
 class Organisation(UUIDPrimaryKeyMixin, TimestampMixin, SQLModel, table=True):
     organisation_name: str
@@ -71,7 +77,7 @@ class Organisation(UUIDPrimaryKeyMixin, TimestampMixin, SQLModel, table=True):
     subscription_status: SubscriptionStatusEnum
 
     # organisation-address relationship
-    address_id: UUID | None = Field(foreign_key="address.id", unique=True)
+    address_id: UUID | None = Field(foreign_key="address.id")
     address: "Address" = Relationship(back_populates="organisation")
 
     # an organization can have more than one or many employees/organization member (Organisation-User relationship)
