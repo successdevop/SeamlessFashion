@@ -58,7 +58,8 @@ class RoleAssignment(UUIDPrimaryKeyMixin, SQLModel, table=True):
             [
                 "organisation_member.user_id", "organisation_member.organisation_id"
             ],
-            name="fk_role_assignment_membership"
+            name="fk_role_assignment_membership",
+            ondelete="CASCADE"
         ),
     )
 

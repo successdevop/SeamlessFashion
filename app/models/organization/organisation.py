@@ -33,10 +33,27 @@ class OrganisationMember(SQLModel, table=True):
     joined_date: datetime = Field(
         sa_column=Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
     )
+    left_date: datetime | None = None
 
     user: "User" = Relationship(back_populates="user_organisations")
+
     organisation: "Organisation" = Relationship(back_populates="employees")
-    role_assignments: list["RoleAssignment"] = Relationship(back_populates="membership")
+
+    role_assignments: list["RoleAssignment"] = Relationship(
+        back_populates="membership", cascade_delete=True
+    )
+
+    stores_created: list["Store"] = Relationship(
+        back_populates="created_by_user",
+        sa_relationship_kwargs={
+            "foreign_keys": "[Store.created_by]"
+        }
+    )
+
+    warehouses_created: list["Warehouse"] = Relationship(
+        back_populates="created_by_user",
+        sa_relationship_kwargs={"foreign_keys":"[Warehouse.created_by]"}
+    )
 
 
 class Organisation(UUIDPrimaryKeyMixin, TimestampMixin, SQLModel, table=True):

@@ -40,10 +40,10 @@ class User(UUIDPrimaryKeyMixin, UserInfoMixin, TimestampMixin, SoftDeleteMixin, 
     user_addresses: list[UserAddress] = Relationship(back_populates="user")
 
     # keeps record of all login information
-    login_events: list["LoginEventInfo"] = Relationship(back_populates="user")
+    login_events: list["LoginEventInfo"] = Relationship(back_populates="user", cascade_delete=True)
 
     # keeps record of all login security information
-    login_security: "UserSecurity | None" = Relationship(back_populates="user")
+    login_security: "UserSecurity | None" = Relationship(back_populates="user", cascade_delete=True)
 
     # one user can belong to many organization(Organisation-User relationship)
     user_organisations: list["OrganisationMember"] = Relationship(back_populates="user")
@@ -71,11 +71,19 @@ class UserSecurity(UUIDPrimaryKeyMixin, TimestampMixin, SQLModel, table=True):
     password_changed_at: datetime | None = None
 
     # loginEvent-User relationship
-    user_id: UUID = Field(foreign_key="user.id", unique=True, nullable=False)
+    user_id: UUID = Field(foreign_key="user.id", unique=True, nullable=False, ondelete="CASCADE")
     user: User = Relationship(back_populates="login_security")
 
 
 class LoginEventInfo(UUIDPrimaryKeyMixin, SQLModel, table=True):
+    occurred_at: datetime = Field(
+        sa_column=Column(
+            DateTime(timezone=True),
+            server_default=func.now(),
+            nullable=False,
+            index=True
+        )
+    )
     ip_address: str | None = None
     device: str | None = None
     browser: str | None = None
@@ -87,5 +95,5 @@ class LoginEventInfo(UUIDPrimaryKeyMixin, SQLModel, table=True):
     is_successful: bool = False
 
     # UserLogin-Security
-    user_id: UUID = Field(foreign_key="user.id")
+    user_id: UUID = Field(foreign_key="user.id", ondelete="CASCADE")
     user: User = Relationship(back_populates="login_events")

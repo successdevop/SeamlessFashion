@@ -28,5 +28,3 @@ class Address(UUIDPrimaryKeyMixin, TimestampMixin, SQLModel, table=True):
     warehouse: "Warehouse | None" = Relationship(back_populates="address")
 
 
-
-
