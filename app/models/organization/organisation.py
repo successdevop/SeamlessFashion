@@ -10,7 +10,7 @@ from app.enums.org_enums import SubscriptionStatusEnum, SubscriptionPlanEnum, Me
 from app.models.base_models.base_models import UUIDPrimaryKeyMixin, TimestampMixin
 
 if TYPE_CHECKING:
-    from app.models import User, Address, Store, Warehouse, RoleAssignment
+    from app.models import User, Address, Store, Warehouse, RoleAssignment, StoreStaff, WarehouseStaff
 
 
 class OrganisationMember(SQLModel, table=True):
@@ -40,7 +40,7 @@ class OrganisationMember(SQLModel, table=True):
     organisation: "Organisation" = Relationship(back_populates="employees")
 
     role_assignments: list["RoleAssignment"] = Relationship(
-        back_populates="membership", cascade_delete=True
+        back_populates="membership"
     )
 
     stores_created: list["Store"] = Relationship(
@@ -50,10 +50,14 @@ class OrganisationMember(SQLModel, table=True):
         }
     )
 
+    store_assignments: list["StoreStaff"] = Relationship(back_populates="staff")
+
     warehouses_created: list["Warehouse"] = Relationship(
         back_populates="created_by_user",
         sa_relationship_kwargs={"foreign_keys":"[Warehouse.created_by]"}
     )
+
+    warehouse_assignments: list["WarehouseStaff"] = Relationship(back_populates="staff")
 
     __table_args__ = (
         Index("idx_org_member_status", "organisation_id", "status"),
@@ -77,7 +81,7 @@ class Organisation(UUIDPrimaryKeyMixin, TimestampMixin, SQLModel, table=True):
     subscription_status: SubscriptionStatusEnum
 
     # organisation-address relationship
-    address_id: UUID | None = Field(foreign_key="address.id")
+    address_id: UUID = Field(foreign_key="address.id")
     address: "Address" = Relationship(back_populates="organisation")
 
     # an organization can have more than one or many employees/organization member (Organisation-User relationship)

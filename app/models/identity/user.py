@@ -71,7 +71,7 @@ class UserSecurityProfile(UUIDPrimaryKeyMixin, TimestampMixin, SQLModel, table=T
     password_changed_at: datetime | None = None
 
     # loginEvent-User relationship
-    user_id: UUID = Field(foreign_key="user.id", unique=True, nullable=False, ondelete="CASCADE")
+    user_id: UUID = Field(foreign_key="user.id", unique=True, nullable=False, ondelete="CASCADE", index=True)
     user: User = Relationship(back_populates="login_security")
 
 

@@ -7,9 +7,8 @@ from identity.user import (UserAddress, User, LoginEventInfo, UserSecurityProfil
 from identity.role import Role
 from identity.permission import Permission
 from organization.organisation import (OrganisationMember, Organisation)
-from organization.store import Store
-from organization.warehouse import Warehouse
-
+from organization.store import Store, StoreStaff
+from organization.warehouse import Warehouse, WarehouseStaff
 
 __all__ = [
     "SQLModel",
@@ -27,6 +26,8 @@ __all__ = [
     "OrganisationMember",
     "Organisation",
     "Store",
-    "Warehouse"
+    "StoreStaff",
+    "Warehouse",
+    "WarehouseStaff"
 ]
 

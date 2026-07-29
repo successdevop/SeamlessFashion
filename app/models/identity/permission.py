@@ -1,5 +1,6 @@
 from typing import TYPE_CHECKING
 
+from sqlalchemy import Index
 from sqlmodel import SQLModel, Relationship, Field
 
 from app.models.base_models.base_models import UUIDPrimaryKeyMixin, TimestampMixin
@@ -17,3 +18,10 @@ class Permission(UUIDPrimaryKeyMixin, TimestampMixin, SQLModel, table=True):
 
     # a permission can have many roles performing it(Role-Permission relationship)
     roles: list["RolePermission"] = Relationship(back_populates="permission")
+
+    __table_args__ = (
+        Index(
+            "idx_permission_module",
+            "module"
+        )
+    )

@@ -34,3 +34,8 @@ class MembershipStatus(str, Enum):
     SUSPENDED = "suspended"
     LEFT = "left"
     REMOVED = "removed"
+
+
+class StaffAssignmentStatus(str, Enum):
+    ACTIVE = "active"
+    REMOVED = "removed"

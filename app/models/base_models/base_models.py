@@ -4,6 +4,7 @@ from uuid import UUID, uuid4
 from sqlalchemy import Column, DateTime, func
 from sqlmodel import SQLModel, Field
 
+from app.enums.org_enums import StaffAssignmentStatus
 from app.enums.user_enums import GenderEnum
 
 
@@ -28,6 +29,19 @@ class UserInfoMixin(SQLModel):
     phone_verified: bool = False
     identity_verified: bool = False
     password_hash: str
+
+
+class StaffAssignmentMixin(SQLModel):
+    staff_id: UUID = Field(primary_key=True)
+    organisation_id: UUID = Field(primary_key=True)
+
+    assigned_at: datetime = Field(
+        sa_column=Column(DateTime(timezone=True), server_default=func.now())
+    )
+    removed_at: datetime | None = None
+    assigned_by: UUID
+    is_primary_store: bool = False
+    status: StaffAssignmentStatus
 
 
 class SoftDeleteMixin(SQLModel):

@@ -1,6 +1,7 @@
 from typing import TYPE_CHECKING
 from uuid import UUID
 
+from sqlalchemy import Index
 from sqlmodel import SQLModel, Field, Relationship
 
 from app.models.base_models.base_models import TimestampMixin
@@ -28,3 +29,7 @@ class RolePermission(TimestampMixin, SQLModel, table=True):
     # linkTable for Role-RolePermission Relationship
     role: "Role" = Relationship(back_populates="permissions")
     permission: "Permission" = Relationship(back_populates="roles")
+
+    __table_args__ = (
+        Index("idx_role_permission", "permission_id")
+    )
