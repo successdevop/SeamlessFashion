@@ -24,9 +24,6 @@ class Role(UUIDPrimaryKeyMixin, TimestampMixin, SQLModel, table=True):
     is_system_role: bool = False
     is_assignable_role: bool = True
 
-    # For organization-scoped roles, if they can be created by users
-    is_custom: bool = Field(default=False)
-
     # a single role can have many permissions assigned to it to perform (Role-Permission relationship)
     permissions: list["RolePermission"] = Relationship(back_populates="role", sa_relationship_kwargs={"lazy":"selectin"})
 

@@ -18,8 +18,9 @@ class RoleAssignment(UUIDPrimaryKeyMixin, SQLModel, table=True):
         foreign_key="role.id",
     )
 
-    # For organisation scoped roles
-    organisation_id: UUID | None
+    # For organization scoped roles (a default organization would be created for the platform to prevent null values
+    # in organization id for platform role assignment)
+    organisation_id: UUID
 
     # Audit fields
     assigned_by: UUID = Field(foreign_key="user.id")
@@ -62,7 +63,8 @@ class RoleAssignment(UUIDPrimaryKeyMixin, SQLModel, table=True):
     )
 
     __table_args__ = (
-        UniqueConstraint("user_id", "role_id", "organisation_id"),
+        UniqueConstraint("user_id", "role_id", "organisation_id", name="uq_role_assignment"),
+
         ForeignKeyConstraint(
             [
                 "user_id", "organisation_id"
