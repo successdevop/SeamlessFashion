@@ -4,13 +4,13 @@ from typing import TYPE_CHECKING
 from sqlalchemy import Index, CheckConstraint
 from sqlmodel import SQLModel, Relationship
 
-from app.models.base_models.base_models import UUIDPrimaryKeyMixin, TimestampMixin
+from app.models.base_models.base_models import UUIDPrimaryKeyMixin, TimestampMixin, SoftDeleteMixin
 
 if TYPE_CHECKING:
     from app.models import UserAddress, Organisation, Store, Warehouse
 
 
-class Address(UUIDPrimaryKeyMixin, TimestampMixin, SQLModel, table=True):
+class Address(UUIDPrimaryKeyMixin, SoftDeleteMixin, TimestampMixin, SQLModel, table=True):
     street: str
     city: str
     state: str
@@ -20,7 +20,7 @@ class Address(UUIDPrimaryKeyMixin, TimestampMixin, SQLModel, table=True):
     longitude: Decimal | None = None
 
     # an address can have multiple users(User-Address relationship)
-    users: list["UserAddress"] = Relationship(back_populates="address")
+    users: list["UserAddress"] = Relationship(back_populates="address", sa_relationship_kwargs={"lazy":"selectin"})
     # organization address(Organisation-Address relationship)
     organisation: "Organisation | None" = Relationship(back_populates="address")
     # organization_store address(Store-Address relationship)

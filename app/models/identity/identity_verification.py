@@ -6,13 +6,13 @@ from sqlalchemy import Column, DateTime
 from sqlmodel import SQLModel, Field, Relationship
 
 from app.enums.user_enums import VerificationStatusEnum, DocumentTypeEnum
-from app.models.base_models.base_models import UUIDPrimaryKeyMixin, TimestampMixin
+from app.models.base_models.base_models import UUIDPrimaryKeyMixin, TimestampMixin, SoftDeleteMixin
 
 if TYPE_CHECKING:
     from app.models import User
 
 
-class IdentityVerification(UUIDPrimaryKeyMixin, TimestampMixin, SQLModel, table=True):
+class IdentityVerification(UUIDPrimaryKeyMixin, TimestampMixin, SoftDeleteMixin, SQLModel, table=True):
     verification_status: VerificationStatusEnum
 
     verified_at: datetime | None = Field(default=None, sa_column=Column(DateTime(timezone=True), nullable=True))
@@ -32,10 +32,14 @@ class IdentityVerification(UUIDPrimaryKeyMixin, TimestampMixin, SQLModel, table=
         sa_relationship_kwargs={"foreign_keys":"[IdentityVerification.verified_by]"}
     )
 
-    documents: list["IdentityDocument"] = Relationship(back_populates="verification", cascade_delete=True)
+    documents: list["IdentityDocument"] = Relationship(
+        back_populates="verification",
+        sa_relationship_kwargs={"lazy":"selectin"},
+        cascade_delete=True
+    )
 
 
-class IdentityDocument(UUIDPrimaryKeyMixin, table=True):
+class IdentityDocument(UUIDPrimaryKeyMixin, SoftDeleteMixin, SQLModel, table=True):
     document_type: DocumentTypeEnum
     document_number_encrypted: str
     document_number_hash: str = Field(index=True)

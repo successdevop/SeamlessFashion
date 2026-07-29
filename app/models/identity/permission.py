@@ -17,7 +17,7 @@ class Permission(UUIDPrimaryKeyMixin, TimestampMixin, SQLModel, table=True):
     description: str | None = None
 
     # a permission can have many roles performing it(Role-Permission relationship)
-    roles: list["RolePermission"] = Relationship(back_populates="permission")
+    roles: list["RolePermission"] = Relationship(back_populates="permission", sa_relationship_kwargs={"lazy":"selectin"})
 
     __table_args__ = (
         Index(

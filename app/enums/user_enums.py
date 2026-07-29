@@ -26,6 +26,7 @@ class DocumentTypeEnum(str, Enum):
     INTERNATIONAL_PASSPORT = "international_passport"
     BUSINESS_REGISTRATION_DOCUMENT = "business_registration_document"
 
+
 class UserRoleEnum(str, Enum):
     CUSTOMER = "customer"
     PLATFORM_ADMIN = "platform_admin"

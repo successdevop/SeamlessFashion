@@ -32,15 +32,11 @@ class UserInfoMixin(SQLModel):
 
 
 class StaffAssignmentMixin(SQLModel):
-    staff_id: UUID = Field(primary_key=True)
-    organisation_id: UUID = Field(primary_key=True)
-
     assigned_at: datetime = Field(
         sa_column=Column(DateTime(timezone=True), server_default=func.now())
     )
     removed_at: datetime | None = None
     assigned_by: UUID
-    is_primary_store: bool = False
     status: StaffAssignmentStatus
 
 

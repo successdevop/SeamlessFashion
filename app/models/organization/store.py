@@ -6,13 +6,13 @@ from sqlmodel import SQLModel, Field, Relationship
 
 from app.enums.currency import CurrencyEnum
 from app.enums.org_enums import StoreStatusEnum
-from app.models.base_models.base_models import UUIDPrimaryKeyMixin, TimestampMixin, StaffAssignmentMixin
+from app.models.base_models.base_models import UUIDPrimaryKeyMixin, TimestampMixin, StaffAssignmentMixin, SoftDeleteMixin
 
 if TYPE_CHECKING:
     from app.models import Address, Organisation, OrganisationMember
 
 
-class Store(UUIDPrimaryKeyMixin, TimestampMixin, SQLModel, table=True):
+class Store(UUIDPrimaryKeyMixin, SoftDeleteMixin, TimestampMixin, SQLModel, table=True):
     name: str
     currency: CurrencyEnum
     timezone: str
@@ -23,11 +23,21 @@ class Store(UUIDPrimaryKeyMixin, TimestampMixin, SQLModel, table=True):
 
     created_by_user: "OrganisationMember" = Relationship(
         back_populates="stores_created",
-        sa_relationship_kwargs={"foreign_keys":"[Store.created_by]"}
+        sa_relationship_kwargs={
+            "primaryjoin":"and_(Store.created_by==organisation_member.user_id, "
+                          "Store.organisation_id==organisation_member.organisation_id)"
+        }
     )
-    manager: "OrganisationMember" = Relationship(sa_relationship_kwargs={"foreign_keys":"[Store.manager_id]"})
+    manager: "OrganisationMember" = Relationship(
+        sa_relationship_kwargs={
+            "primaryjoin":"and_(Store.manager_id==organisation_member.user_id, "
+                          "Store.organisation_id==organisation_member.organisation_id)"
+        }
+    )
 
-    store_staff: list["StoreStaff"] = Relationship(back_populates="store")
+    store_staff: list["StoreStaff"] = Relationship(
+        back_populates="store", sa_relationship_kwargs={"lazy":"selectin"}
+    )
 
     # store-address relationship
     address_id: UUID= Field(foreign_key="address.id")
@@ -53,16 +63,25 @@ class Store(UUIDPrimaryKeyMixin, TimestampMixin, SQLModel, table=True):
 
 
 class StoreStaff(StaffAssignmentMixin, SQLModel, table=True):
+    staff_id: UUID = Field(primary_key=True)
+    organisation_id: UUID = Field(primary_key=True)
     store_id: UUID = Field(primary_key=True)
+    is_primary_store: bool = False
 
-    store: Store = Relationship(back_populates="store_staff")
+    store: Store = Relationship(
+        back_populates="store_staff",
+        sa_relationship_kwargs={
+            "primaryjoin":"and_(StoreStaff.store_id==Store.id, StoreStaff.organisation_id==Store.organisation_id)"
+        }
+    )
+
     staff: "OrganisationMember" = Relationship(
         back_populates="store_assignments",
         sa_relationship_kwargs={"foreign_keys":"[StoreStaff.staff_id, StoreStaff.organisation_id]"}
     )
 
     assigned_by_employee: "OrganisationMember" = Relationship(
-        sa_relationship_kwargs={"foreign_keys":"[StoreStaff.assigned_by]"}
+        sa_relationship_kwargs={"foreign_keys":"[StoreStaff.assigned_by, StoreStaff.organisation_id]"}
     )
 
     __table_args__ = (

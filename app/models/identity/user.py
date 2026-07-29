@@ -40,18 +40,24 @@ class User(UUIDPrimaryKeyMixin, UserInfoMixin, TimestampMixin, SoftDeleteMixin, 
     user_addresses: list[UserAddress] = Relationship(back_populates="user")
 
     # keeps record of all login information
-    login_events: list["LoginEventInfo"] = Relationship(back_populates="user", cascade_delete=True)
+    login_events: list["LoginEventInfo"] = Relationship(
+        back_populates="user", sa_relationship_kwargs={"lazy":"selectin", "cascade":"all, delete-orphan"}
+    )
 
     # keeps record of all login security information
-    login_security: "UserSecurityProfile | None" = Relationship(back_populates="user", cascade_delete=True)
+    login_security: "UserSecurityProfile | None" = Relationship(
+        back_populates="user", sa_relationship_kwargs={"lazy":"selectin", "cascade":"all, delete-orphan"}
+    )
 
     # one user can belong to many organization(Organisation-User relationship)
-    user_organisations: list["OrganisationMember"] = Relationship(back_populates="user")
+    user_organisations: list["OrganisationMember"] = Relationship(
+        back_populates="user", sa_relationship_kwargs={"lazy":"selectin", "cascade":"all, delete-orphan"}
+    )
 
     # a user can perform many roles/have many roles assigned to it(User-Role relationship)
     role_assignments: list["RoleAssignment"] = Relationship(
         back_populates="user",
-        sa_relationship_kwargs={"foreign_keys":"[RoleAssignment.user_id]"}
+        sa_relationship_kwargs={"foreign_keys":"[RoleAssignment.user_id]", "lazy":"selectin"}
     )
 
 

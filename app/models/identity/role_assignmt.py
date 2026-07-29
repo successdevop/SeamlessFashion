@@ -5,7 +5,7 @@ from uuid import UUID
 from sqlalchemy import Column, DateTime, func, ForeignKeyConstraint, Index, UniqueConstraint
 from sqlmodel import SQLModel, Field, Relationship
 
-from base_models.base_models import UUIDPrimaryKeyMixin
+from app.models.base_models.base_models import UUIDPrimaryKeyMixin
 
 if TYPE_CHECKING:
     from app.models import Role, User, OrganisationMember
@@ -62,10 +62,7 @@ class RoleAssignment(UUIDPrimaryKeyMixin, SQLModel, table=True):
     )
 
     __table_args__ = (
-        UniqueConstraint("user_id", "role_id", "organisation_id",
-                         name="uq_role_assignment"
-        ),
-
+        UniqueConstraint("user_id", "role_id", "organisation_id"),
         ForeignKeyConstraint(
             [
                 "user_id", "organisation_id"

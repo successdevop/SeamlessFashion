@@ -28,7 +28,7 @@ class Role(UUIDPrimaryKeyMixin, TimestampMixin, SQLModel, table=True):
     is_custom: bool = Field(default=False)
 
     # a single role can have many permissions assigned to it to perform (Role-Permission relationship)
-    permissions: list["RolePermission"] = Relationship(back_populates="role")
+    permissions: list["RolePermission"] = Relationship(back_populates="role", sa_relationship_kwargs={"lazy":"selectin"})
 
     # a single role can have many users assigned to it(User-Role relationship)
-    role_assignments: list["RoleAssignment"] = Relationship(back_populates="role")
+    role_assignments: list["RoleAssignment"] = Relationship(back_populates="role", sa_relationship_kwargs={"lazy":"selectin"})
