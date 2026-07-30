@@ -1,15 +1,9 @@
 from datetime import datetime
-from typing import TYPE_CHECKING
 from uuid import UUID
- 
-from sqlalchemy import Column, DateTime
-from sqlmodel import SQLModel, Field, Relationship
 
-from app.enums.user_enums import VerificationStatusEnum, DocumentTypeEnum
-from app.models.base_models.base_models import UUIDPrimaryKeyMixin, TimestampMixin, SoftDeleteMixin
+from pydantic import BaseModel
 
-if TYPE_CHECKING:
-    from app.models import User
+from app.enums.user_enums import VerificationStatusEnum
 
 
 class IdentityVerification(UUIDPrimaryKeyMixin, TimestampMixin, SoftDeleteMixin, SQLModel, table=True):
@@ -50,3 +44,15 @@ class IdentityDocument(UUIDPrimaryKeyMixin, SoftDeleteMixin, SQLModel, table=Tru
 
     verification_id: UUID = Field(foreign_key="identityverification.id", ondelete="CASCADE")
     verification: IdentityVerification = Relationship(back_populates="documents")
+
+
+class VerificationSummary(BaseModel):
+    verification_status: VerificationStatusEnum
+    verified_at: datetime | None = None
+    submitted_at: datetime | None = None
+    verification_notes: str | None = None
+    rejection_reason: str | None = None
+    user_id: UUID
+    verified_by: UUID | None = None
+
+
