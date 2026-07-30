@@ -1,8 +1,10 @@
 from datetime import date
+from uuid import UUID
 
 from pydantic import BaseModel, Field, EmailStr
 
-from app.enums.user_enums import GenderEnum
+from app.enums.user_enums import GenderEnum, AddressTypeEnum
+from app.schemas.base_or_shared.address import AddressResponse
 
 
 class UserBase(BaseModel):
@@ -30,17 +32,25 @@ class UserProfileUpdate(BaseModel):
 
 
 class AdminUserUpdate(UserProfileUpdate):
-    is_active: bool = False
-    email_verified: bool = False
-    phone_verified: bool = False
-    identity_verified: bool = False
+    is_active: bool | None = None
+    email_verified: bool | None = None
+    phone_verified: bool | None = None
+    identity_verified: bool | None = None
 
 
 class UserResponse(UserBase):
+    id: UUID
     is_active: bool = False
     email_verified: bool = False
     phone_verified: bool = False
     identity_verified: bool = False
+
+
+class UserAddressResponse(BaseModel):
+    user_id: UUID
+    address: AddressResponse
+    address_type: AddressTypeEnum
+    is_default_address: bool = False
 
 
 class UserDetails(UserResponse):
