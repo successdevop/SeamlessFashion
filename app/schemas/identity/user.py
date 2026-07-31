@@ -1,10 +1,64 @@
-from datetime import date
+from datetime import date, datetime
 from uuid import UUID
 
 from pydantic import BaseModel, Field, EmailStr
 
-from app.enums.user_enums import GenderEnum, AddressTypeEnum
+from app.enums.user_enums import GenderEnum, AddressTypeEnum, VerificationStatusEnum, DocumentTypeEnum
 from app.schemas.base_or_shared.address import AddressResponse
+
+
+class VerificationSummary(BaseModel):
+    verification_status: VerificationStatusEnum
+    verified_at: datetime | None = None
+    submitted_at: datetime | None = None
+    verification_notes: str | None = None
+    rejection_reason: str | None = None
+    user_id: UUID
+    verified_by: UUID | None = None
+
+
+class VerificationDocument(BaseModel):
+    verification_id: UUID
+
+    document_type: DocumentTypeEnum
+    document_number_encrypted: str
+    document_number_hash: str
+    storage_key: str | None = None
+
+    file_size: int | None = None
+    file_hash: str | None = None
+
+
+class LoginEventData(BaseModel):
+    ip_address: str | None = None
+    device: str | None = None
+    browser: str | None = None
+    operating_system: str | None = None
+    country: str | None = None
+    city: str | None = None
+    user_agent: str | None = None
+    session_id_hash: str | None = None
+    is_successful: bool = False
+
+    user_id: UUID
+
+
+class LoginEventResponse(LoginEventData):
+    id: UUID
+
+
+class UserSecurityProfile(BaseModel):
+    failed_login_attempts: int = 0
+    login_count: int = 0
+    login_method: str | None = None
+    locked_until: datetime | None = None
+    password_changed_at: datetime | None = None
+
+    user_id: UUID
+
+
+class UserSecurityResponse(UserSecurityProfile):
+    id: UUID
 
 
 class UserBase(BaseModel):
@@ -48,10 +102,13 @@ class UserResponse(UserBase):
 
 class UserAddressResponse(BaseModel):
     user_id: UUID
-    address: AddressResponse
+    address_id: UUID
     address_type: AddressTypeEnum
     is_default_address: bool = False
+    address: AddressResponse
 
 
 class UserDetails(UserResponse):
-    pass
+    user_addresses: list[UserAddressResponse] = Field(default_factory=list)
+    login_events: list[LoginEventResponse] = Field(default_factory=list)
+    login_security: UserSecurityResponse
