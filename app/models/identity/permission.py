@@ -25,3 +25,6 @@ class Permission(UUIDPrimaryKeyMixin, TimestampMixin, SQLModel, table=True):
             "module"
         )
     )
+
+    def __repr__(self):
+        return f"Permission<({self.id} | {self.code})>"

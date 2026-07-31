@@ -24,13 +24,19 @@ class Warehouse(UUIDPrimaryKeyMixin, SoftDeleteMixin, TimestampMixin, SQLModel, 
     created_by_user: "OrganisationMember" = Relationship(
         back_populates="warehouses_created",
         sa_relationship_kwargs={
-            "primaryjoin":"and_(Warehouse.created_by==organisation_member.user_id, "
-                          "Warehouse.organisation_id==organisation_member.organisation_id"}
+            "primaryjoin":"and_("
+                          "Warehouse.created_by==organisation_member.user_id, "
+                          "Warehouse.organisation_id==organisation_member.organisation_id"
+                          ")"
+        }
     )
     manager: "OrganisationMember" = Relationship(
-        sa_relationship_kwargs={"primaryjoin":"and_(Warehouse.manager_id==organisation_member.user_id, "
-                                              "Warehouse.organisation_id==organisation_member.organisation_id"
-                                }
+        sa_relationship_kwargs={
+            "primaryjoin":"and_("
+                          "Warehouse.manager_id==organisation_member.user_id, "
+                          "Warehouse.organisation_id==organisation_member.organisation_id"
+                          ")"
+        }
     )
 
     warehouse_staff: list["WarehouseStaff"] = Relationship(
@@ -38,7 +44,7 @@ class Warehouse(UUIDPrimaryKeyMixin, SoftDeleteMixin, TimestampMixin, SQLModel, 
     )
 
     # warehouse-address relationship
-    address_id: UUID= Field(foreign_key="address.id")
+    address_id: UUID | None = Field(foreign_key="address.id")
     address: "Address" = Relationship(back_populates="warehouse")
 
     # warehouse-organisation relationship
@@ -59,6 +65,9 @@ class Warehouse(UUIDPrimaryKeyMixin, SoftDeleteMixin, TimestampMixin, SQLModel, 
         Index("idx_warehouse_org", "organisation_id")
     )
 
+    def __repr__(self):
+        return f"Warehouse<({self.id} | {self.name})>"
+
 
 class WarehouseStaff(StaffAssignmentMixin, SQLModel, table=True):
     staff_id: UUID = Field(primary_key=True)
@@ -68,8 +77,10 @@ class WarehouseStaff(StaffAssignmentMixin, SQLModel, table=True):
     warehouse: Warehouse = Relationship(
         back_populates="warehouse_staff",
         sa_relationship_kwargs={
-            "primaryjoin":"and_(WarehouseStaff.warehouse_id==Warehouse.id, "
-                          "WarehouseStaff.organisation_id==Warehouse.organisation_id)"
+            "primaryjoin":"and_("
+                          "WarehouseStaff.warehouse_id==Warehouse.id, "
+                          "WarehouseStaff.organisation_id==Warehouse.organisation_id"
+                          ")"
         }
     )
 
@@ -92,3 +103,6 @@ class WarehouseStaff(StaffAssignmentMixin, SQLModel, table=True):
             ["warehouse.id", "warehouse.organisation_id"]
         )
     )
+
+    def __repr__(self):
+        return f"WarehouseStaff<({self.staff_id} | {self.status})>"

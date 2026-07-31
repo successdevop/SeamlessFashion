@@ -31,6 +31,9 @@ class UserAddress(SQLModel, table=True):
     user: "User" = Relationship(back_populates="user_addresses")
     address: "Address" = Relationship(back_populates="users")
 
+    def __repr__(self):
+        return f"<UserAddress<({self.address_type} | {self.is_default_address} | {self.user_id})>"
+
 
 class User(UUIDPrimaryKeyMixin, UserInfoMixin, TimestampMixin, SoftDeleteMixin, SQLModel, table=True):
 
@@ -60,6 +63,9 @@ class User(UUIDPrimaryKeyMixin, UserInfoMixin, TimestampMixin, SoftDeleteMixin, 
         sa_relationship_kwargs={"foreign_keys":"[RoleAssignment.user_id]", "lazy":"selectin"}
     )
 
+    def __repr__(self):
+        return f"User<({self.id} | {self.username})>"
+
 
 class UserSecurityProfile(UUIDPrimaryKeyMixin, TimestampMixin, SQLModel, table=True):
     last_login: datetime= Field(
@@ -79,6 +85,9 @@ class UserSecurityProfile(UUIDPrimaryKeyMixin, TimestampMixin, SQLModel, table=T
     # loginEvent-User relationship
     user_id: UUID = Field(foreign_key="user.id", unique=True, nullable=False, ondelete="CASCADE", index=True)
     user: User = Relationship(back_populates="login_security")
+
+    def __repr__(self):
+        return f"UserSecurityProfile<({self.id} | {self.last_login})>"
 
 
 class LoginEventInfo(UUIDPrimaryKeyMixin, SQLModel, table=True):
@@ -109,3 +118,6 @@ class LoginEventInfo(UUIDPrimaryKeyMixin, SQLModel, table=True):
         Index("idx_login_success", "is_successful", "occurred_at"),
         Index("idx_login_ip", "ip_address"),
     )
+
+    def __repr__(self):
+        return f"LoginEventInfo<({self.id} | {self.occurred_at})>"

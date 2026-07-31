@@ -33,3 +33,6 @@ class RolePermission(TimestampMixin, SQLModel, table=True):
     __table_args__ = (
         Index("idx_role_permission", "permission_id")
     )
+
+    def __repr__(self):
+        return f"RolePermission<({self.role_id} | {self.permission_id} | {self.assigned_by})>"

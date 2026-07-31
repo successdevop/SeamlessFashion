@@ -1,7 +1,7 @@
 from datetime import datetime
 from typing import TYPE_CHECKING
 from uuid import UUID
- 
+
 from sqlalchemy import Column, DateTime
 from sqlmodel import SQLModel, Field, Relationship
 
@@ -38,6 +38,9 @@ class IdentityVerification(UUIDPrimaryKeyMixin, TimestampMixin, SoftDeleteMixin,
         cascade_delete=True
     )
 
+    def __repr__(self):
+        return f"IdentityVerification<({self.id} | {self.submitted_at} | {self.verification_status})>"
+
 
 class IdentityDocument(UUIDPrimaryKeyMixin, SoftDeleteMixin, SQLModel, table=True):
     document_type: DocumentTypeEnum
@@ -50,3 +53,6 @@ class IdentityDocument(UUIDPrimaryKeyMixin, SoftDeleteMixin, SQLModel, table=Tru
 
     verification_id: UUID = Field(foreign_key="identityverification.id", ondelete="CASCADE")
     verification: IdentityVerification = Relationship(back_populates="documents")
+
+    def __repr__(self):
+        return f"IdentityDocument<({self.id} | {self.document_type})>"

@@ -36,4 +36,5 @@ class Address(UUIDPrimaryKeyMixin, SoftDeleteMixin, TimestampMixin, SQLModel, ta
         Index("idx_address_country_zip", "country", "zip_postal_code"),
     )
 
-
+    def __repr__(self):
+        return f"Address<({self.id} | {self.street}) | {self.country}>"

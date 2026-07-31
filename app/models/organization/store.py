@@ -24,14 +24,18 @@ class Store(UUIDPrimaryKeyMixin, SoftDeleteMixin, TimestampMixin, SQLModel, tabl
     created_by_user: "OrganisationMember" = Relationship(
         back_populates="stores_created",
         sa_relationship_kwargs={
-            "primaryjoin":"and_(Store.created_by==organisation_member.user_id, "
-                          "Store.organisation_id==organisation_member.organisation_id)"
+            "primaryjoin":"and_("
+                          "Store.created_by==organisation_member.user_id, "
+                          "Store.organisation_id==organisation_member.organisation_id"
+                          ")"
         }
     )
     manager: "OrganisationMember" = Relationship(
         sa_relationship_kwargs={
-            "primaryjoin":"and_(Store.manager_id==organisation_member.user_id, "
-                          "Store.organisation_id==organisation_member.organisation_id)"
+            "primaryjoin":"and_("
+                          "Store.manager_id==organisation_member.user_id, "
+                          "Store.organisation_id==organisation_member.organisation_id"
+                          ")"
         }
     )
 
@@ -40,7 +44,7 @@ class Store(UUIDPrimaryKeyMixin, SoftDeleteMixin, TimestampMixin, SQLModel, tabl
     )
 
     # store-address relationship
-    address_id: UUID= Field(foreign_key="address.id")
+    address_id: UUID | None = Field(foreign_key="address.id")
     address: "Address" = Relationship(back_populates="store")
 
     # store-organisation relationship
@@ -61,6 +65,9 @@ class Store(UUIDPrimaryKeyMixin, SoftDeleteMixin, TimestampMixin, SQLModel, tabl
         Index("idx_store_org", "organisation_id")
     )
 
+    def __repr__(self):
+        return f"Store<({self.id} | {self.name})>"
+
 
 class StoreStaff(StaffAssignmentMixin, SQLModel, table=True):
     staff_id: UUID = Field(primary_key=True)
@@ -71,7 +78,10 @@ class StoreStaff(StaffAssignmentMixin, SQLModel, table=True):
     store: Store = Relationship(
         back_populates="store_staff",
         sa_relationship_kwargs={
-            "primaryjoin":"and_(StoreStaff.store_id==Store.id, StoreStaff.organisation_id==Store.organisation_id)"
+            "primaryjoin":"and_("
+                          "StoreStaff.store_id==Store.id, "
+                          "StoreStaff.organisation_id==Store.organisation_id"
+                          ")"
         }
     )
 
@@ -94,3 +104,6 @@ class StoreStaff(StaffAssignmentMixin, SQLModel, table=True):
             ["store.id", "store.organisation_id"]
         )
     )
+
+    def __repr__(self):
+        return f"StoreStaff<({self.staff_id} | {self.status})>"

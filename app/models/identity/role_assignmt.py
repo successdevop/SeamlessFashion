@@ -80,3 +80,6 @@ class RoleAssignment(UUIDPrimaryKeyMixin, SQLModel, table=True):
         Index("idx_role_assign_valid", "valid_from", "valid_until"),
         Index("idx_role_role", "role_id")
     )
+
+    def __repr__(self):
+        return f"RoleAssignment<({self.id} | {self.role_id} | {self.is_active})>"
