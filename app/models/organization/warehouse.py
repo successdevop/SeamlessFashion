@@ -2,7 +2,7 @@ from decimal import Decimal
 from typing import TYPE_CHECKING
 from uuid import UUID
 
-from sqlalchemy import ForeignKeyConstraint, Index
+from sqlalchemy import ForeignKeyConstraint, Index, UniqueConstraint
 from sqlmodel import SQLModel, Field, Relationship
 
 from app.enums.org_enums import WarehouseStatusEnum
@@ -14,7 +14,7 @@ if TYPE_CHECKING:
 
 class Warehouse(UUIDPrimaryKeyMixin, SoftDeleteMixin, TimestampMixin, SQLModel, table=True):
     name: str
-    warehouse_code: str
+    warehouse_code: str = Field(index=True)
     max_storage_units: Decimal
     status: WarehouseStatusEnum
 
@@ -25,16 +25,17 @@ class Warehouse(UUIDPrimaryKeyMixin, SoftDeleteMixin, TimestampMixin, SQLModel, 
         back_populates="warehouses_created",
         sa_relationship_kwargs={
             "primaryjoin":"and_("
-                          "Warehouse.created_by==organisation_member.user_id, "
-                          "Warehouse.organisation_id==organisation_member.organisation_id"
+                          "Warehouse.created_by==OrganisationMember.user_id, "
+                          "Warehouse.organisation_id==OrganisationMember.organisation_id"
                           ")"
         }
     )
     manager: "OrganisationMember" = Relationship(
+        back_populates="warehouses_managed",
         sa_relationship_kwargs={
             "primaryjoin":"and_("
-                          "Warehouse.manager_id==organisation_member.user_id, "
-                          "Warehouse.organisation_id==organisation_member.organisation_id"
+                          "Warehouse.manager_id==OrganisationMember.user_id, "
+                          "Warehouse.organisation_id==OrganisationMember.organisation_id"
                           ")"
         }
     )
@@ -52,6 +53,8 @@ class Warehouse(UUIDPrimaryKeyMixin, SoftDeleteMixin, TimestampMixin, SQLModel, 
     organisation: Organisation = Relationship(back_populates="warehouses")
 
     __table_args__ = (
+        UniqueConstraint("organisation_id", "warehouse_code", "name"),
+
         ForeignKeyConstraint(
             ["created_by", "organisation_id"],
             ["organisation_member.user_id", "organisation_member.organisation_id"],
@@ -101,7 +104,9 @@ class WarehouseStaff(StaffAssignmentMixin, SQLModel, table=True):
         ForeignKeyConstraint(
             ["warehouse_id", "organisation_id"],
             ["warehouse.id", "warehouse.organisation_id"]
-        )
+        ),
+
+        Index("idx_warehouse_staff","staff_id", "organisation_id")
     )
 
     def __repr__(self):

@@ -78,7 +78,8 @@ class RoleAssignment(UUIDPrimaryKeyMixin, SQLModel, table=True):
 
         Index("idx_role_assign_active", "user_id", "is_active"),
         Index("idx_role_assign_valid", "valid_from", "valid_until"),
-        Index("idx_role_role", "role_id")
+        Index("idx_role_role", "role_id"),
+        Index("idx_role_org", "organisation_id")
     )
 
     def __repr__(self):

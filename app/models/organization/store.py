@@ -1,7 +1,7 @@
 from typing import TYPE_CHECKING
 from uuid import UUID
 
-from sqlalchemy import ForeignKeyConstraint, Index
+from sqlalchemy import ForeignKeyConstraint, Index, UniqueConstraint
 from sqlmodel import SQLModel, Field, Relationship
 
 from app.enums.currency import CurrencyEnum
@@ -25,16 +25,17 @@ class Store(UUIDPrimaryKeyMixin, SoftDeleteMixin, TimestampMixin, SQLModel, tabl
         back_populates="stores_created",
         sa_relationship_kwargs={
             "primaryjoin":"and_("
-                          "Store.created_by==organisation_member.user_id, "
-                          "Store.organisation_id==organisation_member.organisation_id"
+                          "Store.created_by==OrganisationMember.user_id, "
+                          "Store.organisation_id==OrganisationMember.organisation_id"
                           ")"
         }
     )
     manager: "OrganisationMember" = Relationship(
+        back_populates="stores_managed",
         sa_relationship_kwargs={
             "primaryjoin":"and_("
-                          "Store.manager_id==organisation_member.user_id, "
-                          "Store.organisation_id==organisation_member.organisation_id"
+                          "Store.manager_id==OrganisationMember.user_id, "
+                          "Store.organisation_id==OrganisationMember.organisation_id"
                           ")"
         }
     )
@@ -52,6 +53,8 @@ class Store(UUIDPrimaryKeyMixin, SoftDeleteMixin, TimestampMixin, SQLModel, tabl
     organisation: Organisation = Relationship(back_populates="stores")
 
     __table_args__ = (
+        UniqueConstraint("organisation_id", "name"),
+
         ForeignKeyConstraint(
             ["created_by", "organisation_id"],
             ["organisation_member.user_id", "organisation_member.organisation_id"],
@@ -102,7 +105,13 @@ class StoreStaff(StaffAssignmentMixin, SQLModel, table=True):
         ForeignKeyConstraint(
             ["store_id", "organisation_id"],
             ["store.id", "store.organisation_id"]
-        )
+        ),
+        ForeignKeyConstraint(
+            ["assigned_by", "organisation_id"],
+            ["organisation_member.user_id", "organisation_member.organisation_id"]
+        ),
+
+        Index("idx_store_staff","staff_id", "organisation_id")
     )
 
     def __repr__(self):
