@@ -2,24 +2,26 @@ from datetime import datetime
 from typing import TYPE_CHECKING
 from uuid import UUID
 
-from sqlalchemy import Column, DateTime, func, ForeignKeyConstraint, Index, UniqueConstraint
+from sqlalchemy import Column, DateTime, func, ForeignKeyConstraint, Index
 from sqlmodel import SQLModel, Field, Relationship
+
+from app.models.base_models.base_models import UUIDPrimaryKeyMixin
 
 if TYPE_CHECKING:
     from app.models import Role, User, OrganisationMember
 
 
-class RoleAssignment(SQLModel, table=True):
-    user_id: UUID = Field(primary_key=True)
+class RoleAssignment(UUIDPrimaryKeyMixin, SQLModel, table=True):
+    user_id: UUID = Field(foreign_key="user.id", index=True)
 
     role_id: UUID = Field(
         foreign_key="role.id",
-        primary_key=True
+        index=True
     )
 
     # For organization scoped roles (a default organization would be created for the platform to prevent null values
     # in organization id for platform role assignment)
-    organisation_id: UUID = Field(primary_key=True)
+    organisation_id: UUID = Field(foreign_key="organisation.id", index=True)
 
     # Audit fields
     assigned_by: UUID = Field(foreign_key="user.id")
@@ -43,7 +45,7 @@ class RoleAssignment(SQLModel, table=True):
     valid_until: datetime | None = None
 
     # Status
-    is_active: bool = True
+    is_active: bool = Field(default=True, index=True)
 
     # Relationships
     membership: "OrganisationMember" = Relationship(
@@ -62,8 +64,6 @@ class RoleAssignment(SQLModel, table=True):
     )
 
     __table_args__ = (
-        UniqueConstraint("user_id", "role_id", "organisation_id", name="uq_role_assignment"),
-
         ForeignKeyConstraint(
             [
                 "user_id", "organisation_id"
@@ -81,11 +81,11 @@ class RoleAssignment(SQLModel, table=True):
             name="fk_assigner_role_assignment_membership"
         ),
 
-        Index("idx_role_assign_active", "user_id", "is_active"),
-        Index("idx_role_assign_valid", "valid_from", "valid_until"),
-        Index("idx_role_role", "role_id"),
-        Index("idx_role_org", "organisation_id")
+        Index("idx_role_assign_user_current", "user_id", "is_active"),
+        Index("idx_role_assign_dates", "valid_from", "valid_until"),
+        Index("idx_role_assign_user_role", "user_id", "role_id"),
+        Index("idx_role_assign_active_period", "is_active", "valid_from", "valid_until"),
     )
 
     def __repr__(self):
-        return f"<RoleAssignment(user_id={self.user_id} | role_id={self.role_id} | is_active={self.is_active})>"
+        return f"<RoleAssignment(id={self.id} | role_id={self.role_id} | is_active={self.is_active})>"

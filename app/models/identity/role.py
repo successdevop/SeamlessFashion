@@ -17,7 +17,7 @@ class RoleScope(str, Enum):
 class Role(UUIDPrimaryKeyMixin, TimestampMixin, SQLModel, table=True):
     name: str = Field(index=True)
     description: str | None = None
-    scope: RoleScope
+    scope: RoleScope = Field(index=True)
 
     level: int = 1  # Hierarchy level (1 = highest)
     

@@ -24,7 +24,7 @@ class UserAddress(SoftDeleteMixin, SQLModel, table=True):
         primary_key=True
     )
 
-    address_type: AddressTypeEnum
+    address_type: AddressTypeEnum = Field(index=True)
     is_default_address: bool = False
 
     # linkTable for User-Address Relationship
@@ -72,7 +72,8 @@ class UserSecurityProfile(UUIDPrimaryKeyMixin, TimestampMixin, SQLModel, table=T
         sa_column=Column(
             DateTime(timezone=True),
             server_default=func.now(),
-            nullable=False
+            nullable=False,
+            index=True
         )
     )
 

@@ -83,9 +83,9 @@ class OrganisationMember(SQLModel, table=True):
 
 
 class Organisation(UUIDPrimaryKeyMixin, SoftDeleteMixin, TimestampMixin, SQLModel, table=True):
-    organisation_name: str
+    organisation_name: str = Field(unique=True, index=True)
     logo_url: str | None = None
-    business_email: str
+    business_email: str = Field(index=True, unique=True)
     tax_number: str | None = None
     business_registration_number: str | None = None
     business_phone_no: str
