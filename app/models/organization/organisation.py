@@ -79,7 +79,7 @@ class OrganisationMember(SQLModel, table=True):
     )
 
     def __repr__(self):
-        return f"OrganisationMember<({self.status} | {self.joined_date})>"
+        return f"<OrganisationMember(status={self.status} | joined_date={self.joined_date})>"
 
 
 class Organisation(UUIDPrimaryKeyMixin, SoftDeleteMixin, TimestampMixin, SQLModel, table=True):
@@ -97,7 +97,7 @@ class Organisation(UUIDPrimaryKeyMixin, SoftDeleteMixin, TimestampMixin, SQLMode
     subscription_status: SubscriptionStatusEnum
 
     # organisation-address relationship
-    address_id: UUID | None = Field(foreign_key="address.id")
+    address_id: UUID = Field(foreign_key="address.id")
     address: "Address" = Relationship(back_populates="organisation")
 
     # an organization can have more than one or many employees/organization member (Organisation-User relationship)
@@ -114,4 +114,4 @@ class Organisation(UUIDPrimaryKeyMixin, SoftDeleteMixin, TimestampMixin, SQLMode
     )
 
     def __repr__(self):
-        return f"Organisation<({self.id} | {self.organisation_name})>"
+        return f"<Organisation(id={self.id} | name={self.organisation_name})>"

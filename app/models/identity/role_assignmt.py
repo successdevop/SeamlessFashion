@@ -5,22 +5,21 @@ from uuid import UUID
 from sqlalchemy import Column, DateTime, func, ForeignKeyConstraint, Index, UniqueConstraint
 from sqlmodel import SQLModel, Field, Relationship
 
-from app.models.base_models.base_models import UUIDPrimaryKeyMixin
-
 if TYPE_CHECKING:
     from app.models import Role, User, OrganisationMember
 
 
-class RoleAssignment(UUIDPrimaryKeyMixin, SQLModel, table=True):
-    user_id: UUID
+class RoleAssignment(SQLModel, table=True):
+    user_id: UUID = Field(primary_key=True)
 
     role_id: UUID = Field(
         foreign_key="role.id",
+        primary_key=True
     )
 
     # For organization scoped roles (a default organization would be created for the platform to prevent null values
     # in organization id for platform role assignment)
-    organisation_id: UUID
+    organisation_id: UUID = Field(primary_key=True)
 
     # Audit fields
     assigned_by: UUID = Field(foreign_key="user.id")
@@ -72,8 +71,14 @@ class RoleAssignment(UUIDPrimaryKeyMixin, SQLModel, table=True):
             [
                 "organisation_member.user_id", "organisation_member.organisation_id"
             ],
-            name="fk_role_assignment_membership",
+            name="fk_user_role_assignment_membership",
             ondelete="CASCADE"
+        ),
+
+        ForeignKeyConstraint(
+            ["assigned_by", "organisation_id"],
+            ["organisation_member.user_id", "organisation_member.organisation_id"],
+            name="fk_assigner_role_assignment_membership"
         ),
 
         Index("idx_role_assign_active", "user_id", "is_active"),
@@ -83,4 +88,4 @@ class RoleAssignment(UUIDPrimaryKeyMixin, SQLModel, table=True):
     )
 
     def __repr__(self):
-        return f"RoleAssignment<({self.id} | {self.role_id} | {self.is_active})>"
+        return f"<RoleAssignment(user_id={self.user_id} | role_id={self.role_id} | is_active={self.is_active})>"

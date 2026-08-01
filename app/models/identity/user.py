@@ -13,7 +13,7 @@ if TYPE_CHECKING:
     from app.models import Address, IdentityVerification, OrganisationMember, RoleAssignment
 
 
-class UserAddress(SQLModel, table=True):
+class UserAddress(SoftDeleteMixin, SQLModel, table=True):
     user_id: UUID = Field(
         foreign_key="user.id",
         primary_key=True
@@ -32,7 +32,7 @@ class UserAddress(SQLModel, table=True):
     address: "Address" = Relationship(back_populates="users")
 
     def __repr__(self):
-        return f"<UserAddress<({self.address_type} | {self.is_default_address} | {self.user_id})>"
+        return f"<UserAddress(address_type={self.address_type} | default_address={self.is_default_address} | user_id={self.user_id})>"
 
 
 class User(UUIDPrimaryKeyMixin, UserInfoMixin, TimestampMixin, SoftDeleteMixin, SQLModel, table=True):
@@ -64,7 +64,7 @@ class User(UUIDPrimaryKeyMixin, UserInfoMixin, TimestampMixin, SoftDeleteMixin, 
     )
 
     def __repr__(self):
-        return f"User<({self.id} | {self.username})>"
+        return f"<User(id={self.id} | username={self.username})>"
 
 
 class UserSecurityProfile(UUIDPrimaryKeyMixin, TimestampMixin, SQLModel, table=True):
@@ -87,7 +87,7 @@ class UserSecurityProfile(UUIDPrimaryKeyMixin, TimestampMixin, SQLModel, table=T
     user: User = Relationship(back_populates="login_security")
 
     def __repr__(self):
-        return f"UserSecurityProfile<({self.id} | {self.last_login})>"
+        return f"<UserSecurityProfile(id={self.id} | last_login={self.last_login})>"
 
 
 class LoginEventInfo(UUIDPrimaryKeyMixin, SQLModel, table=True):
@@ -120,4 +120,4 @@ class LoginEventInfo(UUIDPrimaryKeyMixin, SQLModel, table=True):
     )
 
     def __repr__(self):
-        return f"LoginEventInfo<({self.id} | {self.occurred_at})>"
+        return f"<LoginEventInfo(id={self.id} | occurred_at={self.occurred_at})>"

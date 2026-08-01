@@ -35,4 +35,4 @@ class RolePermission(TimestampMixin, SQLModel, table=True):
     )
 
     def __repr__(self):
-        return f"RolePermission<({self.role_id} | {self.permission_id} | {self.assigned_by})>"
+        return f"<RolePermission(role_id={self.role_id} | permission_id{self.permission_id} | assigned_by_id{self.assigned_by})>"

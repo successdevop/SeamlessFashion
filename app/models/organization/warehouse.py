@@ -45,7 +45,7 @@ class Warehouse(UUIDPrimaryKeyMixin, SoftDeleteMixin, TimestampMixin, SQLModel, 
     )
 
     # warehouse-address relationship
-    address_id: UUID | None = Field(foreign_key="address.id")
+    address_id: UUID = Field(foreign_key="address.id")
     address: "Address" = Relationship(back_populates="warehouse")
 
     # warehouse-organisation relationship
@@ -53,7 +53,7 @@ class Warehouse(UUIDPrimaryKeyMixin, SoftDeleteMixin, TimestampMixin, SQLModel, 
     organisation: Organisation = Relationship(back_populates="warehouses")
 
     __table_args__ = (
-        UniqueConstraint("organisation_id", "warehouse_code", "name"),
+        UniqueConstraint("organisation_id", "warehouse_code"),
 
         ForeignKeyConstraint(
             ["created_by", "organisation_id"],
@@ -69,7 +69,7 @@ class Warehouse(UUIDPrimaryKeyMixin, SoftDeleteMixin, TimestampMixin, SQLModel, 
     )
 
     def __repr__(self):
-        return f"Warehouse<({self.id} | {self.name})>"
+        return f"<Warehouse(id={self.id} | name={self.name})>"
 
 
 class WarehouseStaff(StaffAssignmentMixin, SQLModel, table=True):
@@ -110,4 +110,4 @@ class WarehouseStaff(StaffAssignmentMixin, SQLModel, table=True):
     )
 
     def __repr__(self):
-        return f"WarehouseStaff<({self.staff_id} | {self.status})>"
+        return f"<WarehouseStaff(staff_id={self.staff_id} | status={self.status})>"

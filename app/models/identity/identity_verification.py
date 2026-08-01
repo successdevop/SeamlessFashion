@@ -39,7 +39,7 @@ class IdentityVerification(UUIDPrimaryKeyMixin, TimestampMixin, SoftDeleteMixin,
     )
 
     def __repr__(self):
-        return f"IdentityVerification<({self.id} | {self.submitted_at} | {self.verification_status})>"
+        return f"<IdentityVerification(id={self.id} | submitted_at={self.submitted_at} | status={self.verification_status})>"
 
 
 class IdentityDocument(UUIDPrimaryKeyMixin, SoftDeleteMixin, SQLModel, table=True):
@@ -55,4 +55,4 @@ class IdentityDocument(UUIDPrimaryKeyMixin, SoftDeleteMixin, SQLModel, table=Tru
     verification: IdentityVerification = Relationship(back_populates="documents")
 
     def __repr__(self):
-        return f"IdentityDocument<({self.id} | {self.document_type})>"
+        return f"<IdentityDocument(id={self.id} | doc_type={self.document_type})>"

@@ -31,4 +31,4 @@ class Role(UUIDPrimaryKeyMixin, TimestampMixin, SQLModel, table=True):
     role_assignments: list["RoleAssignment"] = Relationship(back_populates="role", sa_relationship_kwargs={"lazy":"selectin"})
 
     def __repr__(self):
-        return f"Role<({self.id} | {self.name} | {self.scope})>"
+        return f"<Role(id={self.id} | name={self.name} | scope={self.scope})>"

@@ -45,7 +45,7 @@ class Store(UUIDPrimaryKeyMixin, SoftDeleteMixin, TimestampMixin, SQLModel, tabl
     )
 
     # store-address relationship
-    address_id: UUID | None = Field(foreign_key="address.id")
+    address_id: UUID = Field(foreign_key="address.id")
     address: "Address" = Relationship(back_populates="store")
 
     # store-organisation relationship
@@ -69,7 +69,7 @@ class Store(UUIDPrimaryKeyMixin, SoftDeleteMixin, TimestampMixin, SQLModel, tabl
     )
 
     def __repr__(self):
-        return f"Store<({self.id} | {self.name})>"
+        return f"<Store(id={self.id} | name={self.name})>"
 
 
 class StoreStaff(StaffAssignmentMixin, SQLModel, table=True):
@@ -115,4 +115,4 @@ class StoreStaff(StaffAssignmentMixin, SQLModel, table=True):
     )
 
     def __repr__(self):
-        return f"StoreStaff<({self.staff_id} | {self.status})>"
+        return f"<StoreStaff(staff_id={self.staff_id} | status={self.status})>"

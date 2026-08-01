@@ -37,4 +37,4 @@ class Address(UUIDPrimaryKeyMixin, SoftDeleteMixin, TimestampMixin, SQLModel, ta
     )
 
     def __repr__(self):
-        return f"Address<({self.id} | {self.street}) | {self.country}>"
+        return f"<Address(id={self.id} | street={self.street}) | country={self.country})>"
