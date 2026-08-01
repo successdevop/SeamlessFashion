@@ -105,8 +105,13 @@ class WarehouseStaff(StaffAssignmentMixin, SQLModel, table=True):
             ["warehouse_id", "organisation_id"],
             ["warehouse.id", "warehouse.organisation_id"]
         ),
+        ForeignKeyConstraint(
+            ["assigned_by", "organisation_id"],
+            ["organisation_member.user_id", "organisation_member.organisation_id"]
+        ),
 
-        Index("idx_warehouse_staff","staff_id", "organisation_id")
+        Index("idx_warehouse_staff","staff_id", "organisation_id"),
+        Index("idx_warehouse_staff_warehouse", "warehouse_id", "organisation_id")
     )
 
     def __repr__(self):

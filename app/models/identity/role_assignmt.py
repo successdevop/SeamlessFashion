@@ -2,7 +2,7 @@ from datetime import datetime
 from typing import TYPE_CHECKING
 from uuid import UUID
 
-from sqlalchemy import Column, DateTime, func, ForeignKeyConstraint, Index
+from sqlalchemy import Column, DateTime, func, ForeignKeyConstraint, Index, CheckConstraint, UniqueConstraint
 from sqlmodel import SQLModel, Field, Relationship
 
 from app.models.base_models.base_models import UUIDPrimaryKeyMixin
@@ -64,6 +64,11 @@ class RoleAssignment(UUIDPrimaryKeyMixin, SQLModel, table=True):
     )
 
     __table_args__ = (
+        CheckConstraint(
+            "valid_until IS NULL OR valid_until > valid_from",
+            name="ck_role_assignment_valid_period"
+        ),
+
         ForeignKeyConstraint(
             [
                 "user_id", "organisation_id"
@@ -72,7 +77,6 @@ class RoleAssignment(UUIDPrimaryKeyMixin, SQLModel, table=True):
                 "organisation_member.user_id", "organisation_member.organisation_id"
             ],
             name="fk_user_role_assignment_membership",
-            ondelete="CASCADE"
         ),
 
         ForeignKeyConstraint(

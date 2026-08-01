@@ -19,7 +19,7 @@ class Role(UUIDPrimaryKeyMixin, TimestampMixin, SQLModel, table=True):
     description: str | None = None
     scope: RoleScope = Field(index=True)
 
-    level: int = 1  # Hierarchy level (1 = highest)
+    hierarchy_level: int = 1  # Hierarchy level (1 = highest)
     
     is_system_role: bool = False
     is_assignable_role: bool = True

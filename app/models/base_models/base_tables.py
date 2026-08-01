@@ -22,11 +22,11 @@ class Address(UUIDPrimaryKeyMixin, SoftDeleteMixin, TimestampMixin, SQLModel, ta
     # an address can have multiple users(User-Address relationship)
     users: list["UserAddress"] = Relationship(back_populates="address", sa_relationship_kwargs={"lazy":"selectin"})
     # organization address(Organisation-Address relationship)
-    organisation: "Organisation | None" = Relationship(back_populates="address")
+    organisation: "Organisation" = Relationship(back_populates="address")
     # organization_store address(Store-Address relationship)
-    store: "Store | None" = Relationship(back_populates="address")
+    store: "Store" = Relationship(back_populates="address")
     # organization_warehouse address(Warehouse-Address relationship)
-    warehouse: "Warehouse | None" = Relationship(back_populates="address")
+    warehouse: "Warehouse" = Relationship(back_populates="address")
 
     __table_args__ = (
         CheckConstraint("latitude >= -90 AND latitude <= 90", name="check_latitude"),
@@ -37,4 +37,4 @@ class Address(UUIDPrimaryKeyMixin, SoftDeleteMixin, TimestampMixin, SQLModel, ta
     )
 
     def __repr__(self):
-        return f"<Address(id={self.id} | street={self.street}) | country={self.country})>"
+        return f"<Address(id={self.id} | street={self.street} | country={self.country})>"

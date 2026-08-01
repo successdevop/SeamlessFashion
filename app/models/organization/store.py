@@ -14,6 +14,7 @@ if TYPE_CHECKING:
 
 class Store(UUIDPrimaryKeyMixin, SoftDeleteMixin, TimestampMixin, SQLModel, table=True):
     name: str
+    store_code: str = Field(index=True)
     currency: CurrencyEnum
     timezone: str
     status: StoreStatusEnum
@@ -53,7 +54,7 @@ class Store(UUIDPrimaryKeyMixin, SoftDeleteMixin, TimestampMixin, SQLModel, tabl
     organisation: Organisation = Relationship(back_populates="stores")
 
     __table_args__ = (
-        UniqueConstraint("organisation_id", "name"),
+        UniqueConstraint("organisation_id", "store_code"),
 
         ForeignKeyConstraint(
             ["created_by", "organisation_id"],
@@ -66,6 +67,7 @@ class Store(UUIDPrimaryKeyMixin, SoftDeleteMixin, TimestampMixin, SQLModel, tabl
             name="fk_store_manager_membership"
         ),
         Index("idx_store_org", "organisation_id")
+
     )
 
     def __repr__(self):
@@ -111,7 +113,8 @@ class StoreStaff(StaffAssignmentMixin, SQLModel, table=True):
             ["organisation_member.user_id", "organisation_member.organisation_id"]
         ),
 
-        Index("idx_store_staff","staff_id", "organisation_id")
+        Index("idx_store_staff","staff_id", "organisation_id"),
+        Index("idx_store_staff_store", "store_id", "organisation_id"),
     )
 
     def __repr__(self):
