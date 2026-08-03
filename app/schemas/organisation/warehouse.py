@@ -1,12 +1,15 @@
 from datetime import datetime
 from decimal import Decimal
+from typing import TYPE_CHECKING
 from uuid import UUID
 
 from pydantic import BaseModel, Field
 
 from app.enums.org_enums import StaffAssignmentStatus, WarehouseStatusEnum
-from app.schemas.base_or_shared.address import AddressResponse
-from app.schemas.organisation.organisation import OrganisationResponse, OrganisationMemberBase
+
+if TYPE_CHECKING:
+    from app.schemas import OrganisationMemberBase, AddressResponse, OrganisationResponse
+
 
 
 class WarehouseStaffBase(BaseModel):
@@ -40,7 +43,7 @@ class WarehouseUpdate(BaseModel):
     warehouse_code: str
     max_storage_units: Decimal
     status: WarehouseStatusEnum
-    created_by: UUID
+    updated_by: UUID
     manager_id: UUID | None = None
     address_id: UUID | None = None
 
@@ -50,14 +53,14 @@ class WarehouseResponse(WarehouseBase):
 
 
 class AdminWarehouseDetails(WarehouseResponse):
-    created_by_user: OrganisationMemberBase
-    manager: OrganisationMemberBase
+    created_by_user: "OrganisationMemberBase"
+    manager: "OrganisationMemberBase"
     warehouse_staff: list[WarehouseStaffBase] = Field(default_factory=list)
-    address: AddressResponse
-    organisation: OrganisationResponse
+    address: "AddressResponse"
+    organisation: "OrganisationResponse"
 
 
 class AdminWarehouseStaffDetails(WarehouseStaffBase):
     warehouse: WarehouseResponse
-    staff: OrganisationMemberBase
-    assigned_by_employee: OrganisationMemberBase
+    staff: "OrganisationMemberBase"
+    assigned_by_employee: "OrganisationMemberBase"

@@ -21,6 +21,8 @@ class Warehouse(UUIDPrimaryKeyMixin, SoftDeleteMixin, TimestampMixin, SQLModel, 
     created_by: UUID = Field(index=True)
     manager_id: UUID = Field(index=True)
 
+    updated_by: UUID | None = None
+
     created_by_user: "OrganisationMember" = Relationship(
         back_populates="warehouses_created",
         sa_relationship_kwargs={
@@ -64,6 +66,11 @@ class Warehouse(UUIDPrimaryKeyMixin, SoftDeleteMixin, TimestampMixin, SQLModel, 
             ["manager_id", "organisation_id"],
             ["organisation_member.user_id", "organisation_member.organisation_id"],
             name="fk_warehouse_manager_membership"
+        ),
+        ForeignKeyConstraint(
+            ["updated_by", "organisation_id"],
+            ["organisation_member.user_id", "organisation_member.organisation_id"],
+            name="fk_store_updated_by"
         ),
         Index("idx_warehouse_org", "organisation_id")
     )

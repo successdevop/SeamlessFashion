@@ -1,11 +1,13 @@
 from datetime import datetime
+from typing import TYPE_CHECKING
 from uuid import UUID
 
 from pydantic import BaseModel, Field
 
 from app.enums.org_enums import RoleScope
-from app.schemas.identity.user import UserResponse
-from app.schemas.organisation.organisation import OrganisationMemberBase
+
+if TYPE_CHECKING:
+    from app.schemas import OrganisationMemberBase, UserResponse
 
 
 class PermissionBase(BaseModel):
@@ -50,7 +52,7 @@ class RolePermissionDetails(BaseModel):
 
     role: RoleResponse
     permission: PermissionResponse
-    assigner: OrganisationMemberBase
+    assigner: "OrganisationMemberBase"
 
 
 class PermissionDetails(BaseModel):
@@ -76,12 +78,12 @@ class RoleAssignmentResponse(RoleAssignmentBase):
 
 
 class RoleAssignmentDetails(RoleAssignmentResponse):
-    membership: OrganisationMemberBase
+    membership: "OrganisationMemberBase"
     role: RoleResponse
-    user: UserResponse
-    assigned_by_user: UserResponse
+    user: "UserResponse"
+    assigned_by_user: "UserResponse"
 
 
-class RoleDetails:
+class RoleDetails(BaseModel):
     permissions: list[RolePermissionDetails] = Field(default_factory=list)
     role_assignments: list[RoleAssignmentResponse] = Field(default_factory=list)

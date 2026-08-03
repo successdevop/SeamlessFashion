@@ -2,7 +2,7 @@ from datetime import datetime
 from typing import TYPE_CHECKING
 from uuid import UUID
 
-from sqlalchemy import Column, DateTime, func, ForeignKeyConstraint, Index, CheckConstraint, UniqueConstraint
+from sqlalchemy import Column, DateTime, func, ForeignKeyConstraint, Index, CheckConstraint
 from sqlmodel import SQLModel, Field, Relationship
 
 from app.models.base_models.base_models import UUIDPrimaryKeyMixin

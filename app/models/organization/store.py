@@ -22,6 +22,8 @@ class Store(UUIDPrimaryKeyMixin, SoftDeleteMixin, TimestampMixin, SQLModel, tabl
     created_by: UUID = Field(index=True)
     manager_id: UUID | None = Field(default=None, index=True)
 
+    updated_by: UUID | None = None
+
     created_by_user: "OrganisationMember" = Relationship(
         back_populates="stores_created",
         sa_relationship_kwargs={
@@ -66,6 +68,11 @@ class Store(UUIDPrimaryKeyMixin, SoftDeleteMixin, TimestampMixin, SQLModel, tabl
             ["manager_id", "organisation_id"],
             ["organisation_member.user_id", "organisation_member.organisation_id"],
             name="fk_store_manager_membership"
+        ),
+        ForeignKeyConstraint(
+            ["updated_by", "organisation_id"],
+            ["organisation_member.user_id", "organisation_member.organisation_id"],
+            name="fk_store_updated_by"
         ),
         Index("idx_store_org", "organisation_id")
 

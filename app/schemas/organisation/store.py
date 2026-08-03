@@ -1,12 +1,14 @@
 from datetime import datetime
+from typing import TYPE_CHECKING
 from uuid import UUID
 
 from pydantic import BaseModel, Field
 
 from app.enums.currency import CurrencyEnum
 from app.enums.org_enums import StoreStatusEnum, StaffAssignmentStatus
-from app.schemas.base_or_shared.address import AddressResponse
-from app.schemas.organisation.organisation import OrganisationResponse, OrganisationMemberBase
+
+if TYPE_CHECKING:
+    from app.schemas import OrganisationMemberBase, AddressResponse, OrganisationResponse
 
 
 class StoreStaffBase(BaseModel):
@@ -54,14 +56,14 @@ class StoreResponse(StoreBase):
 
 
 class AdminStoreDetails(StoreBase):
-    created_by_user: OrganisationMemberBase
-    manager: OrganisationMemberBase
+    created_by_user: "OrganisationMemberBase"
+    manager: "OrganisationMemberBase"
     store_staff: list[StoreStaffBase] = Field(default_factory=list)
-    address: AddressResponse
-    organisation: OrganisationResponse
+    address: "AddressResponse"
+    organisation: "OrganisationResponse"
 
 
 class AdminStoreStaffDetails(StoreStaffBase):
     store: list[StoreResponse] = Field(default_factory=list)
-    staff: OrganisationMemberBase
-    assigned_by_employee: OrganisationMemberBase
+    staff: "OrganisationMemberBase"
+    assigned_by_employee: "OrganisationMemberBase"
