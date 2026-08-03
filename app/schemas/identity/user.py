@@ -5,6 +5,8 @@ from pydantic import BaseModel, Field, EmailStr
 
 from app.enums.user_enums import GenderEnum, AddressTypeEnum, VerificationStatusEnum, DocumentTypeEnum
 from app.schemas.base_or_shared.address import AddressResponse
+from app.schemas.base_or_shared.role_assignment import RoleAssignmentResponse
+from app.schemas.organisation.organisation import OrganisationMemberBase
 
 
 class VerificationDocument(BaseModel):
@@ -122,3 +124,5 @@ class UserDetails(UserResponse):
     user_addresses: list[UserAddressResponse] = Field(default_factory=list)
     login_events: list[LoginEventResponse] = Field(default_factory=list)
     login_security: UserSecurityResponse
+    user_organisations: list[OrganisationMemberBase] = Field(default_factory=list)
+    role_assignments: list[RoleAssignmentResponse] = Field(default_factory=list)

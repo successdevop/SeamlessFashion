@@ -5,8 +5,10 @@ from pydantic import BaseModel, Field
 
 from app.enums.currency import CurrencyEnum
 from app.enums.org_enums import SubscriptionPlanEnum, SubscriptionStatusEnum, MembershipStatus
+from app.schemas.base_or_shared.role_assignment import RoleAssignmentResponse
 from app.schemas.identity.user import UserResponse
 from app.schemas.organisation.store import StoreResponse, StoreStaffBase
+from app.schemas.organisation.warehouse import WarehouseResponse, WarehouseStaffBase
 
 
 class OrganisationMemberBase(BaseModel):
@@ -47,30 +49,19 @@ class OrganisationResponse(OrganisationBase):
 class OrganisationDetails(OrganisationResponse):
     employees: list[OrganisationMemberBase] = Field(default_factory=list)
     stores: list[StoreResponse] = Field(default_factory=list)
-    warehouses: list["Warehouse"] = Field(default_factory=list)
+    warehouses: list[WarehouseResponse] = Field(default_factory=list)
 
 
 class AdminOrganisationMemberDetails(OrganisationMemberBase):
     user: UserResponse
-    role_assignments: list["RoleAssignment"] = Relationship(
-        back_populates="membership", sa_relationship_kwargs={"lazy":"selectin", "cascade":"all, delete-orphan"}
-    )
+    role_assignments: list[RoleAssignmentResponse] = Field(default_factory=list)
     stores_created: list[StoreResponse] = Field(default_factory=list)
 
     stores_managed: StoreResponse
 
     store_assignments: list[StoreStaffBase] = Field(default_factory=list)
 
-    warehouses_created: list["Warehouse"] = Relationship(
-        back_populates="created_by_user",
-        sa_relationship_kwargs={"foreign_keys":"[Warehouse.created_by]", "lazy":"selectin"}
-    )
+    warehouses_created: list[WarehouseResponse] = Field(default_factory=list)
+    warehouses_managed: list[WarehouseResponse] = Field(default_factory=list)
 
-    warehouses_managed: list["Warehouse"] = Relationship(
-        back_populates="manager",
-        sa_relationship_kwargs={"foreign_keys":"[Warehouse.manager_id]", "lazy":"selectin"})
-
-    warehouse_assignments: list["WarehouseStaff"] = Relationship(
-        back_populates="staff", sa_relationship_kwargs={"lazy":"selectin"}
-    )
-    pass
+    warehouse_assignments: list[WarehouseStaffBase] = Field(default_factory=list)

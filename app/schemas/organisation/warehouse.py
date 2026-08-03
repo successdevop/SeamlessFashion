@@ -1,67 +1,63 @@
-from pydantic import BaseModel
+from datetime import datetime
+from decimal import Decimal
+from uuid import UUID
+
+from pydantic import BaseModel, Field
+
+from app.enums.org_enums import StaffAssignmentStatus, WarehouseStatusEnum
+from app.schemas.base_or_shared.address import AddressResponse
+from app.schemas.organisation.organisation import OrganisationResponse, OrganisationMemberBase
 
 
 class WarehouseStaffBase(BaseModel):
-    staff_id: UUID = Field(primary_key=True)
-    organisation_id: UUID = Field(primary_key=True)
-    warehouse_id: UUID = Field(primary_key=True)
-
-    warehouse: Warehouse = Relationship(
-        back_populates="warehouse_staff",
-        sa_relationship_kwargs={
-            "primaryjoin":"and_("
-                          "WarehouseStaff.warehouse_id==Warehouse.id, "
-                          "WarehouseStaff.organisation_id==Warehouse.organisation_id"
-                          ")"
-        }
-    )
-
-    staff: "OrganisationMember" = Relationship(
-        back_populates="warehouse_assignments",
-        sa_relationship_kwargs={"foreign_keys":"[WarehouseStaff.staff_id, WarehouseStaff.organisation_id]"}
-    )
-
-    assigned_by_employee: "OrganisationMember" = Relationship(
-        sa_relationship_kwargs={"foreign_keys":"[WarehouseStaff.assigned_by, WarehouseStaff.organisation_id]"}
-    )
+    staff_id: UUID
+    organisation_id: UUID
+    warehouse_id: UUID
+    assigned_at: datetime
+    removed_at: datetime | None = None
+    assigned_by: UUID
+    status: StaffAssignmentStatus
 
 
 class WarehouseBase(BaseModel):
     name: str
-    warehouse_code: str = Field(index=True)
+    warehouse_code: str
     max_storage_units: Decimal
     status: WarehouseStatusEnum
+    created_by: UUID
+    manager_id: UUID | None = None
+    updated_by: UUID | None = None
+    address_id: UUID
+    organisation_id: UUID
 
-    created_by: UUID = Field(index=True)
-    manager_id: UUID = Field(index=True)
 
-    created_by_user: "OrganisationMember" = Relationship(
-        back_populates="warehouses_created",
-        sa_relationship_kwargs={
-            "primaryjoin":"and_("
-                          "Warehouse.created_by==OrganisationMember.user_id, "
-                          "Warehouse.organisation_id==OrganisationMember.organisation_id"
-                          ")"
-        }
-    )
-    manager: "OrganisationMember" = Relationship(
-        back_populates="warehouses_managed",
-        sa_relationship_kwargs={
-            "primaryjoin":"and_("
-                          "Warehouse.manager_id==OrganisationMember.user_id, "
-                          "Warehouse.organisation_id==OrganisationMember.organisation_id"
-                          ")"
-        }
-    )
+class WarehouseCreate(WarehouseBase):
+    pass
 
-    warehouse_staff: list["WarehouseStaff"] = Relationship(
-        back_populates="warehouse", sa_relationship_kwargs={"lazy":"selectin"}
-    )
 
-    # warehouse-address relationship
-    address_id: UUID = Field(foreign_key="address.id")
-    address: "Address" = Relationship(back_populates="warehouse")
+class WarehouseUpdate(BaseModel):
+    name: str
+    warehouse_code: str
+    max_storage_units: Decimal
+    status: WarehouseStatusEnum
+    created_by: UUID
+    manager_id: UUID | None = None
+    address_id: UUID | None = None
 
-    # warehouse-organisation relationship
-    organisation_id: UUID = Field(foreign_key="organisation.id")
-    organisation: Organisation = Relationship(back_populates="warehouses")
+
+class WarehouseResponse(WarehouseBase):
+    id: UUID
+
+
+class AdminWarehouseDetails(WarehouseResponse):
+    created_by_user: OrganisationMemberBase
+    manager: OrganisationMemberBase
+    warehouse_staff: list[WarehouseStaffBase] = Field(default_factory=list)
+    address: AddressResponse
+    organisation: OrganisationResponse
+
+
+class AdminWarehouseStaffDetails(WarehouseStaffBase):
+    warehouse: WarehouseResponse
+    staff: OrganisationMemberBase
+    assigned_by_employee: OrganisationMemberBase

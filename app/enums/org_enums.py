@@ -39,3 +39,8 @@ class MembershipStatus(str, Enum):
 class StaffAssignmentStatus(str, Enum):
     ACTIVE = "active"
     REMOVED = "removed"
+
+
+class RoleScope(str, Enum):
+    PLATFORM = "platform"
+    ORGANISATION = "organisation"

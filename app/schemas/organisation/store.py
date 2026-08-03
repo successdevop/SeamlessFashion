@@ -6,7 +6,7 @@ from pydantic import BaseModel, Field
 from app.enums.currency import CurrencyEnum
 from app.enums.org_enums import StoreStatusEnum, StaffAssignmentStatus
 from app.schemas.base_or_shared.address import AddressResponse
-from app.schemas.organisation.organisation import OrganisationResponse
+from app.schemas.organisation.organisation import OrganisationResponse, OrganisationMemberBase
 
 
 class StoreStaffBase(BaseModel):
@@ -29,6 +29,7 @@ class StoreBase(BaseModel):
 
     created_by: UUID
     manager_id: UUID | None = None
+    updated_by: UUID | None = None
     address_id: UUID
     organisation_id: UUID
 
@@ -43,8 +44,9 @@ class StoreUpdate(BaseModel):
     currency: CurrencyEnum | None = None
     timezone: str | None = None
     status: StoreStatusEnum | None = None
-    created_by: UUID
+    updated_by: UUID
     manager_id: UUID | None = None
+    address_id: UUID | None = None
 
 
 class StoreResponse(StoreBase):
@@ -52,8 +54,8 @@ class StoreResponse(StoreBase):
 
 
 class AdminStoreDetails(StoreBase):
-    created_by_user: "OrganisationMember"
-    manager: "OrganisationMember"
+    created_by_user: OrganisationMemberBase
+    manager: OrganisationMemberBase
     store_staff: list[StoreStaffBase] = Field(default_factory=list)
     address: AddressResponse
     organisation: OrganisationResponse
@@ -61,5 +63,5 @@ class AdminStoreDetails(StoreBase):
 
 class AdminStoreStaffDetails(StoreStaffBase):
     store: list[StoreResponse] = Field(default_factory=list)
-    staff: "OrganisationMember"
-    assigned_by_employee: "OrganisationMember"
+    staff: OrganisationMemberBase
+    assigned_by_employee: OrganisationMemberBase

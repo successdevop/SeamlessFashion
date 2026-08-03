@@ -1,17 +1,12 @@
-from enum import Enum
 from typing import TYPE_CHECKING
 
 from sqlmodel import SQLModel, Relationship, Field
 
+from app.enums.org_enums import RoleScope
 from app.models.base_models.base_models import TimestampMixin, UUIDPrimaryKeyMixin
 
 if TYPE_CHECKING:
     from app.models import RolePermission, RoleAssignment
-
-
-class RoleScope(str, Enum):
-    PLATFORM = "platform"
-    ORGANISATION = "organisation"
 
 
 class Role(UUIDPrimaryKeyMixin, TimestampMixin, SQLModel, table=True):
