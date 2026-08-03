@@ -37,7 +37,7 @@ class UserAddress(SoftDeleteMixin, SQLModel, table=True):
 
 class User(UUIDPrimaryKeyMixin, UserInfoMixin, TimestampMixin, SoftDeleteMixin, SQLModel, table=True):
 
-    identity_verification: IdentityVerification | None = Relationship(back_populates="user")
+    identity_verification: IdentityVerification = Relationship(back_populates="user")
 
     # a user can have more than one address(User-Address relationship)
     user_addresses: list[UserAddress] = Relationship(back_populates="user")

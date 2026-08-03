@@ -20,7 +20,7 @@ class Store(UUIDPrimaryKeyMixin, SoftDeleteMixin, TimestampMixin, SQLModel, tabl
     status: StoreStatusEnum
 
     created_by: UUID = Field(index=True)
-    manager_id: UUID = Field(index=True)
+    manager_id: UUID | None = Field(default=None, index=True)
 
     created_by_user: "OrganisationMember" = Relationship(
         back_populates="stores_created",
@@ -31,6 +31,7 @@ class Store(UUIDPrimaryKeyMixin, SoftDeleteMixin, TimestampMixin, SQLModel, tabl
                           ")"
         }
     )
+
     manager: "OrganisationMember" = Relationship(
         back_populates="stores_managed",
         sa_relationship_kwargs={

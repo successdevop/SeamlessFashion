@@ -7,16 +7,6 @@ from app.enums.user_enums import GenderEnum, AddressTypeEnum, VerificationStatus
 from app.schemas.base_or_shared.address import AddressResponse
 
 
-class VerificationSummary(BaseModel):
-    verification_status: VerificationStatusEnum
-    verified_at: datetime | None = None
-    submitted_at: datetime | None = None
-    verification_notes: str | None = None
-    rejection_reason: str | None = None
-    user_id: UUID
-    verified_by: UUID | None = None
-
-
 class VerificationDocument(BaseModel):
     verification_id: UUID
 
@@ -27,6 +17,25 @@ class VerificationDocument(BaseModel):
 
     file_size: int | None = None
     file_hash: str | None = None
+
+
+class VerificationBase(BaseModel):
+    verification_status: VerificationStatusEnum
+    submitted_at: datetime
+    user_id: UUID
+
+
+class VerificationCreate(VerificationBase):
+    documents: list[VerificationDocument] = Field(default_factory=list)
+
+
+class VerificationReview(VerificationCreate):
+    verification_id: UUID
+    verification_status: VerificationStatusEnum
+    verified_by: UUID
+    verification_notes: str | None = None
+    rejection_reason: str | None = None
+    verified_at: datetime
 
 
 class LoginEventData(BaseModel):
@@ -109,6 +118,7 @@ class UserAddressResponse(BaseModel):
 
 
 class UserDetails(UserResponse):
+    identity_verification: VerificationReview
     user_addresses: list[UserAddressResponse] = Field(default_factory=list)
     login_events: list[LoginEventResponse] = Field(default_factory=list)
     login_security: UserSecurityResponse
