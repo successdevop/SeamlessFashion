@@ -49,7 +49,7 @@ class RoleAssignment(UUIDPrimaryKeyMixin, SQLModel, table=True):
 
     # Relationships
     membership: "OrganisationMember" = Relationship(
-        back_populates="role_assignments",
+        back_populates="role_assignments"
     )
 
     role: "Role" = Relationship(back_populates="role_assignments")
@@ -77,6 +77,7 @@ class RoleAssignment(UUIDPrimaryKeyMixin, SQLModel, table=True):
                 "organisation_member.user_id", "organisation_member.organisation_id"
             ],
             name="fk_user_role_assignment_membership",
+            ondelete="CASCADE"
         ),
 
         ForeignKeyConstraint(
@@ -84,7 +85,7 @@ class RoleAssignment(UUIDPrimaryKeyMixin, SQLModel, table=True):
             ["organisation_member.user_id", "organisation_member.organisation_id"],
             name="fk_assigner_role_assignment_membership"
         ),
-
+        Index("idx_role_assignment_org_role","organisation_id", "role_id"),
         Index("idx_role_assign_user_current", "user_id", "is_active"),
         Index("idx_role_assign_dates", "valid_from", "valid_until"),
         Index("idx_role_assign_user_role", "user_id", "role_id"),

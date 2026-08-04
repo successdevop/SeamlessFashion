@@ -19,6 +19,9 @@ class Store(UUIDPrimaryKeyMixin, SoftDeleteMixin, TimestampMixin, SQLModel, tabl
     timezone: str
     status: StoreStatusEnum
 
+    phone_number: str | None = Field(default=None)
+    store_mail: str | None = Field(default=None, index=True)
+
     created_by: UUID = Field(index=True)
     manager_id: UUID | None = Field(default=None, index=True)
 
@@ -75,7 +78,6 @@ class Store(UUIDPrimaryKeyMixin, SoftDeleteMixin, TimestampMixin, SQLModel, tabl
             name="fk_store_updated_by"
         ),
         Index("idx_store_org", "organisation_id")
-
     )
 
     def __repr__(self):
@@ -107,6 +109,10 @@ class StoreStaff(StaffAssignmentMixin, SQLModel, table=True):
         sa_relationship_kwargs={"foreign_keys":"[StoreStaff.assigned_by, StoreStaff.organisation_id]"}
     )
 
+    removed_by_employee: "OrganisationMember" = Relationship(
+        sa_relationship_kwargs={"foreign_keys":"[StoreStaff.removed_by, StoreStaff.organisation_id]"}
+    )
+
     __table_args__ = (
         ForeignKeyConstraint(
             ["staff_id", "organisation_id"],
@@ -118,6 +124,10 @@ class StoreStaff(StaffAssignmentMixin, SQLModel, table=True):
         ),
         ForeignKeyConstraint(
             ["assigned_by", "organisation_id"],
+            ["organisation_member.user_id", "organisation_member.organisation_id"]
+        ),
+        ForeignKeyConstraint(
+            ["removed_by", "organisation_id"],
             ["organisation_member.user_id", "organisation_member.organisation_id"]
         ),
 

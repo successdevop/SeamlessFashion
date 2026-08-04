@@ -51,6 +51,10 @@ class IdentityDocument(UUIDPrimaryKeyMixin, SoftDeleteMixin, SQLModel, table=Tru
     file_size: int | None = None
     file_hash: str | None = None  # For integrity verification
 
+    mime_type: str | None = None
+    original_filename: str | None = None
+    expires_at: datetime | None = None
+
     verification_id: UUID = Field(foreign_key="identityverification.id", ondelete="CASCADE")
     verification: IdentityVerification = Relationship(back_populates="documents")
 

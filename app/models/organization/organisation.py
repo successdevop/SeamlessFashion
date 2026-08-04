@@ -26,7 +26,8 @@ class OrganisationMember(SQLModel, table=True):
         primary_key=True
     )
 
-    employee_email: str | None = None
+    employee_email: str | None = Field(default=None)
+    employee_number: str = Field(unique=True, index=True)
 
     # User's status within the organization
     status: MembershipStatus
@@ -85,10 +86,10 @@ class OrganisationMember(SQLModel, table=True):
 class Organisation(UUIDPrimaryKeyMixin, SoftDeleteMixin, TimestampMixin, SQLModel, table=True):
     organisation_name: str = Field(unique=True, index=True)
     logo_url: str | None = None
-    business_email: str = Field(index=True, unique=True)
+    email: str = Field(index=True, unique=True)
     tax_number: str | None = None
     business_registration_number: str | None = None
-    business_phone_no: str
+    phone_number: str
     currency: CurrencyEnum
     website: str | None = None
     industry: str | None = None

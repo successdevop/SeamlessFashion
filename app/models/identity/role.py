@@ -10,6 +10,7 @@ if TYPE_CHECKING:
 
 
 class Role(UUIDPrimaryKeyMixin, TimestampMixin, SQLModel, table=True):
+    display_name: str | None = Field(default=None, index=True)
     name: str = Field(index=True)
     description: str | None = None
     scope: RoleScope = Field(index=True)

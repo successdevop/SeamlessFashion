@@ -27,7 +27,6 @@ class UserInfoMixin(SQLModel):
     is_active: bool = Field(default=False, index=True)
     email_verified: bool = False
     phone_verified: bool = False
-    identity_verified: bool = False
     password_hash: str
 
 
@@ -37,6 +36,7 @@ class StaffAssignmentMixin(SQLModel):
     )
     removed_at: datetime | None = None
     assigned_by: UUID
+    removed_by: UUID | None = None
     status: StaffAssignmentStatus
 
 
@@ -56,4 +56,12 @@ class TimestampMixin(SQLModel):
         )
     )
 
-    updated_at: datetime | None = None
+    updated_at: datetime | None = Field(
+        default=None,
+        sa_column=Column(
+            DateTime(timezone=True),
+            onupdate=func.now(),
+            nullable=False,
+            index=True
+        )
+    )

@@ -18,6 +18,9 @@ class Warehouse(UUIDPrimaryKeyMixin, SoftDeleteMixin, TimestampMixin, SQLModel, 
     max_storage_units: Decimal
     status: WarehouseStatusEnum
 
+    phone_number: str | None = Field(default=None)
+    store_mail: str | None = Field(default=None, index=True)
+
     created_by: UUID = Field(index=True)
     manager_id: UUID = Field(index=True)
 
@@ -70,7 +73,7 @@ class Warehouse(UUIDPrimaryKeyMixin, SoftDeleteMixin, TimestampMixin, SQLModel, 
         ForeignKeyConstraint(
             ["updated_by", "organisation_id"],
             ["organisation_member.user_id", "organisation_member.organisation_id"],
-            name="fk_store_updated_by"
+            name="fk_warehouse_updated_by"
         ),
         Index("idx_warehouse_org", "organisation_id")
     )
@@ -103,6 +106,10 @@ class WarehouseStaff(StaffAssignmentMixin, SQLModel, table=True):
         sa_relationship_kwargs={"foreign_keys":"[WarehouseStaff.assigned_by, WarehouseStaff.organisation_id]"}
     )
 
+    removed_by_employee: "OrganisationMember" = Relationship(
+        sa_relationship_kwargs={"foreign_keys":"[WarehouseStaff.removed_by, WarehouseStaff.organisation_id]"}
+    )
+
     __table_args__ = (
         ForeignKeyConstraint(
             ["staff_id", "organisation_id"],
@@ -114,6 +121,10 @@ class WarehouseStaff(StaffAssignmentMixin, SQLModel, table=True):
         ),
         ForeignKeyConstraint(
             ["assigned_by", "organisation_id"],
+            ["organisation_member.user_id", "organisation_member.organisation_id"]
+        ),
+        ForeignKeyConstraint(
+            ["removed_by", "organisation_id"],
             ["organisation_member.user_id", "organisation_member.organisation_id"]
         ),
 
