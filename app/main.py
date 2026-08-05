@@ -9,7 +9,7 @@ logger = logging.getLogger(__name__)
 
 
 @asynccontextmanager
-async def lifespan(my_app: FastAPI):
+async def lifespan(_app: FastAPI):
     print("++++++++++++++")
     logger.info("Application starting...")
     print("++++++++++++++")
