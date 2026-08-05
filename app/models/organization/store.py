@@ -77,7 +77,7 @@ class Store(UUIDPrimaryKeyMixin, SoftDeleteMixin, TimestampMixin, SQLModel, tabl
             ["organisation_member.user_id", "organisation_member.organisation_id"],
             name="fk_store_updated_by"
         ),
-        Index("idx_store_org", "organisation_id")
+        Index("idx_store_org", "organisation_id"),
     )
 
     def __repr__(self):

@@ -75,7 +75,7 @@ class Warehouse(UUIDPrimaryKeyMixin, SoftDeleteMixin, TimestampMixin, SQLModel, 
             ["organisation_member.user_id", "organisation_member.organisation_id"],
             name="fk_warehouse_updated_by"
         ),
-        Index("idx_warehouse_org", "organisation_id")
+        Index("idx_warehouse_org", "organisation_id"),
     )
 
     def __repr__(self):
@@ -129,7 +129,7 @@ class WarehouseStaff(StaffAssignmentMixin, SQLModel, table=True):
         ),
 
         Index("idx_warehouse_staff","staff_id", "organisation_id"),
-        Index("idx_warehouse_staff_warehouse", "warehouse_id", "organisation_id")
+        Index("idx_warehouse_staff_warehouse", "warehouse_id", "organisation_id"),
     )
 
     def __repr__(self):

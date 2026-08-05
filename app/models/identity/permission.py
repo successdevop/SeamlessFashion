@@ -23,7 +23,7 @@ class Permission(UUIDPrimaryKeyMixin, TimestampMixin, SQLModel, table=True):
         Index(
             "idx_permission_module",
             "module"
-        )
+        ),
     )
 
     def __repr__(self):

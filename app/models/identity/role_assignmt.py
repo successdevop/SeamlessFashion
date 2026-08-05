@@ -85,6 +85,7 @@ class RoleAssignment(UUIDPrimaryKeyMixin, SQLModel, table=True):
             ["organisation_member.user_id", "organisation_member.organisation_id"],
             name="fk_assigner_role_assignment_membership"
         ),
+
         Index("idx_role_assignment_org_role","organisation_id", "role_id"),
         Index("idx_role_assign_user_current", "user_id", "is_active"),
         Index("idx_role_assign_dates", "valid_from", "valid_until"),

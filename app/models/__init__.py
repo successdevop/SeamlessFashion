@@ -1,14 +1,14 @@
 from sqlmodel import SQLModel
-from base_models.base_tables import Address
-from identity.identity_verification import IdentityDocument, IdentityVerification
-from identity.role_assignmt import RoleAssignment
-from identity.role_permission import RolePermission
-from identity.user import (UserAddress, User, LoginEventInfo, UserSecurityProfile)
-from identity.role import Role
-from identity.permission import Permission
-from organization.organisation import (OrganisationMember, Organisation)
-from organization.store import Store, StoreStaff
-from organization.warehouse import Warehouse, WarehouseStaff
+from app.models.base_models.base_tables import Address
+from app.models.identity.identity_verification import IdentityDocument, IdentityVerification
+from app.models.identity.role_assignmt import RoleAssignment
+from app.models.identity.role_permission import RolePermission
+from app.models.identity.user import (UserAddress, User, LoginEventInfo, UserSecurityProfile)
+from app.models.identity.role import Role
+from app.models.identity.permission import Permission
+from app.models.organization.organisation import (OrganisationMember, Organisation)
+from app.models.organization.store import Store, StoreStaff
+from app.models.organization.warehouse import Warehouse, WarehouseStaff
 
 __all__ = [
     "SQLModel",

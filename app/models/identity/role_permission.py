@@ -31,7 +31,7 @@ class RolePermission(TimestampMixin, SQLModel, table=True):
     permission: "Permission" = Relationship(back_populates="roles")
 
     __table_args__ = (
-        Index("idx_role_permission", "permission_id")
+        Index("idx_role_permission", "permission_id"),
     )
 
     def __repr__(self):
