@@ -1,14 +1,10 @@
 from datetime import date, datetime
-from typing import TYPE_CHECKING
 from uuid import UUID
 
 from pydantic import BaseModel, Field, EmailStr
 
 from app.enums.user_enums import GenderEnum, AddressTypeEnum, VerificationStatusEnum, DocumentTypeEnum
 from app.schemas.base_or_shared.orm_base import ORMBaseSchema
-
-if TYPE_CHECKING:
-    pass
 
 
 class VerificationDocumentCreate(BaseModel):
@@ -38,39 +34,42 @@ class VerificationReview(ORMBaseSchema, BaseModel):
     verified_at: datetime
 
 
-class LoginEventData(BaseModel):
-    ip_address: str | None = None
-    device: str | None = None
-    browser: str | None = None
-    operating_system: str | None = None
-    country: str | None = None
-    city: str | None = None
-    user_agent: str | None = None
-    session_id_hash: str | None = None
+class AdminVerificationDetails(VerificationRead):
+    review: VerificationReview
+
+
+class LoginEventData(ORMBaseSchema, BaseModel):
+    ip_address: str
+    device: str
+    browser: str
+    operating_system: str
+    country: str
+    city: str
+    user_agent: str
     is_successful: bool = False
 
-    user_id: UUID
+
+class LoginEventCreate(LoginEventData):
+    session_id: str
 
 
-class LoginEventResponse(LoginEventData):
+class LoginEventRead(LoginEventData):
     id: UUID
 
 
-class UserSecurityProfile(BaseModel):
+class UserSecurityProfile(ORMBaseSchema, BaseModel):
     failed_login_attempts: int = 0
     login_count: int = 0
     login_method: str | None = None
     locked_until: datetime | None = None
     password_changed_at: datetime | None = None
 
-    user_id: UUID
-
 
 class UserSecurityResponse(UserSecurityProfile):
     id: UUID
 
 
-class UserBase(BaseModel):
+class UserBase(ORMBaseSchema, BaseModel):
     first_name: str | None = Field(default=None, max_length=100)
     last_name: str | None = Field(default=None, max_length=100)
     username: str = Field(min_length=4, max_length=30)
@@ -85,7 +84,7 @@ class UserCreate(UserBase):
     password: str = Field(min_length=8, max_length=128)
 
 
-class UserProfileUpdate(BaseModel):
+class UserProfileUpdate(ORMBaseSchema, BaseModel):
     first_name: str | None = None
     last_name: str | None = None
     avatar_url: str | None = None
@@ -94,34 +93,25 @@ class UserProfileUpdate(BaseModel):
     date_of_birth: date | None = None
 
 
-class AdminUserUpdate(UserProfileUpdate):
+class AdminUserUpdate(ORMBaseSchema, BaseModel):
     is_active: bool | None = None
     email_verified: bool | None = None
     phone_verified: bool | None = None
-    identity_verified: bool | None = None
 
 
-class UserResponse(UserBase):
+class UserRead(UserBase):
     id: UUID
-    is_active: bool = False
-    email_verified: bool = False
-    phone_verified: bool = False
-    identity_verified: bool = False
+    is_active: bool
+    email_verified: bool
+    phone_verified: bool
 
 
-class UserAddressResponse(BaseModel):
-    user_id: UUID
-    address_id: UUID
+class UserAddressCreate(ORMBaseSchema, BaseModel):
     address_type: AddressTypeEnum
     is_default_address: bool = False
-    address: "AddressResponse"
 
 
-class UserDetails(UserResponse):
-    identity_verification: VerificationReview
-    user_addresses: list[UserAddressResponse] = Field(default_factory=list)
-    login_events: list[LoginEventResponse] = Field(default_factory=list)
-    login_security: UserSecurityResponse
-    user_organisations: list["OrganisationMemberBase"] = Field(default_factory=list)
-    role_assignments: list["RoleAssignmentResponse"] = Field(default_factory=list)
+class UserAddressRead(UserAddressCreate):
+    user_id: UUID
+    address_id: UUID
 
