@@ -1,32 +1,41 @@
 from datetime import date, datetime
+from typing import TYPE_CHECKING
 from uuid import UUID
 
-from pydantic import BaseModel, Field, EmailStr
+from pydantic import Field, EmailStr
 
 from app.enums.user_enums import GenderEnum, AddressTypeEnum, VerificationStatusEnum, DocumentTypeEnum
 from app.schemas.base_or_shared.orm_base import ORMBaseSchema
 
+if TYPE_CHECKING:
+    from app.schemas.base_or_shared.address import AddressRead
 
-class VerificationDocumentCreate(BaseModel):
+
+class VerificationDocumentCreate(ORMBaseSchema):
     verification_id: UUID
     document_type: DocumentTypeEnum
     expires_at: datetime | None = None
 
 
-class VerificationBase(BaseModel):
+class VerificationDocumentRead(VerificationDocumentCreate):
+    id: UUID
+
+
+class VerificationBase(ORMBaseSchema):
     verification_status: VerificationStatusEnum
     user_id: UUID
 
 
-class VerificationCreate(ORMBaseSchema, VerificationBase):
+class VerificationCreate(VerificationBase):
     documents: list[VerificationDocumentCreate] = Field(default_factory=list)
 
 
-class VerificationRead(VerificationCreate):
+class VerificationRead(VerificationBase):
     id: UUID
+    documents: list[VerificationDocumentRead]
 
 
-class VerificationReview(ORMBaseSchema, BaseModel):
+class VerificationReview(ORMBaseSchema):
     verification_status: VerificationStatusEnum
     verified_by: UUID
     verification_notes: str | None = None
@@ -34,11 +43,12 @@ class VerificationReview(ORMBaseSchema, BaseModel):
     verified_at: datetime
 
 
-class AdminVerificationDetails(VerificationRead):
+class AdminVerificationDetails(VerificationBase):
     review: VerificationReview
+    documents: list[VerificationDocumentRead]
 
 
-class LoginEventData(ORMBaseSchema, BaseModel):
+class LoginEventSummary(ORMBaseSchema):
     ip_address: str
     device: str
     browser: str
@@ -49,15 +59,15 @@ class LoginEventData(ORMBaseSchema, BaseModel):
     is_successful: bool = False
 
 
-class LoginEventCreate(LoginEventData):
+class LoginEventCreate(LoginEventSummary):
     session_id: str
 
 
-class LoginEventRead(LoginEventData):
+class LoginEventRead(LoginEventSummary):
     id: UUID
 
 
-class UserSecurityProfile(ORMBaseSchema, BaseModel):
+class UserSecurityProfileSummary(ORMBaseSchema):
     failed_login_attempts: int = 0
     login_count: int = 0
     login_method: str | None = None
@@ -65,16 +75,16 @@ class UserSecurityProfile(ORMBaseSchema, BaseModel):
     password_changed_at: datetime | None = None
 
 
-class UserSecurityResponse(UserSecurityProfile):
+class UserSecurityResponse(UserSecurityProfileSummary):
     id: UUID
 
 
-class UserBase(ORMBaseSchema, BaseModel):
+class UserBase(ORMBaseSchema):
     first_name: str | None = Field(default=None, max_length=100)
     last_name: str | None = Field(default=None, max_length=100)
-    username: str = Field(min_length=4, max_length=30)
+    username: str = Field(min_length=4, max_length=30, pattern=r"^[a-zA-Z0-9_]+$")
     email: EmailStr
-    phone_number: str
+    phone_number: str = Field(pattern=r"^\+?[1-9]\d{7,15}$")
     avatar_url: str | None = None
     gender: GenderEnum | None = None
     date_of_birth: date | None = None
@@ -84,7 +94,7 @@ class UserCreate(UserBase):
     password: str = Field(min_length=8, max_length=128)
 
 
-class UserProfileUpdate(ORMBaseSchema, BaseModel):
+class UserProfileUpdate(ORMBaseSchema):
     first_name: str | None = None
     last_name: str | None = None
     avatar_url: str | None = None
@@ -93,7 +103,7 @@ class UserProfileUpdate(ORMBaseSchema, BaseModel):
     date_of_birth: date | None = None
 
 
-class AdminUserUpdate(ORMBaseSchema, BaseModel):
+class AdminUserProfileUpdate(ORMBaseSchema):
     is_active: bool | None = None
     email_verified: bool | None = None
     phone_verified: bool | None = None
@@ -106,12 +116,15 @@ class UserRead(UserBase):
     phone_verified: bool
 
 
-class UserAddressCreate(ORMBaseSchema, BaseModel):
+class UserAddressCreate(ORMBaseSchema):
     address_type: AddressTypeEnum
     is_default_address: bool = False
 
 
 class UserAddressRead(UserAddressCreate):
     user_id: UUID
-    address_id: UUID
+
+
+class UserAddressDetails(UserAddressRead):
+    address: "AddressRead"
 

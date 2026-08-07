@@ -8,8 +8,7 @@ from app.enums.currency import CurrencyEnum
 from app.enums.org_enums import SubscriptionPlanEnum, SubscriptionStatusEnum, MembershipStatus
 
 if TYPE_CHECKING:
-    from app.schemas import StoreResponse, WarehouseResponse, UserResponse, RoleAssignmentResponse, StoreStaffBase, WarehouseStaffBase
-
+    pass
 
 
 class OrganisationMemberBase(BaseModel):
