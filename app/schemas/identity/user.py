@@ -5,36 +5,32 @@ from uuid import UUID
 from pydantic import BaseModel, Field, EmailStr
 
 from app.enums.user_enums import GenderEnum, AddressTypeEnum, VerificationStatusEnum, DocumentTypeEnum
+from app.schemas.base_or_shared.orm_base import ORMBaseSchema
 
 if TYPE_CHECKING:
-    from app.schemas import AddressResponse, OrganisationMemberBase, RoleAssignmentResponse
+    pass
 
 
-
-class VerificationDocument(BaseModel):
+class VerificationDocumentCreate(BaseModel):
     verification_id: UUID
-
     document_type: DocumentTypeEnum
-    document_number_encrypted: str
-    document_number_hash: str
-    storage_key: str | None = None
-
-    file_size: int | None = None
-    file_hash: str | None = None
+    expires_at: datetime | None = None
 
 
 class VerificationBase(BaseModel):
     verification_status: VerificationStatusEnum
-    submitted_at: datetime
     user_id: UUID
 
 
-class VerificationCreate(VerificationBase):
-    documents: list[VerificationDocument] = Field(default_factory=list)
+class VerificationCreate(ORMBaseSchema, VerificationBase):
+    documents: list[VerificationDocumentCreate] = Field(default_factory=list)
 
 
-class VerificationReview(VerificationCreate):
-    verification_id: UUID
+class VerificationRead(VerificationCreate):
+    id: UUID
+
+
+class VerificationReview(ORMBaseSchema, BaseModel):
     verification_status: VerificationStatusEnum
     verified_by: UUID
     verification_notes: str | None = None

@@ -2,8 +2,9 @@ from pydantic import SecretStr
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from sqlalchemy.engine import URL
 
+
 _base_config = SettingsConfigDict(
-    env_file="./config/.env",
+    env_file="./.env",
     env_ignore_empty=True,
     env_file_encoding="utf-8",
     extra='ignore'

@@ -16,7 +16,7 @@ class IdentityVerification(UUIDPrimaryKeyMixin, TimestampMixin, SoftDeleteMixin,
     verification_status: VerificationStatusEnum
 
     verified_at: datetime | None = Field(default=None, sa_column=Column(DateTime(timezone=True), nullable=True))
-    submitted_at: datetime | None = Field(default=None, sa_column=Column(DateTime(timezone=True), nullable=True))
+    submitted_at: datetime= Field(sa_column=Column(DateTime(timezone=True), nullable=True))
 
     verification_notes: str | None = None
     rejection_reason: str | None = None
@@ -54,6 +54,8 @@ class IdentityDocument(UUIDPrimaryKeyMixin, SoftDeleteMixin, SQLModel, table=Tru
     mime_type: str | None = None
     original_filename: str | None = None
     expires_at: datetime | None = None
+
+    uploaded_at: datetime= Field(sa_column=Column(DateTime(timezone=True), nullable=True))
 
     verification_id: UUID = Field(foreign_key="identityverification.id", ondelete="CASCADE")
     verification: IdentityVerification = Relationship(back_populates="documents")

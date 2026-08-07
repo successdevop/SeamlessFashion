@@ -15,7 +15,7 @@ from app.models import SQLModel
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
 config = context.config
-config.set_main_option("sqlalchemy.url", db_settings.postgres_url)
+config.set_main_option("sqlalchemy.url", str(db_settings.postgres_url))
 
 
 # Interpret the config file for Python logging.
