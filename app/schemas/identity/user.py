@@ -79,7 +79,7 @@ class UserSecurityResponse(UserSecurityProfileSummary):
     id: UUID
 
 
-class UserBase(ORMBaseSchema):
+class UserSummary(ORMBaseSchema):
     first_name: str | None = Field(default=None, max_length=100)
     last_name: str | None = Field(default=None, max_length=100)
     username: str = Field(min_length=4, max_length=30, pattern=r"^[a-zA-Z0-9_]+$")
@@ -90,7 +90,7 @@ class UserBase(ORMBaseSchema):
     date_of_birth: date | None = None
 
 
-class UserCreate(UserBase):
+class UserCreate(UserSummary):
     password: str = Field(min_length=8, max_length=128)
 
 
@@ -109,7 +109,7 @@ class AdminUserProfileUpdate(ORMBaseSchema):
     phone_verified: bool | None = None
 
 
-class UserRead(UserBase):
+class UserRead(UserSummary):
     id: UUID
     is_active: bool
     email_verified: bool

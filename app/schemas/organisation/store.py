@@ -2,68 +2,71 @@ from datetime import datetime
 from typing import TYPE_CHECKING
 from uuid import UUID
 
-from pydantic import BaseModel, Field
+from pydantic import Field
 
 from app.enums.currency import CurrencyEnum
 from app.enums.org_enums import StoreStatusEnum, StaffAssignmentStatus
+from app.schemas.base_or_shared.address import AddressRead
+from app.schemas.base_or_shared.orm_base import ORMBaseSchema
 
 if TYPE_CHECKING:
-    from app.schemas import OrganisationMemberBase, AddressResponse, OrganisationResponse
+    from app.schemas.organisation.organisation import OrganisationMemberSummary, OrganisationBase
 
 
-class StoreStaffBase(BaseModel):
+class StoreStaffBase(ORMBaseSchema):
     staff_id: UUID
     organisation_id: UUID
     store_id: UUID
     is_primary_store: bool = False
-    assigned_at: datetime
-    removed_at: datetime | None = None
-    assigned_by: UUID
     status: StaffAssignmentStatus
 
 
-class StoreBase(BaseModel):
+class StoreStaffSummary(StoreStaffBase):
+    assigned_at: datetime
+    removed_at: datetime | None = None
+    assigned_by: UUID
+
+
+class StoreBase(ORMBaseSchema):
     name: str
     store_code: str
-    currency: CurrencyEnum
     timezone: str
     status: StoreStatusEnum
 
-    created_by: UUID
-    manager_id: UUID | None = None
-    updated_by: UUID | None = None
-    address_id: UUID
-    organisation_id: UUID
+
+class StoreSummary(StoreBase):
+    phone_number: str | None = None
+    email: str | None = None
 
 
-class StoreCreate(StoreBase):
+class StoreCreate(StoreSummary):
     pass
 
 
-class StoreUpdate(BaseModel):
+class StoreUpdate(ORMBaseSchema):
     name: str | None = None
     store_code: str | None = None
-    currency: CurrencyEnum | None = None
     timezone: str | None = None
     status: StoreStatusEnum | None = None
     updated_by: UUID
-    manager_id: UUID | None = None
-    address_id: UUID | None = None
 
 
-class StoreResponse(StoreBase):
+class StoreRead(StoreSummary):
     id: UUID
 
 
-class AdminStoreDetails(StoreBase):
-    created_by_user: "OrganisationMemberBase"
-    manager: "OrganisationMemberBase"
-    store_staff: list[StoreStaffBase] = Field(default_factory=list)
-    address: "AddressResponse"
-    organisation: "OrganisationResponse"
+class AdminStoreRead(StoreRead):
+    currency: CurrencyEnum
+    created_by: UUID
+    manager_id: UUID
+    updated_by: UUID
+    organisation_id: UUID
+    address: AddressRead
 
 
-class AdminStoreStaffDetails(StoreStaffBase):
-    store: list[StoreResponse] = Field(default_factory=list)
-    staff: "OrganisationMemberBase"
-    assigned_by_employee: "OrganisationMemberBase"
+class AdminStoreDetails(ORMBaseSchema):
+    created_by_user: OrganisationMemberSummary
+    manager: OrganisationMemberSummary
+    store_staff: list[StoreStaffSummary] = Field(default_factory=list)
+    address: AddressRead
+    organisation: OrganisationBase

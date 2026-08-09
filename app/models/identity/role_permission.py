@@ -21,7 +21,7 @@ class RolePermission(TimestampMixin, SQLModel, table=True):
         primary_key=True
     )
 
-    assigned_by: UUID | None = Field(
+    assigned_by: UUID = Field(
         default=None,
         foreign_key="user.id"
     )

@@ -19,7 +19,7 @@ class Warehouse(UUIDPrimaryKeyMixin, SoftDeleteMixin, TimestampMixin, SQLModel, 
     status: WarehouseStatusEnum
 
     phone_number: str | None = Field(default=None)
-    store_mail: str | None = Field(default=None, index=True)
+    email: str | None = Field(default=None, index=True)
 
     created_by: UUID = Field(index=True)
     manager_id: UUID = Field(index=True)

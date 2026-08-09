@@ -10,7 +10,7 @@ from app.enums.user_enums import AddressTypeEnum
 from app.models.base_models.base_models import UUIDPrimaryKeyMixin, TimestampMixin, UserInfoMixin, SoftDeleteMixin
 
 if TYPE_CHECKING:
-    from app.models import Address, IdentityVerification, OrganisationMember, RoleAssignment
+    from app.models import Address, IdentityVerification, OrganisationMember, RoleAssignment, Organisation
 
 
 class UserAddress(SoftDeleteMixin, SQLModel, table=True):
@@ -50,6 +50,11 @@ class User(UUIDPrimaryKeyMixin, UserInfoMixin, TimestampMixin, SoftDeleteMixin, 
     # keeps record of all login security information
     login_security: "UserSecurityProfile | None" = Relationship(
         back_populates="user", sa_relationship_kwargs={"lazy":"selectin", "cascade":"all, delete-orphan"}
+    )
+
+    organisations_created: list["Organisation"] = Relationship(
+        back_populates="created_by_user",
+        sa_relationship_kwargs={"lazy":"selectin", "cascade":"all, delete-orphan"}
     )
 
     # one user can belong to many organization(Organisation-User relationship)

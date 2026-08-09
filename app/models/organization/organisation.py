@@ -97,9 +97,21 @@ class Organisation(UUIDPrimaryKeyMixin, SoftDeleteMixin, TimestampMixin, SQLMode
     subscription_plan: SubscriptionPlanEnum
     subscription_status: SubscriptionStatusEnum
 
+    created_by: UUID = Field(foreign_key="user.id")
+    updated_by: UUID | None = Field(default=None, foreign_key="user.id")
+
     # organisation-address relationship
     address_id: UUID = Field(foreign_key="address.id")
     address: "Address" = Relationship(back_populates="organisation")
+
+    created_by_user: "User" = Relationship(
+        back_populates="organisations_created",
+        sa_relationship_kwargs={"foreign_keys":"[Organisation.created_by]"}
+    )
+
+    updated_by_user: "User" = Relationship(
+        sa_relationship_kwargs={"foreign_keys":"[Organisation.updated_by]"}
+    )
 
     # an organization can have more than one or many employees/organization member (Organisation-User relationship)
     employees: list[OrganisationMember] = Relationship(

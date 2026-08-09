@@ -48,11 +48,11 @@ class IdentityDocument(UUIDPrimaryKeyMixin, SoftDeleteMixin, SQLModel, table=Tru
     document_number_hash: str = Field(index=True)
     storage_key: str # Only certain roles should view / and also a short_lived signed url
 
-    file_size: int | None = None
-    file_hash: str | None = None  # For integrity verification
+    file_size: int
+    file_hash: str# For integrity verification
 
-    mime_type: str | None = None
-    original_filename: str | None = None
+    mime_type: str
+    original_filename: str
     expires_at: datetime | None = None
 
     uploaded_at: datetime= Field(sa_column=Column(DateTime(timezone=True), nullable=True))

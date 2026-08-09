@@ -1,4 +1,5 @@
 from typing import TYPE_CHECKING
+from uuid import UUID
 
 from sqlmodel import SQLModel, Relationship, Field
 
@@ -19,6 +20,8 @@ class Role(UUIDPrimaryKeyMixin, TimestampMixin, SQLModel, table=True):
     
     is_system_role: bool = False
     is_assignable_role: bool = True
+
+    created_by: UUID = Field(foreign_key="user.id")
 
     # a single role can have many permissions assigned to it to perform (Role-Permission relationship)
     permissions: list["RolePermission"] = Relationship(back_populates="role", sa_relationship_kwargs={"lazy":"selectin"})
