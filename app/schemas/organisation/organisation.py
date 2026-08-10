@@ -9,9 +9,12 @@ from app.enums.org_enums import SubscriptionPlanEnum, SubscriptionStatusEnum, Me
 from app.schemas.base_or_shared.address import AddressRead
 from app.schemas.base_or_shared.orm_base import ORMBaseSchema
 
+
 if TYPE_CHECKING:
-    from app.schemas.organisation.store import StoreRead
-    from app.schemas.organisation.warehouse import WarehouseRead
+    from app.schemas.organisation.store import StoreRead, StoreStaffSummary
+    from app.schemas.organisation.warehouse import WarehouseRead, WarehouseStaffSummary
+    from app.schemas.base_or_shared.role_assignment import RoleAssignmentRead
+    from app.schemas.identity.user import UserRead
 
 
 class OrganisationMemberBase(ORMBaseSchema):
@@ -86,15 +89,12 @@ class AdminOrganisationDetails(ORMBaseSchema):
 
 
 class AdminOrganisationMemberDetails(ORMBaseSchema):
-    user: "UserResponse"
-    role_assignments: list["RoleAssignmentResponse"] = Field(default_factory=list)
-    stores_created: list["StoreResponse"] = Field(default_factory=list)
-
-    stores_managed: "StoreResponse"
-
-    store_assignments: list["StoreStaffBase"] = Field(default_factory=list)
-
-    warehouses_created: list["WarehouseResponse"] = Field(default_factory=list)
-    warehouses_managed: list["WarehouseResponse"] = Field(default_factory=list)
-
-    warehouse_assignments: list["WarehouseStaffBase"] = Field(default_factory=list)
+    user_detail: "UserRead"
+    org_detail: OrganisationRead
+    role_assignments: list["RoleAssignmentRead"] = Field(default_factory=list)
+    stores_created: list["StoreRead"] = Field(default_factory=list)
+    stores_managed: "StoreRead"
+    store_assignments: list["StoreStaffSummary"] = Field(default_factory=list)
+    warehouses_created: list["WarehouseRead"] = Field(default_factory=list)
+    warehouses_managed: "WarehouseRead | None"
+    warehouse_assignments: list["WarehouseStaffSummary"] = Field(default_factory=list)
