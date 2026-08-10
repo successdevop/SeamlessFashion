@@ -2,6 +2,8 @@ from datetime import datetime
 from typing import TYPE_CHECKING
 from uuid import UUID
 
+from pydantic import Field
+
 from app.enums.org_enums import RoleScope
 from app.schemas.base_or_shared.orm_base import ORMBaseSchema
 
@@ -26,6 +28,9 @@ class PermissionCreate(PermissionSummary):
 
 class PermissionRead(PermissionSummary):
     id: UUID
+
+
+class AdminPermissionRead(PermissionRead):
     created_by: UUID
 
 
@@ -37,9 +42,7 @@ class RoleBase(ORMBaseSchema):
 
 
 class RoleSummary(RoleBase):
-    hierarchy_level: int = 1  # Hierarchy level (1 = highest)
-    is_system_role: bool = False
-    is_assignable_role: bool = True
+    hierarchy_level: int = Field(default=1, ge=1, le=50)  # Hierarchy level (1 = highest)
 
 
 class RoleCreate(RoleSummary):
@@ -49,6 +52,11 @@ class RoleCreate(RoleSummary):
 class RoleRead(RoleBase):
     id: UUID
     created_by: UUID
+
+
+class AdminRoleRead(RoleRead):
+    is_system_role: bool = False
+    is_assignable_role: bool = True
 
 
 class RolePermissionDetails(ORMBaseSchema):

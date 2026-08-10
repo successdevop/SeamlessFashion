@@ -2,7 +2,7 @@ from datetime import date, datetime
 from typing import TYPE_CHECKING
 from uuid import UUID
 
-from pydantic import Field, EmailStr
+from pydantic import Field, EmailStr, model_validator
 
 from app.enums.user_enums import GenderEnum, AddressTypeEnum, VerificationStatusEnum, DocumentTypeEnum
 from app.schemas.base_or_shared.orm_base import ORMBaseSchema
@@ -12,7 +12,6 @@ if TYPE_CHECKING:
 
 
 class VerificationDocumentCreate(ORMBaseSchema):
-    verification_id: UUID
     document_type: DocumentTypeEnum
     expires_at: datetime | None = None
 
@@ -42,6 +41,15 @@ class VerificationReview(ORMBaseSchema):
     rejection_reason: str | None = None
     verified_at: datetime
 
+    @model_validator(mode="after")
+    def validate_review(self):
+        if self.verification_status == VerificationStatusEnum.REJECTED:
+            if not self.rejection_reason:
+                raise ValueError(
+                    "rejection_reason is required when verification is rejected"
+                )
+        return self
+
 
 class AdminVerificationDetails(VerificationBase):
     review: VerificationReview
@@ -49,14 +57,13 @@ class AdminVerificationDetails(VerificationBase):
 
 
 class LoginEventSummary(ORMBaseSchema):
-    ip_address: str
-    device: str
-    browser: str
-    operating_system: str
-    country: str
-    city: str
-    user_agent: str
-    is_successful: bool = False
+    ip_address: str | None = None
+    device: str | None = None
+    browser: str | None = None
+    operating_system: str | None = None
+    country: str | None = None
+    city: str | None = None
+    user_agent: str | None = None
 
 
 class LoginEventCreate(LoginEventSummary):
@@ -65,6 +72,7 @@ class LoginEventCreate(LoginEventSummary):
 
 class LoginEventRead(LoginEventSummary):
     id: UUID
+    is_successful: bool
 
 
 class UserSecurityProfileSummary(ORMBaseSchema):
@@ -88,9 +96,12 @@ class UserBase(ORMBaseSchema):
 class UserSummary(UserBase):
     first_name: str | None = Field(default=None, max_length=100)
     last_name: str | None = Field(default=None, max_length=100)
-    avatar_url: str | None = None
     gender: GenderEnum | None = None
     date_of_birth: date | None = None
+
+
+class UserProfilePicture(ORMBaseSchema):
+    avatar_url: str | None = None
 
 
 class UserCreate(UserSummary):
@@ -117,6 +128,7 @@ class UserRead(UserSummary):
     is_active: bool
     email_verified: bool
     phone_verified: bool
+    avatar: UserProfilePicture
 
 
 class UserAddressCreate(ORMBaseSchema):
@@ -126,6 +138,7 @@ class UserAddressCreate(ORMBaseSchema):
 
 class UserAddressRead(UserAddressCreate):
     user_id: UUID
+    address_id: UUID
 
 
 class UserAddressDetails(UserAddressRead):

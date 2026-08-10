@@ -47,7 +47,6 @@ class WarehouseUpdate(ORMBaseSchema):
     warehouse_code: str | None = None
     max_storage_units: Decimal | None = None
     status: WarehouseStatusEnum | None = None
-    updated_by: UUID
 
 
 class WarehouseRead(WarehouseSummary):
@@ -62,7 +61,7 @@ class AdminWarehouseRead(WarehouseRead):
     organisation_id: UUID
 
 
-class AdminWarehouseDetails(ORMBaseSchema):
+class AdminWarehouseDetails(WarehouseRead):
     created_by_user: OrganisationMemberSummary
     manager: OrganisationMemberSummary
     warehouse_staff: list[WarehouseStaffSummary] = Field(default_factory=list)

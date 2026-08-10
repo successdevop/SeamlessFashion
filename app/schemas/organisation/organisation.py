@@ -58,11 +58,10 @@ class OrganisationCreate(OrganisationSummary):
 class OrganisationUpdate(ORMBaseSchema):
     organisation_name: str | None = None
     logo_url: str | None = None
-    business_email: str | None = None
+    email: str | None = None
     website: str | None = None
     industry: str | None = None
     description: str | None = None
-    updated_by: UUID
 
 
 class OrganisationSubscriptionUpdate(ORMBaseSchema):

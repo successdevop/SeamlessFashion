@@ -48,7 +48,6 @@ class StoreUpdate(ORMBaseSchema):
     store_code: str | None = None
     timezone: str | None = None
     status: StoreStatusEnum | None = None
-    updated_by: UUID
 
 
 class StoreRead(StoreSummary):
@@ -58,15 +57,15 @@ class StoreRead(StoreSummary):
 class AdminStoreRead(StoreRead):
     currency: CurrencyEnum
     created_by: UUID
-    manager_id: UUID
+    manager_id: UUID | None
     updated_by: UUID
+    address_id: UUID
     organisation_id: UUID
-    address: AddressRead
 
 
-class AdminStoreDetails(ORMBaseSchema):
+class AdminStoreDetails(StoreRead):
     created_by_user: OrganisationMemberSummary
-    manager: OrganisationMemberSummary
+    manager: OrganisationMemberSummary | None
     store_staff: list[StoreStaffSummary] = Field(default_factory=list)
     address: AddressRead
     organisation: OrganisationBase
