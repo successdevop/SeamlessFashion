@@ -27,7 +27,7 @@ class DatabaseSettings(BaseSettings):
         return URL.create(
             drivername="postgresql+asyncpg",
             username=self.POSTGRES_USER,
-            password=str(self.POSTGRES_PASSWORD),
+            password=self.POSTGRES_PASSWORD.get_secret_value(),
             host=self.POSTGRES_SERVER,
             port=self.POSTGRES_PORT,
             database=self.POSTGRES_DB
