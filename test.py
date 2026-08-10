@@ -23,10 +23,38 @@
 #         print(result)
 #
 #     # return {"id": q, "item": item}
-from typing import Annotated
+# from typing import Annotated
+#
+#
+# def say_hello(name: Annotated[str, "this is just metadata"]) -> str:
+#     return f"Hello {name}"
+#
+# print(say_hello(""))
+
+import asyncio
+import asyncpg
+
+from app.config.config import db_settings
 
 
-def say_hello(name: Annotated[str, "this is just metadata"]) -> str:
-    return f"Hello {name}"
+async def test_connection():
+    print("Loaded user:", db_settings.POSTGRES_USER)
+    print("Loaded server:", db_settings.POSTGRES_SERVER)
+    print("Loaded port:", db_settings.POSTGRES_PORT)
+    print("Loaded database:", db_settings.POSTGRES_DB)
+    print("Password length:", len(db_settings.POSTGRES_PASSWORD))
 
-print(say_hello(""))
+    conn = await asyncpg.connect(
+        host=db_settings.POSTGRES_SERVER,
+        port=db_settings.POSTGRES_PORT,
+        user=db_settings.POSTGRES_USER,
+        password=db_settings.POSTGRES_PASSWORD,
+        database=db_settings.POSTGRES_DB,
+    )
+
+    print("Successfully connected to PostgreSQL!")
+
+    await conn.close()
+
+
+asyncio.run(test_connection())
