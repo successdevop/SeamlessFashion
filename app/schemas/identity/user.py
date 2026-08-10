@@ -75,16 +75,19 @@ class UserSecurityProfileSummary(ORMBaseSchema):
     password_changed_at: datetime | None = None
 
 
-class UserSecurityResponse(UserSecurityProfileSummary):
+class UserSecurityRead(UserSecurityProfileSummary):
     id: UUID
 
 
-class UserSummary(ORMBaseSchema):
-    first_name: str | None = Field(default=None, max_length=100)
-    last_name: str | None = Field(default=None, max_length=100)
+class UserBase(ORMBaseSchema):
     username: str = Field(min_length=4, max_length=30, pattern=r"^[a-zA-Z0-9_]+$")
     email: EmailStr
     phone_number: str = Field(pattern=r"^\+?[1-9]\d{7,15}$")
+
+
+class UserSummary(UserBase):
+    first_name: str | None = Field(default=None, max_length=100)
+    last_name: str | None = Field(default=None, max_length=100)
     avatar_url: str | None = None
     gender: GenderEnum | None = None
     date_of_birth: date | None = None

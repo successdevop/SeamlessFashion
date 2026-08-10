@@ -2,13 +2,11 @@ from datetime import datetime
 from typing import TYPE_CHECKING
 from uuid import UUID
 
-from pydantic import BaseModel, Field
-
 from app.enums.org_enums import RoleScope
 from app.schemas.base_or_shared.orm_base import ORMBaseSchema
 
 if TYPE_CHECKING:
-    from app.schemas import OrganisationMemberBase, UserResponse
+    from app.schemas.organisation.organisation import OrganisationMemberSummary
 
 
 class PermissionBase(ORMBaseSchema):
@@ -32,6 +30,7 @@ class PermissionRead(PermissionSummary):
 
 
 class RoleBase(ORMBaseSchema):
+    display_name: str
     name: str
     description: str | None = None
     scope: RoleScope
@@ -47,7 +46,7 @@ class RoleCreate(RoleSummary):
     pass
 
 
-class RoleResponse(RoleBase):
+class RoleRead(RoleBase):
     id: UUID
     created_by: UUID
 
@@ -57,40 +56,32 @@ class RolePermissionDetails(ORMBaseSchema):
     permission_id: UUID
     assigned_by: UUID
 
-    role: RoleResponse
-    permission: PermissionResponse
-    assigner: "OrganisationMemberBase"
+    role: RoleSummary
+    permission: PermissionSummary
+    assigner: "OrganisationMemberSummary"
 
 
-class PermissionDetails(BaseModel):
-    roles: list[RolePermissionDetails] = Field(default_factory=list)
-
-
-class RoleAssignmentBase(BaseModel):
+class RoleAssignmentBase(ORMBaseSchema):
     user_id: UUID
     organisation_id: UUID
     assigned_by: UUID
+
+
+class RoleAssignmentSummary(RoleAssignmentBase):
     assigned_at: datetime
     valid_from: datetime
     valid_until: datetime | None = None
     is_active: bool = True
 
 
-class RoleAssignmentCreate(RoleAssignmentBase):
+class RoleAssignmentCreate(RoleAssignmentSummary):
     pass
 
 
-class RoleAssignmentResponse(RoleAssignmentBase):
+class RoleAssignmentRead(RoleAssignmentSummary):
     id: UUID
 
 
-class RoleAssignmentDetails(RoleAssignmentResponse):
-    membership: "OrganisationMemberBase"
-    role: RoleResponse
-    user: "UserResponse"
-    assigned_by_user: "UserResponse"
-
-
-class RoleDetails(BaseModel):
-    permissions: list[RolePermissionDetails] = Field(default_factory=list)
-    role_assignments: list[RoleAssignmentResponse] = Field(default_factory=list)
+class AdminRoleAssignmentDetails(ORMBaseSchema):
+    role_assignment_details: RoleAssignmentRead
+    role_permission_details: RolePermissionDetails
