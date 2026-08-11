@@ -41,6 +41,10 @@ def create_app() -> FastAPI:
         lifespan=lifespan
     )
 
+    @my_app.get("/")
+    async def root():
+        return {"message": "Hello World"}
+
     return my_app
 
 app = create_app()
