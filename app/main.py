@@ -70,6 +70,10 @@ def create_app() -> FastAPI:
     async def read_items(item: AddressCreate):
         return item
 
+    @my_app.get("/us")
+    async def check():
+        return "hello"
+
     return my_app
 
 app = create_app()
