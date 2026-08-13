@@ -3,19 +3,18 @@ from logging.config import fileConfig
 
 from sqlalchemy import pool
 from sqlalchemy.engine import Connection
-from sqlalchemy.ext.asyncio import async_engine_from_config
+from sqlalchemy.ext.asyncio import create_async_engine
 
 from alembic import context
+from sqlmodel import SQLModel
 
 import app.models
 from app.config.config import db_settings
-from app.models import SQLModel
 
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
 config = context.config
-config.set_main_option("sqlalchemy.url", str(db_settings.postgres_url))
 
 
 # Interpret the config file for Python logging.
@@ -72,9 +71,8 @@ async def run_async_migrations() -> None:
 
     """
 
-    connectable = async_engine_from_config(
-        config.get_section(config.config_ini_section, {}),
-        prefix="sqlalchemy.",
+    connectable = create_async_engine(
+        db_settings.postgres_url,
         poolclass=pool.NullPool,
     )
 
