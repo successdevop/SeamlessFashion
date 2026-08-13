@@ -60,18 +60,30 @@ class Store(UUIDPrimaryKeyMixin, SoftDeleteMixin, TimestampMixin, SQLModel, tabl
     organisation: Organisation = Relationship(back_populates="stores")
 
     __table_args__ = (
-        UniqueConstraint("organisation_id", "store_code"),
+        UniqueConstraint(
+            "id",
+            "organisation_id",
+            name="uq_store_id_organisation"
+        ),
+
+        UniqueConstraint(
+            "organisation_id",
+            "store_code",
+            name="uq_store_organisation_code"
+        ),
 
         ForeignKeyConstraint(
             ["created_by", "organisation_id"],
             ["organisation_member.user_id", "organisation_member.organisation_id"],
             name="fk_store_creator_membership"
         ),
+
         ForeignKeyConstraint(
             ["manager_id", "organisation_id"],
             ["organisation_member.user_id", "organisation_member.organisation_id"],
             name="fk_store_manager_membership"
         ),
+
         ForeignKeyConstraint(
             ["updated_by", "organisation_id"],
             ["organisation_member.user_id", "organisation_member.organisation_id"],

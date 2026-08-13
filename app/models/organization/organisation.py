@@ -2,7 +2,7 @@ from datetime import datetime
 from typing import TYPE_CHECKING
 from uuid import UUID
 
-from sqlalchemy import Column, DateTime, func, Index
+from sqlalchemy import Column, DateTime, func, Index, UniqueConstraint
 from sqlmodel import SQLModel, Field, Relationship
 
 from app.enums.currency import CurrencyEnum
@@ -16,13 +16,13 @@ if TYPE_CHECKING:
 class OrganisationMember(SQLModel, table=True):
     __tablename__ = "organisation_member"
 
-    organisation_id: UUID = Field(
-        foreign_key="organisation.id",
+    user_id: UUID = Field(
+        foreign_key="user.id",
         primary_key=True
     )
 
-    user_id: UUID = Field(
-        foreign_key="user.id",
+    organisation_id: UUID = Field(
+        foreign_key="organisation.id",
         primary_key=True
     )
 
@@ -74,6 +74,9 @@ class OrganisationMember(SQLModel, table=True):
     )
 
     __table_args__ = (
+        UniqueConstraint(
+            "user_id", "organisation_id", name="uq_org_member_user_org"
+        ),
         Index("idx_org_member_status", "organisation_id", "status"),
         Index("idx_org_member_user_status", "user_id", "status"),
         Index("idx_org_member_joined", "joined_date"),

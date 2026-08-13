@@ -58,7 +58,15 @@ class Warehouse(UUIDPrimaryKeyMixin, SoftDeleteMixin, TimestampMixin, SQLModel, 
     organisation: Organisation = Relationship(back_populates="warehouses")
 
     __table_args__ = (
-        UniqueConstraint("organisation_id", "warehouse_code"),
+        UniqueConstraint(
+            "id", "organisation_id",
+            name="uq_warehouse_id_organisation"
+        ),
+
+        UniqueConstraint(
+            "organisation_id", "warehouse_code",
+            name="uq_warehouse_organisation_code"
+        ),
 
         ForeignKeyConstraint(
             ["created_by", "organisation_id"],
