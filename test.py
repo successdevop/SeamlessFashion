@@ -31,30 +31,52 @@
 #
 # print(say_hello(""))
 
+# import asyncio
+# import asyncpg
+#
+# from app.config.config import db_settings
+#
+#
+# async def test_connection():
+#     print("Loaded user:", db_settings.POSTGRES_USER)
+#     print("Loaded server:", db_settings.POSTGRES_SERVER)
+#     print("Loaded port:", db_settings.POSTGRES_PORT)
+#     print("Loaded database:", db_settings.POSTGRES_DB)
+#     print("Password length:", len(db_settings.POSTGRES_PASSWORD))
+#
+#     conn = await asyncpg.connect(
+#         host=db_settings.POSTGRES_SERVER,
+#         port=db_settings.POSTGRES_PORT,
+#         user=db_settings.POSTGRES_USER,
+#         password=db_settings.POSTGRES_PASSWORD.get_secret_value(),
+#         database=db_settings.POSTGRES_DB,
+#     )
+#
+#     print("Successfully connected to PostgreSQL!")
+#
+#     await conn.close()
+#
+#
+# asyncio.run(test_connection())
+
 import asyncio
-import asyncpg
+
+from sqlalchemy.ext.asyncio import create_async_engine
 
 from app.config.config import db_settings
 
 
 async def test_connection():
-    print("Loaded user:", db_settings.POSTGRES_USER)
-    print("Loaded server:", db_settings.POSTGRES_SERVER)
-    print("Loaded port:", db_settings.POSTGRES_PORT)
-    print("Loaded database:", db_settings.POSTGRES_DB)
-    print("Password length:", len(db_settings.POSTGRES_PASSWORD))
+    url = db_settings.postgres_url
 
-    conn = await asyncpg.connect(
-        host=db_settings.POSTGRES_SERVER,
-        port=db_settings.POSTGRES_PORT,
-        user=db_settings.POSTGRES_USER,
-        password=db_settings.POSTGRES_PASSWORD,
-        database=db_settings.POSTGRES_DB,
-    )
+    print(url.render_as_string(hide_password=True))
 
-    print("Successfully connected to PostgreSQL!")
+    engine = create_async_engine(url)
 
-    await conn.close()
+    async with engine.connect() as connection:
+        print("SQLAlchemy connection successful!")
+
+    await engine.dispose()
 
 
 asyncio.run(test_connection())
