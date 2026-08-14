@@ -1,14 +1,17 @@
 import logging
 import random
+from datetime import datetime, timedelta, time
 from typing import Annotated, Any
+from uuid import UUID, uuid4
 
-from fastapi import FastAPI, Query, Path
+from fastapi import FastAPI, Query, Path, Body, Cookie, Header
 from contextlib import asynccontextmanager
 
-from pydantic import AfterValidator
+from pydantic import AfterValidator, BaseModel
 
 from app.database.db_session import engine
 from app.schemas.base_or_shared.address import AddressCreate
+from app.schemas.identity.user import UserBase
 
 logger = logging.getLogger(__name__)
 
@@ -54,47 +57,70 @@ def create_app() -> FastAPI:
             raise ValueError("Invalid ID format. It must start with 'isbn-' or 'imdb-'")
         return id
 
-    # @my_app.get("/book/")
-    # async def get_id(book_id: Annotated[str | None, AfterValidator(check_valid_id)] = None):
-    #     if book_id:
-    #         item = data.get(book_id)
-    #     else:
-    #         book_id, item = random.choice(list(data.items()))
-    #     return {"id": book_id, "item": item}
+    class Item(BaseModel):
+        name: str
+        description: str | None = None
+        price: float
+        tax: float | None = None
+        tags: set[str] = set()
+        address: AddressCreate
 
+        model_config = {
+            "json_schema_extra":{
+                "examples":[
+                    {
+                        "name": "John doe",
+                        "description": "A very nice item",
+                        "price": 35.4,
+                        "tax":3.2
+                    }
+                ]
+            }
+        }
+
+    class Offer(BaseModel):
+        name: str
+        description: str | None = None
+        price: float
+        items: list[Item]
 
     @my_app.post("/items/{item_id}")
-    def create(*, item_id: int,
-               q: Annotated[str|None, Query(
-                   title="query-string",
-                   alias="item-query",
-                   description="Query string for the items to search in the database that have a good match",
-                   min_length=3,
-                   max_length=50,
-                   pattern="^fixedquery$",
-                   deprecated=True,
-                   include_in_schema=False
-               )] = None,
-               address: Annotated[AddressCreate, Query()]
-               ):
-        address_dict = address.model_dump()
-        if q:
-            address_dict.update({"q":q})
-        if address.zip_postal_code is not None:
-            new_item = "added new field/column"
-            address_dict.update({"new_field": new_item})
-        return {"id": item_id, **address_dict}
+    def read_item(
+            item_id: UUID,
+            start_datetime: Annotated[datetime, Body()],
+            end_datetime: Annotated[datetime, Body()],
+            process_after: Annotated[timedelta, Body()],
+            repeat_at: Annotated[time | None, Body()]
+    ):
+        start_process = start_datetime + process_after
+        duration = end_datetime - start_process
 
-    # @my_app.get("/items/{item_id}")
-    # async def read_item(
-    #         item_id: Annotated[int, Path(title="the ID of the item to get", ge=1, le=10)],
-    #         q: Annotated[str | None, Query(alias="item-query")] = None
-    # ):
-    #     res: dict[str, Any] = {"id": item_id}
-    #     if q:
-    #         res.update({"q": q})
-    #
-    #     return res
+        return {
+
+            "item_id": item_id,
+            "start_datetime": start_datetime,
+            "end_datetime": end_datetime,
+            "process_after": process_after,
+            "repeat_at": repeat_at,
+            "start_process": start_process,
+            "duration": duration
+        }
+
+    @my_app.get("/cookie")
+    def cookie(ads_id: Annotated[str|None, Cookie()]):
+        return ads_id
+
+    class CommonHeaders(BaseModel):
+        host: str
+        save_data: bool
+        if_modified_since: str | None = None
+        trace_parent: str | None = None
+        x_tags: list[str] = []
+
+    @my_app.get("/header")
+    def headers(headers: Annotated[CommonHeaders, Header()]):
+        return headers
+
 
     return my_app
 
