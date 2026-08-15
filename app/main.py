@@ -1,13 +1,14 @@
 import logging
 import random
 from datetime import datetime, timedelta, time
-from typing import Annotated, Any
+from typing import Annotated, Any, Union
 from uuid import UUID, uuid4
 
-from fastapi import FastAPI, Query, Path, Body, Cookie, Header
+from fastapi import FastAPI, Query, Path, Body, Cookie, Header, Response
 from contextlib import asynccontextmanager
 
 from pydantic import AfterValidator, BaseModel
+from starlette.responses import RedirectResponse, JSONResponse
 
 from app.database.db_session import engine
 from app.schemas.base_or_shared.address import AddressCreate
@@ -52,6 +53,12 @@ def create_app() -> FastAPI:
         "isbn-9781439512982": "Isaac Asimov: The Complete Stories, Vol. 2",
     }
 
+    items = {
+        "foo": {"name": "Foo", "price": 50.2},
+        "bar": {"name": "Bar", "description": "The bartenders", "price": 62, "tax": 20.2},
+        "baz": {"name": "Baz", "description": None, "price": 50.2, "tax": 10.5, "tags": []},
+    }
+
     def check_valid_id(id: str):
         if not id.startswith(("isbn-", "imdb-")):
             raise ValueError("Invalid ID format. It must start with 'isbn-' or 'imdb-'")
@@ -61,22 +68,9 @@ def create_app() -> FastAPI:
         name: str
         description: str | None = None
         price: float
-        tax: float | None = None
+        tax: float = 10.5
         tags: set[str] = set()
-        address: AddressCreate
-
-        model_config = {
-            "json_schema_extra":{
-                "examples":[
-                    {
-                        "name": "John doe",
-                        "description": "A very nice item",
-                        "price": 35.4,
-                        "tax":3.2
-                    }
-                ]
-            }
-        }
+        # address: AddressCreate
 
     class Offer(BaseModel):
         name: str
@@ -84,43 +78,39 @@ def create_app() -> FastAPI:
         price: float
         items: list[Item]
 
-    @my_app.post("/items/{item_id}")
-    def read_item(
-            item_id: UUID,
-            start_datetime: Annotated[datetime, Body()],
-            end_datetime: Annotated[datetime, Body()],
-            process_after: Annotated[timedelta, Body()],
-            repeat_at: Annotated[time | None, Body()]
-    ):
-        start_process = start_datetime + process_after
-        duration = end_datetime - start_process
+    class BaseItem(BaseModel):
+        description: str
+        type: str
 
-        return {
+    class CarItem(BaseItem):
+        type: str = "car"
 
-            "item_id": item_id,
-            "start_datetime": start_datetime,
-            "end_datetime": end_datetime,
-            "process_after": process_after,
-            "repeat_at": repeat_at,
-            "start_process": start_process,
-            "duration": duration
-        }
+    class PlaneItem(BaseItem):
+        type: str = "plane"
+        size: int
 
-    @my_app.get("/cookie")
-    def cookie(ads_id: Annotated[str|None, Cookie()]):
-        return ads_id
+    items1 = {
+        "item1": {"description": "All my friends drive a low rider", "type": "car"},
+        "item2": {
+            "description": "Music is my aeroplane, it's my aeroplane",
+            "type": "plane",
+            "size": 5,
+        },
+    }
 
-    class CommonHeaders(BaseModel):
-        host: str
-        save_data: bool
-        if_modified_since: str | None = None
-        trace_parent: str | None = None
-        x_tags: list[str] = []
+    # @my_app.get("/union", response_model=PlaneItem | CarItem)
+    # def read_items(item_id: str):
+    #     return items1[item_id]
+    #
+    # @my_app.post("/items/{id}", response_model=Item, response_model_exclude_unset=True)
+    # def read_item(id: str):
+    #     return items[id]
 
-    @my_app.get("/header")
-    def headers(headers: Annotated[CommonHeaders, Header()]):
-        return headers
-
+    @my_app.get("/items")
+    def items(teleport: bool = False) -> Response | dict:
+        if teleport:
+            return RedirectResponse(url="https://www.google.com")
+        return {"msg":"done"}
 
     return my_app
 
