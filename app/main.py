@@ -1,14 +1,14 @@
 import logging
 import random
 from datetime import datetime, timedelta, time
-from typing import Annotated, Any, Union
+from typing import Annotated, Any, Union, Optional
 from uuid import UUID, uuid4
 
-from fastapi import FastAPI, Query, Path, Body, Cookie, Header, Response
+from fastapi import FastAPI, Query, Path, Body, Cookie, Header, Response, File, UploadFile, Depends, HTTPException
 from contextlib import asynccontextmanager
 
 from pydantic import AfterValidator, BaseModel
-from starlette.responses import RedirectResponse, JSONResponse
+from starlette.responses import RedirectResponse, JSONResponse, HTMLResponse
 
 from app.database.db_session import engine
 from app.schemas.base_or_shared.address import AddressCreate
@@ -44,7 +44,7 @@ def create_app() -> FastAPI:
         title="A multi-tenant fashion commerce platform",
         description="SeamlessFashion is an enterprise-grade fashion commerce platform that enables fashion brands, "
                     "clothing businesses, and designers to operate complete online businesses from a single platform",
-        lifespan=lifespan
+        lifespan=lifespan,
     )
 
     data = {
@@ -58,11 +58,6 @@ def create_app() -> FastAPI:
         "bar": {"name": "Bar", "description": "The bartenders", "price": 62, "tax": 20.2},
         "baz": {"name": "Baz", "description": None, "price": 50.2, "tax": 10.5, "tags": []},
     }
-
-    def check_valid_id(id: str):
-        if not id.startswith(("isbn-", "imdb-")):
-            raise ValueError("Invalid ID format. It must start with 'isbn-' or 'imdb-'")
-        return id
 
     class Item(BaseModel):
         name: str
@@ -98,19 +93,18 @@ def create_app() -> FastAPI:
         },
     }
 
-    # @my_app.get("/union", response_model=PlaneItem | CarItem)
-    # def read_items(item_id: str):
-    #     return items1[item_id]
-    #
-    # @my_app.post("/items/{id}", response_model=Item, response_model_exclude_unset=True)
-    # def read_item(id: str):
-    #     return items[id]
+    async def verify_token(x_token: Annotated[str, Header()]):
+        if x_token != "fake_secret_token":
+            raise HTTPException(status_code=400, detail="X Token header invalid")
+        return x_token
 
-    @my_app.get("/items")
-    def items(teleport: bool = False) -> Response | dict:
-        if teleport:
-            return RedirectResponse(url="https://www.google.com")
-        return {"msg":"done"}
+    async def verify_key(x_key: Annotated[str, Header()]):
+        if x_key != "fake_secret_key":
+            raise HTTPException(status_code=400, detail="X Key header invalid")
+
+    @my_app.get("/items", dependencies=[Depends(verify_token), Depends(verify_key)])
+    async def query_or_cookie():
+        return {"msg":"returned value is correct"}
 
     return my_app
 
