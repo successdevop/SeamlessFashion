@@ -1,7 +1,6 @@
 from typing import Annotated
 from fastapi import Depends
 from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker
-from sqlmodel import SQLModel
 from sqlmodel.ext.asyncio.session import AsyncSession
 
 from app.config.config import db_settings
@@ -20,11 +19,10 @@ AsyncSessionLocal = async_sessionmaker(
     expire_on_commit=False
 )
 
-
-async def init_db():
-    import app.models
-    async with engine.begin() as conn:
-        await conn.run_sync(SQLModel.metadata.create_all)
+# async def init_db():
+#     import app.models
+#     async with engine.begin() as conn:
+#         await conn.run_sync(SQLModel.metadata.create_all)
 
 
 async def get_db_session():

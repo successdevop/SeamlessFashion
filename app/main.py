@@ -93,6 +93,11 @@ def create_app() -> FastAPI:
         },
     }
 
+    data = {
+        "plumbus": {"description": "Freshly pickled plumbus", "owner": "Morty"},
+        "portal-gun": {"description": "Gun to create portals", "owner": "Rick"},
+    }
+
     async def verify_token(x_token: Annotated[str, Header()]):
         if x_token != "fake_secret_token":
             raise HTTPException(status_code=400, detail="X Token header invalid")
@@ -101,6 +106,44 @@ def create_app() -> FastAPI:
     async def verify_key(x_key: Annotated[str, Header()]):
         if x_key != "fake_secret_key":
             raise HTTPException(status_code=400, detail="X Key header invalid")
+        return x_key
+
+    class OwnerError(Exception):
+        pass
+
+    class InternalError(Exception):
+        pass
+
+    def get_another_username():
+        try:
+            yield "Rick"
+        except InternalError:
+            print("We don't swallow the internal error here, we raise again 😎")
+            raise
+
+    @my_app.get("/users/{user_id}")
+    def get_another_user(user_id: str, username: Annotated[str, Depends(get_another_username)]):
+        if user_id == "portal-gun":
+            raise InternalError(f"The portal-gun is too dangerous to be owned by {username}")
+
+        if user_id != "plumbus":
+            raise HTTPException(status_code=404, detail="Not found")
+        return user_id
+
+    def get_username():
+        try:
+            yield "Rick"
+        except OwnerError as e:
+            raise HTTPException(status_code=400, detail=f"Owner error: {e}")
+
+    @my_app.get("/user/{user_id}")
+    def get_user(user_id: str, username: Annotated[str, Depends(get_username)]):
+        if user_id not in data:
+            raise HTTPException(status_code=404, detail="Not found")
+        user = data[user_id]
+        if user["owner"] != username:
+            raise OwnerError(username)
+        return user
 
     @my_app.get("/items", dependencies=[Depends(verify_token), Depends(verify_key)])
     async def query_or_cookie():
