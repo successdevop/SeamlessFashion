@@ -1,14 +1,19 @@
 import logging
 import random
-from datetime import datetime, timedelta, time
+from datetime import datetime, timedelta, time, timezone
 from typing import Annotated, Any, Union, Optional
 from uuid import UUID, uuid4
 
+import jwt
 from fastapi import FastAPI, Query, Path, Body, Cookie, Header, Response, File, UploadFile, Depends, HTTPException
 from contextlib import asynccontextmanager
 
+from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
+from jwt import InvalidTokenError
 from pydantic import AfterValidator, BaseModel
 from starlette.responses import RedirectResponse, JSONResponse, HTMLResponse
+
+from pwdlib import PasswordHash
 
 from app.database.db_session import engine
 from app.schemas.base_or_shared.address import AddressCreate
@@ -47,107 +52,135 @@ def create_app() -> FastAPI:
         lifespan=lifespan,
     )
 
-    data = {
-        "isbn-9781529046137": "The Hitchhiker's Guide to the Galaxy",
-        "imdb-tt0371724": "The Hitchhiker's Guide to the Galaxy",
-        "isbn-9781439512982": "Isaac Asimov: The Complete Stories, Vol. 2",
-    }
-
-    items = {
-        "foo": {"name": "Foo", "price": 50.2},
-        "bar": {"name": "Bar", "description": "The bartenders", "price": 62, "tax": 20.2},
-        "baz": {"name": "Baz", "description": None, "price": 50.2, "tax": 10.5, "tags": []},
-    }
-
-    class Item(BaseModel):
-        name: str
-        description: str | None = None
-        price: float
-        tax: float = 10.5
-        tags: set[str] = set()
-        # address: AddressCreate
-
-    class Offer(BaseModel):
-        name: str
-        description: str | None = None
-        price: float
-        items: list[Item]
-
-    class BaseItem(BaseModel):
-        description: str
-        type: str
-
-    class CarItem(BaseItem):
-        type: str = "car"
-
-    class PlaneItem(BaseItem):
-        type: str = "plane"
-        size: int
-
-    items1 = {
-        "item1": {"description": "All my friends drive a low rider", "type": "car"},
-        "item2": {
-            "description": "Music is my aeroplane, it's my aeroplane",
-            "type": "plane",
-            "size": 5,
+    fake_users_db = {
+        "johndoe": {
+            "username": "johndoe",
+            "full_name": "John Doe",
+            "email": "johndoe@example.com",
+            "hashed_password": "$argon2id$v=19$m=65536,t=3,p=4$wagCPXjifgvUFBzq4hqe3w$CYaIb8sB+wtD+Vu/P4uod1+Qof8h+1g7bbDlBID48Rc",
+            "disabled": False,
+        },
+        "alice": {
+            "username": "alice",
+            "full_name": "Alice Wonderson",
+            "email": "alice@example.com",
+            "hashed_password": "fakehashedsecret2",
+            "disabled": True,
         },
     }
 
-    data = {
-        "plumbus": {"description": "Freshly pickled plumbus", "owner": "Morty"},
-        "portal-gun": {"description": "Gun to create portals", "owner": "Rick"},
-    }
+    SECRET_KEY = "5df860686389b11fe6aa3736b46810e233f3ce5ee6d22dbadc50a26d74cbd1d3"
+    ALGORITHM = "HS256"
+    ACCESS_TOKEN_EXPIRE_MINUTES = 30
 
-    async def verify_token(x_token: Annotated[str, Header()]):
-        if x_token != "fake_secret_token":
-            raise HTTPException(status_code=400, detail="X Token header invalid")
-        return x_token
+    class Token(BaseModel):
+        access_token: str
+        token_type: str
 
-    async def verify_key(x_key: Annotated[str, Header()]):
-        if x_key != "fake_secret_key":
-            raise HTTPException(status_code=400, detail="X Key header invalid")
-        return x_key
+    class TokenData(BaseModel):
+        username: str
 
-    class OwnerError(Exception):
-        pass
+    class User(BaseModel):
+        username: str
+        email: str | None = None
+        full_name: str | None = None
+        disabled: bool | None = None
 
-    class InternalError(Exception):
-        pass
+    class UserInDB(User):
+        hashed_password: str
 
-    def get_another_username():
-        try:
-            yield "Rick"
-        except InternalError:
-            print("We don't swallow the internal error here, we raise again 😎")
-            raise
+    oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
+    password_hash = PasswordHash.recommended()
+    DUMMY_HASH = password_hash.hash("dummypassword")
 
-    @my_app.get("/users/{user_id}")
-    def get_another_user(user_id: str, username: Annotated[str, Depends(get_another_username)]):
-        if user_id == "portal-gun":
-            raise InternalError(f"The portal-gun is too dangerous to be owned by {username}")
 
-        if user_id != "plumbus":
-            raise HTTPException(status_code=404, detail="Not found")
-        return user_id
+    def get_hash_password(password: str):
+        return password_hash.hash(password=password)
 
-    def get_username():
-        try:
-            yield "Rick"
-        except OwnerError as e:
-            raise HTTPException(status_code=400, detail=f"Owner error: {e}")
+    def verify_password(password: str, hashed_password: str):
+        return password_hash.verify(password=password, hash=hashed_password)
 
-    @my_app.get("/user/{user_id}")
-    def get_user(user_id: str, username: Annotated[str, Depends(get_username)]):
-        if user_id not in data:
-            raise HTTPException(status_code=404, detail="Not found")
-        user = data[user_id]
-        if user["owner"] != username:
-            raise OwnerError(username)
+    def get_user(db: dict, username: str):
+        if username not in db:
+            return None
+        user = db[username]
+        return UserInDB(**user)
+
+    def authenticate_user(db: dict, username: str, password: str):
+        user = get_user(db=db, username=username)
+        if not user:
+            verify_password(password=password, hashed_password=DUMMY_HASH)
+            return False
+        if not verify_password(password=password, hashed_password=user.hashed_password):
+            return False
         return user
 
-    @my_app.get("/items", dependencies=[Depends(verify_token), Depends(verify_key)])
-    async def query_or_cookie():
-        return {"msg":"returned value is correct"}
+    def create_access_token(data: dict, expires_delta: timedelta | None = None):
+        to_encode = data.copy()
+        if expires_delta:
+            expire = datetime.now(timezone.utc) + expires_delta
+        else:
+            expire = datetime.now(timezone.utc) + timedelta(minutes=15)
+
+        to_encode.update({"exp": expire})
+        encoded_jwt = jwt.encode(payload=to_encode, key=SECRET_KEY, algorithm=ALGORITHM)
+        return encoded_jwt
+
+
+    async def get_current_user(token: Annotated[str, Depends(oauth2_scheme)]):
+        credential_exception = HTTPException(
+            status_code=400,
+            detail="Could not validate credentials",
+            headers={"WWW-Authenticate":"Bearer"}
+        )
+
+        try:
+            payload = jwt.decode(token, key=SECRET_KEY, algorithms=[ALGORITHM])
+            print(payload)
+
+            username = payload.get("sub")
+            if username is None:
+                raise credential_exception
+
+            token_data = TokenData(username=username)
+
+        except InvalidTokenError:
+            raise credential_exception
+
+        user = get_user(fake_users_db, token_data.username)
+        if user is None:
+            raise credential_exception
+        return user
+
+    async def get_current_active_user(active_user: Annotated[User, Depends(get_current_user)]):
+        if active_user.disabled:
+            raise HTTPException(status_code=400, detail="Inactive user")
+        return active_user
+
+    @my_app.post("/token")
+    def login(form_data: Annotated[OAuth2PasswordRequestForm, Depends()]):
+        user_data = authenticate_user(fake_users_db, form_data.username, form_data.password)
+        if not user_data:
+            raise HTTPException(
+                status_code=401, detail="Incorrect username or password", headers={"WWW-Authenticate":"Bearer"}
+            )
+
+        access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+        access_token = create_access_token(
+            data={"sub": user_data.username}, expires_delta=access_token_expires
+        )
+
+        return Token(access_token=access_token, token_type="bearer")
+
+    @my_app.get("/users/me/")
+    async def read_user_me(user: Annotated[User, Depends(get_current_active_user)]) -> User:
+        return user
+
+    @my_app.get("/users/me/items/")
+    async def read_own_items(
+            current_user: Annotated[User, Depends(get_current_active_user)],
+    ):
+        return [{"item_id": "Foo", "owner": current_user.username}]
 
     return my_app
 
