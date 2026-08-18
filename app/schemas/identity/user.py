@@ -2,10 +2,11 @@ from datetime import date, datetime
 from typing import TYPE_CHECKING
 from uuid import UUID
 
-from pydantic import Field, EmailStr, model_validator
+from pydantic import Field, EmailStr, model_validator, field_validator, HttpUrl
 
 from app.enums.user_enums import GenderEnum, AddressTypeEnum, VerificationStatusEnum, DocumentTypeEnum
 from app.schemas.base_or_shared.orm_base import ORMBaseSchema
+from app.utils.utils import validate_username, validate_phone_number, validate_date_of_birth
 
 if TYPE_CHECKING:
     from app.schemas.base_or_shared.address import AddressRead
@@ -92,6 +93,16 @@ class UserBase(ORMBaseSchema):
     email: EmailStr
     phone_number: str
 
+    @field_validator("username")
+    @classmethod
+    def validate_username_field(cls, value: str) -> str:
+        return validate_username(value)
+
+    @field_validator("phone_number")
+    @classmethod
+    def validate_phone_number_field(cls, value: str) -> str:
+        return validate_phone_number(value)
+
 
 class UserSummary(UserBase):
     first_name: str | None = Field(default=None, max_length=100)
@@ -111,10 +122,20 @@ class UserCreate(UserSummary):
 class UserProfileUpdate(ORMBaseSchema):
     first_name: str | None = None
     last_name: str | None = None
-    avatar_url: str | None = None
+    avatar_url: HttpUrl | None = None
     phone_number: str | None = None
     gender: GenderEnum | None = None
     date_of_birth: date | None = None
+
+    @field_validator("phone_number")
+    @classmethod
+    def validate_phone_number_field(cls, value: str) -> str:
+        return validate_phone_number(value)
+
+    @field_validator("date_of_birth")
+    @classmethod
+    def validate_dob_field(cls, value: date) -> str:
+        return validate_date_of_birth(value)
 
 
 class AdminUserProfileUpdate(ORMBaseSchema):

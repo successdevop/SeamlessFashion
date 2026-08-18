@@ -37,4 +37,21 @@ class DatabaseSettings(BaseSettings):
             database=self.POSTGRES_DB
         )
 
+
+class SecuritySetting(BaseSettings):
+    JWT_PRIVATE_KEY: str
+    JWT_PUBLIC_KEY: str
+    JWT_ALGORITHM: str
+    ACCESS_TOKEN_EXPIRE_MINUTES: int
+    REFRESH_TOKEN_EXPIRE_DAYS: int
+
+    model_config = _base_config
+
+
+# DATABASE SETTINGS
 db_settings = DatabaseSettings()
+
+# JWT SECURITY KEY
+security = SecuritySetting()
+PRIVATE_KEY = security.JWT_PRIVATE_KEY.replace("\\n", "\n")
+PUBLIC_KEY = security.JWT_PUBLIC_KEY.replace("\\n", "\n")
