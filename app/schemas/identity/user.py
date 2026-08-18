@@ -88,9 +88,9 @@ class UserSecurityRead(UserSecurityProfileSummary):
 
 
 class UserBase(ORMBaseSchema):
-    username: str = Field(min_length=4, max_length=30, pattern=r"^[a-zA-Z0-9_]+$")
+    username: str
     email: EmailStr
-    phone_number: str = Field(pattern=r"^\+?[1-9]\d{7,15}$")
+    phone_number: str
 
 
 class UserSummary(UserBase):
