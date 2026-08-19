@@ -15,6 +15,7 @@ from starlette.responses import RedirectResponse, JSONResponse, HTMLResponse
 
 from pwdlib import PasswordHash
 
+from app.api.auth.auth import auth
 from app.database.db_session import engine
 from app.schemas.base_or_shared.address import AddressCreate
 from app.schemas.identity.user import UserBase
@@ -51,6 +52,8 @@ def create_app() -> FastAPI:
                     "clothing businesses, and designers to operate complete online businesses from a single platform",
         lifespan=lifespan,
     )
+
+    my_app.include_router(auth)
 
     fake_users_db = {
         "johndoe": {

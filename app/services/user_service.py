@@ -9,8 +9,8 @@ from app.utils.auth import validate_password, generate_hash_password
 
 
 class UserService(UserCrud):
-    def __init__(self, model: SQLModel, session: AsyncSession):
-        super().__init__(model=model, session=session)
+    def __init__(self, model: type[SQLModel], session: AsyncSession):
+        super().__init__(model=type[model], session=session)
 
     async def register_user(self, user_data: UserCreate):
         if await self.get_by_email(email=user_data.email):
