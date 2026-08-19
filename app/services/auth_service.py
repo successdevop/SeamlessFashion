@@ -13,13 +13,26 @@ class AuthService:
         self._session = session
 
     async def register_user(self, user_data: UserCreate) -> User:
-        email = str(user_data.email).strip().lower()
 
-        existing_user = await self._user_repo._get_by_email(email)
+        existing_user = await self._user_repo.get_by_email(email=user_data.email)
         if existing_user:
             raise HTTPException(
                 status_code=status.HTTP_409_CONFLICT,
                 detail="Email already exist"
+            )
+
+        existing_username = await self._user_repo.get_by_username(username=user_data.username)
+        if existing_username:
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail="Username already taken"
+            )
+
+        existing_phone_number = await self._user_repo.get_by_phone_number(phone_number=user_data.phone_number)
+        if existing_phone_number:
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail="Phone number already exist"
             )
 
         is_valid, message = validate_password(user_data.password)
@@ -35,12 +48,11 @@ class AuthService:
 
         new_user = User(
             **user_dict,
-            email=email,
             hash_password=hash_password
         )
 
         try:
-            await self._user_repo._save(new_user)
+            await self._user_repo.save(new_user)
             await self._session.commit()
             await self._session.refresh(new_user)
 

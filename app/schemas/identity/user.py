@@ -98,6 +98,11 @@ class UserBase(ORMBaseSchema):
     def validate_username_field(cls, value: str) -> str:
         return validate_username(value)
 
+    @field_validator("email")
+    @classmethod
+    def normalize_email(cls, value: EmailStr) -> str:
+        return str(value).strip().lower()
+
     @field_validator("phone_number")
     @classmethod
     def validate_phone_number_field(cls, value: str) -> str:
