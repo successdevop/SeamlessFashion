@@ -19,6 +19,21 @@ def verify_hash_password(login_password: str, stored_hash_password: str) -> bool
     return password_hash.verify(password=login_password, hash=stored_hash_password)
 
 
+def validate_password(password: str) -> tuple[bool, str]:
+    special_characters = "!@#$%^&*()_+-=[]{}|;:,.<>?"
+
+    if not any(c.isupper() for c in password) or not any(c.islower() for c in password):
+        return False, "Password must contain at least one capital letter and one small letter"
+
+    if not any(c.isdigit() for c in password):
+        return False, "Password must contain at least one number"
+
+    if not any(c in special_characters for c in password):
+        return False, "Password must contain at least one special character"
+
+    return True, "OK"
+
+
 def generate_access_token(user_id: UUID) -> str:
     now = datetime.now(tz=timezone.utc)
 
