@@ -19,7 +19,7 @@ class UserInfoMixin(SQLModel):
     last_name: str | None = None
     username: str = Field(unique=True, index=True)
     email: str = Field(unique=True, index=True)
-    phone_number: str = Field(index=True)
+    phone_number: str = Field(unique=True, index=True)
     avatar_url: str | None = None
     gender: GenderEnum | None = None
     date_of_birth: date | None = None

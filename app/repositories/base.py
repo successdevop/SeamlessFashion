@@ -19,23 +19,16 @@ class BaseCrud(Generic[ModelT]):
 
     async def save(self, entity: ModelT) -> ModelT:
         self.session.add(entity)
-        await self.session.commit()
+        await self.session.flush()
         await self.session.refresh(entity)
         return entity
 
-    async def update(self, entity: ModelT) -> ModelT:
-        self.session.add(entity)
-        await self.session.commit()
-        return entity
-
-    async def delete(self, entity: ModelT, soft: bool = True) -> None:
-        if soft and hasattr(entity, "is_deleted"):
+    async def delete(self, entity: ModelT, soft_delete: bool = True) -> None:
+        if soft_delete and hasattr(entity, "is_deleted"):
             entity.is_deleted = True
             entity.deleted_at = datetime.now(tz=timezone.utc)
             entity.is_active = False
         else:
             await self.session.delete(entity)
 
-        await self.session.commit()
-
-
+        await self.session.flush()

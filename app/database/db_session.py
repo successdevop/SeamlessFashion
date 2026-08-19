@@ -19,15 +19,10 @@ AsyncSessionLocal = async_sessionmaker(
     expire_on_commit=False
 )
 
-# async def init_db():
-#     import app.models
-#     async with engine.begin() as conn:
-#         await conn.run_sync(SQLModel.metadata.create_all)
-
 
 async def get_db_session():
     async with AsyncSessionLocal() as session:
         yield session
 
 
-databaseSessionDep = Annotated[AsyncSession, Depends(get_db_session)]
+DatabaseSessionDep = Annotated[AsyncSession, Depends(get_db_session)]
