@@ -1,24 +1,19 @@
 import logging
-import random
-from datetime import datetime, timedelta, time, timezone
-from typing import Annotated, Any, Union, Optional
-from uuid import UUID, uuid4
+from datetime import datetime, timedelta, timezone
+from typing import Annotated
 
 import jwt
-from fastapi import FastAPI, Query, Path, Body, Cookie, Header, Response, File, UploadFile, Depends, HTTPException
+from fastapi import FastAPI, Depends, HTTPException
 from contextlib import asynccontextmanager
 
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from jwt import InvalidTokenError
-from pydantic import AfterValidator, BaseModel
-from starlette.responses import RedirectResponse, JSONResponse, HTMLResponse
+from pydantic import BaseModel
 
 from pwdlib import PasswordHash
 
 from app.api.auth.auth import auth
 from app.database.db_session import engine
-from app.schemas.base_or_shared.address import AddressCreate
-from app.schemas.identity.user import UserBase
 
 logger = logging.getLogger(__name__)
 

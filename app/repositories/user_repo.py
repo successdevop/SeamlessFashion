@@ -2,34 +2,37 @@ from sqlmodel import select
 from sqlmodel.ext.asyncio.session import AsyncSession
 
 from app.models import User
-from app.repositories.base import BaseCrud
+from app.repositories.base import BaseRepository
 
 
-class UserCrud(BaseCrud[User]):
+class UserRepository(BaseRepository[User]):
     def __init__(self, session: AsyncSession ):
         super().__init__(User, session=session)
 
-    async def get_by_email(self, email: str) -> User | None:
+    async def _get_by_email(self, email: str) -> User | None:
         return (
-            await self.session.exec(
+            await self._session.exec(
                 select(User).where(User.email == email)
             )
         ).first()
 
-    async def get_by_username(self, username: str) -> User | None:
+    async def _get_by_username(self, username: str) -> User | None:
         return (
-            await self.session.exec(
+            await self._session.exec(
                 select(User).where(User.username == username)
             )
-        ).one()
+        ).first()
 
-    async def get_by_phone_number(self, phone_number: str) -> User | None:
+    async def _get_by_phone_number(self, phone_number: str) -> User | None:
         return (
-            await self.session.exec(
+            await self._session.exec(
                 select(User).where(User.phone_number == phone_number)
             )
-        ).one()
+        ).first()
 
-    async def get_all_active_users(self, is_active: bool = True):
-        smt = select(User).where(User.is_active == is_active)
-        return (await self.session.exec(smt)).all()
+    async def _get_users_by_active_status(self, is_active: bool) -> list[User]:
+        users = await self._session.exec(
+            select(User).where(User.is_active == is_active)
+        )
+
+        return list(users.all())
