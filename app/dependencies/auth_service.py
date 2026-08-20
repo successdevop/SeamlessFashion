@@ -12,6 +12,6 @@ def get_user_crud(session: DatabaseSessionDep) -> UserRepository:
 
 
 def get_auth_service(crud: Annotated[UserRepository, Depends(get_user_crud)], session: DatabaseSessionDep):
-    return AuthService(user_crud=crud, session=session)
+    return AuthService(user_repo=crud, session=session)
 
 AuthServiceDep = Annotated[AuthService, Depends(get_auth_service)]

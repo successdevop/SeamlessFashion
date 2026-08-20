@@ -1,7 +1,8 @@
-from fastapi import HTTPException, status
 from sqlalchemy.exc import IntegrityError
 from sqlmodel.ext.asyncio.session import AsyncSession
 
+from app.exceptions.exceptions import EmailAlreadyExistsError, UsernameAlreadyTakenError, PhoneNumberAlreadyExistsError, \
+    InvalidPasswordError, DatabaseIntegrityError
 from app.models import User
 from app.repositories.user_repo import UserRepository
 from app.schemas.identity.user import UserCreate
@@ -15,33 +16,21 @@ class AuthService:
 
     async def register_user(self, user_data: UserCreate) -> User:
 
-        existing_user = await self._user_repo.get_by_email(email=user_data.email)
+        existing_user = await self._user_repo.get_by_email_including_deleted(email=user_data.email)
         if existing_user:
-            raise HTTPException(
-                status_code=status.HTTP_409_CONFLICT,
-                detail="Email already exist"
-            )
+            raise EmailAlreadyExistsError()
 
         existing_username = await self._user_repo.get_by_username(username=user_data.username)
         if existing_username:
-            raise HTTPException(
-                status_code=status.HTTP_409_CONFLICT,
-                detail="Username already taken"
-            )
+            raise UsernameAlreadyTakenError()
 
         existing_phone_number = await self._user_repo.get_by_phone_number(phone_number=user_data.phone_number)
         if existing_phone_number:
-            raise HTTPException(
-                status_code=status.HTTP_409_CONFLICT,
-                detail="Phone number already exist"
-            )
+            raise PhoneNumberAlreadyExistsError()
 
         is_valid, message = validate_password(user_data.password)
         if not is_valid:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail=message
-            )
+            raise InvalidPasswordError()
 
         password_hash = generate_hash_password(password=user_data.password)
 
@@ -62,11 +51,8 @@ class AuthService:
         except IntegrityError as exc:
             await self._session.rollback()
 
-            raise HTTPException(
-                status_code=status.HTTP_409_CONFLICT,
-                detail=f"Integrity error: {exc}"
-            ) from exc
-        
+            raise DatabaseIntegrityError() from exc
+
         except Exception:
             await self._session.rollback()
             raise
