@@ -1,4 +1,5 @@
 from fastapi import HTTPException, status
+from sqlalchemy.exc import IntegrityError
 from sqlmodel.ext.asyncio.session import AsyncSession
 
 from app.models import User
@@ -42,13 +43,13 @@ class AuthService:
                 detail=message
             )
 
-        hash_password = generate_hash_password(password=user_data.password)
+        password_hash = generate_hash_password(password=user_data.password)
 
         user_dict = user_data.model_dump(exclude={"password"})
 
         new_user = User(
             **user_dict,
-            hash_password=hash_password
+            password_hash=password_hash
         )
 
         try:
@@ -57,6 +58,15 @@ class AuthService:
             await self._session.refresh(new_user)
 
             return new_user
+
+        except IntegrityError as exc:
+            await self._session.rollback()
+
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail=f"Integrity error: {exc}"
+            ) from exc
+        
         except Exception:
             await self._session.rollback()
             raise

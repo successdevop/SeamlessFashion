@@ -5,6 +5,7 @@ from uuid import UUID
 from sqlmodel import SQLModel
 from sqlmodel.ext.asyncio.session import AsyncSession
 
+from app.models import User
 
 ModelT = TypeVar("ModelT", bound=SQLModel)
 
@@ -15,6 +16,16 @@ class BaseRepository(Generic[ModelT]):
         self.session = session
 
     async def get_by_id(self, uid: UUID) -> ModelT | None:
+        entity = await self.session.get(self.model, uid)
+        if entity is None:
+            return None
+
+        if getattr(entity, "is_deleted", True):
+            return None
+
+        return entity
+
+    async def get_by_id_including_deleted(self, uid: UUID) -> ModelT | None:
         return await self.session.get(self.model, uid)
 
     async def save(self, entity: ModelT) -> None:
@@ -22,17 +33,15 @@ class BaseRepository(Generic[ModelT]):
         await self.session.flush()
 
     async def delete(self, entity: ModelT) -> None:
-        await self.session.delete(entity)
-        await self.session.flush()
-
-    async def soft_delete(self, entity: ModelT) -> None:
-        if all(hasattr(entity, field) for field in ("is_deleted", "deleted_at", "is_active")):
+        if isinstance(entity, User):
             entity.is_deleted = True
             entity.deleted_at = datetime.now(tz=timezone.utc)
             entity.is_active = False
-        elif all(hasattr(entity, field) for field in ("is_deleted", "deleted_at")):
+        elif hasattr(entity, "is_deleted"):
             entity.is_deleted = True
             entity.deleted_at = datetime.now(tz=timezone.utc)
         else:
-            raise ValueError(f"{self.model.__name__} does not support soft deletion")
+            await self.session.delete(entity)
+
         await self.session.flush()
+
