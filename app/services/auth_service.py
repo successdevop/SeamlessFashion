@@ -1,3 +1,5 @@
+from datetime import datetime, timezone
+
 from sqlalchemy.exc import IntegrityError
 from sqlmodel.ext.asyncio.session import AsyncSession
 
@@ -18,6 +20,12 @@ class AuthService:
 
         existing_user = await self._user_repo.get_by_email_including_deleted(email=user_data.email)
         if existing_user:
+            if existing_user.is_deleted and existing_user.deleted_at:
+                days = datetime.now(tz=timezone.utc) - existing_user.deleted_at
+                if days.days <= 30:
+                    # send an email informing the customer to activate their account by logging in
+                    raise EmailAlreadyExistsError()
+            # customer has an active account and doesn't need activation
             raise EmailAlreadyExistsError()
 
         existing_username = await self._user_repo.get_by_username(username=user_data.username)

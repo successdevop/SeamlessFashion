@@ -13,6 +13,9 @@ class BaseRepository(Generic[ModelT]):
         self.model = model
         self.session = session
 
+    async def get_by_id_including_deleted(self, uid: UUID) -> ModelT | None:
+        return await self.session.get(self.model, uid)
+
     async def get_by_id(self, uid: UUID) -> ModelT | None:
         entity = await self.session.get(self.model, uid)
         if entity is None:
@@ -22,9 +25,6 @@ class BaseRepository(Generic[ModelT]):
             return None
 
         return entity
-
-    async def get_by_id_including_deleted(self, uid: UUID) -> ModelT | None:
-        return await self.session.get(self.model, uid)
 
     async def save(self, entity: ModelT) -> ModelT:
         self.session.add(entity)
