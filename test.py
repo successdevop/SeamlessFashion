@@ -66,17 +66,40 @@ from sqlalchemy.ext.asyncio import create_async_engine
 from app.config.config import db_settings
 
 
-async def test_connection():
-    url = db_settings.postgres_url
+# async def test_connection():
+#     url = db_settings.postgres_url
+#
+#     print(url.render_as_string(hide_password=True))
+#
+#     engine = create_async_engine(url)
+#
+#     async with engine.connect() as connection:
+#         print("SQLAlchemy connection successful!")
+#
+#     await engine.dispose()
+#
+#
+# asyncio.run(test_connection())
 
-    print(url.render_as_string(hide_password=True))
-
-    engine = create_async_engine(url)
-
-    async with engine.connect() as connection:
-        print("SQLAlchemy connection successful!")
-
-    await engine.dispose()
+from cryptography.hazmat.primitives import serialization
+from cryptography.hazmat.primitives.asymmetric import rsa
 
 
-asyncio.run(test_connection())
+private_key = rsa.generate_private_key(
+    public_exponent=65537,
+    key_size=3072,
+)
+
+private_pem = private_key.private_bytes(
+    encoding=serialization.Encoding.PEM,
+    format=serialization.PrivateFormat.PKCS8,
+    encryption_algorithm=serialization.NoEncryption(),
+)
+
+public_pem = private_key.public_key().public_bytes(
+    encoding=serialization.Encoding.PEM,
+    format=serialization.PublicFormat.SubjectPublicKeyInfo,
+)
+
+print(private_pem.decode())
+print(public_pem.decode())
