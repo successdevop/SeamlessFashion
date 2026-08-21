@@ -5,7 +5,7 @@ from uuid import UUID, uuid4
 import jwt
 from pwdlib import PasswordHash
 
-from app.config.config import security, PRIVATE_KEY, PUBLIC_KEY
+from app.database.db_engine import security, PRIVATE_KEY, PUBLIC_KEY
 
 password_hash = PasswordHash.recommended()
 DUMMY_HASH = password_hash.hash("dummy_password")

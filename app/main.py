@@ -1,4 +1,5 @@
 import logging
+from collections.abc import AsyncIterator
 from datetime import datetime, timedelta, timezone
 from typing import Annotated
 
@@ -7,12 +8,14 @@ from fastapi import FastAPI, Depends, HTTPException
 from contextlib import asynccontextmanager
 
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
+from fastapi.sse import EventSourceResponse, ServerSentEvent
 from jwt import InvalidTokenError
 from pydantic import BaseModel
 
 from pwdlib import PasswordHash
+from sqlmodel import SQLModel
 
-from app.api.auth.auth import auth
+from app.api import api_routes
 from app.database.db_session import engine
 
 logger = logging.getLogger(__name__)
@@ -48,7 +51,7 @@ def create_app() -> FastAPI:
         lifespan=lifespan,
     )
 
-    my_app.include_router(auth)
+    my_app.include_router(api_routes)
 
     fake_users_db = {
         "johndoe": {
@@ -179,6 +182,31 @@ def create_app() -> FastAPI:
             current_user: Annotated[User, Depends(get_current_active_user)],
     ):
         return [{"item_id": "Foo", "owner": current_user.username}]
+
+    class Item(SQLModel):
+        name: str
+        description: str
+
+    items = [
+        Item(name="Plumbus", description="A multi-purpose household device."),
+        Item(name="Portal Gun", description="A portal opening device."),
+        Item(name="Meeseeks Box", description="A box that summons a Meeseeks."),
+    ]
+
+    logs = [
+        "2025-01-01 INFO  Application started",
+        "2025-01-01 DEBUG Connected to database",
+        "2025-01-01 WARN  High memory usage detected",
+    ]
+
+    @my_app.get("/strems", response_class=EventSourceResponse)
+    async def stream_data() -> AsyncIterator[ServerSentEvent]:
+        # yield ServerSentEvent(comment="stream of item updated")
+        # for i, item in enumerate(items):
+        #     yield ServerSentEvent(data=item, event="item_update", id=str(i+1), retry=5000)
+        for i, log in enumerate(logs):
+            yield ServerSentEvent(raw_data=log, id=str(i))
+
 
     return my_app
 
