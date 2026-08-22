@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from pydantic import SecretStr
+from pydantic import SecretStr, AnyHttpUrl
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from sqlalchemy.engine import URL
 
@@ -14,6 +14,13 @@ _base_config = SettingsConfigDict(
     extra='ignore',
     case_sensitive=True
 )
+
+
+class ApplicationSettings(BaseSettings):
+    APP_NAME: str
+    APP_DOMAIN: AnyHttpUrl
+
+    model_config = _base_config
 
 
 class DatabaseSettings(BaseSettings):
@@ -37,6 +44,16 @@ class DatabaseSettings(BaseSettings):
             port=self.POSTGRES_PORT,
             database=self.POSTGRES_DB
         )
+
+
+class RedisSettings(BaseSettings):
+    REDIS_HOST: str
+    REDIS_PORT: str
+
+    model_config = _base_config
+
+    def redis_url(self, db: int):
+        return f"redis://{self.REDIS_HOST}:{self.REDIS_PORT}/{db}"
 
 
 class SecuritySetting(BaseSettings):
@@ -64,8 +81,14 @@ class EmailSettings(BaseSettings):
     model_config = _base_config
 
 
+# APPLICATION SETTINGS
+app_settings = ApplicationSettings()
+
 # DATABASE SETTINGS
 db_settings = DatabaseSettings()
+
+# REDIS SETTINGS
+redis_settings = RedisSettings()
 
 # JWT SECURITY KEY
 security = SecuritySetting()

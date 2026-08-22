@@ -1,4 +1,5 @@
 from pathlib import Path
+from typing import Any
 
 from fastapi_mail import ConnectionConfig, FastMail, MessageSchema, MessageType
 
@@ -14,12 +15,14 @@ class EmailService:
         self._fastmail = FastMail(config=self._config)
         self._email_sender = self._fastmail.send_message
 
-    def send_email_with_html_template(self, recipients: list, email_subject: str, context: dict, template_name:str):
+    def send_email_with_html_template(
+            self, recipients: list, email_subject: str, template_name:str, template_data: dict[str, Any]
+    ):
         try:
             message=MessageSchema(
                 recipients=recipients,
                 subject=email_subject,
-                template_body=context,
+                template_body=template_data,
                 subtype=MessageType.html
             )
 
