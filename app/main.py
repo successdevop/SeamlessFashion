@@ -1,10 +1,11 @@
 import logging
+import time
 from collections.abc import AsyncIterator
 from datetime import datetime, timedelta, timezone
 from typing import Annotated
 
 import jwt
-from fastapi import FastAPI, Depends, HTTPException
+from fastapi import FastAPI, Depends, HTTPException, Header, BackgroundTasks
 from contextlib import asynccontextmanager
 
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
@@ -13,6 +14,7 @@ from jwt import InvalidTokenError
 from pydantic import BaseModel
 
 from pwdlib import PasswordHash
+from sqlalchemy.util import ellipses_string
 from sqlmodel import SQLModel
 
 from app.api import api_routes
@@ -185,12 +187,15 @@ def create_app() -> FastAPI:
 
     class Item(SQLModel):
         name: str
-        description: str
+        price: float
+
+    class Prompt(BaseModel):
+        text: str
 
     items = [
-        Item(name="Plumbus", description="A multi-purpose household device."),
-        Item(name="Portal Gun", description="A portal opening device."),
-        Item(name="Meeseeks Box", description="A box that summons a Meeseeks."),
+        Item(name="Plumbus", price=32.99),
+        Item(name="Portal Gun", price=999.99),
+        Item(name="Meeseeks Box", price=49.99),
     ]
 
     logs = [
@@ -199,13 +204,56 @@ def create_app() -> FastAPI:
         "2025-01-01 WARN  High memory usage detected",
     ]
 
+    @my_app.post("/chat/stream")
+    async def chat(post: Prompt) -> AsyncIterator[ServerSentEvent]:
+        words = post.text.split()
+        for word in words:
+            yield ServerSentEvent(data=word)
+        yield ServerSentEvent(raw_data='[DONE]', event="done")
+
     @my_app.get("/strems", response_class=EventSourceResponse)
-    async def stream_data() -> AsyncIterator[ServerSentEvent]:
-        # yield ServerSentEvent(comment="stream of item updated")
-        # for i, item in enumerate(items):
-        #     yield ServerSentEvent(data=item, event="item_update", id=str(i+1), retry=5000)
-        for i, log in enumerate(logs):
-            yield ServerSentEvent(raw_data=log, id=str(i))
+    async def stream_data(last_event_id: Annotated[int | None, Header()] = None) -> AsyncIterator[ServerSentEvent]:
+        start = last_event_id + 1 if last_event_id is not None else 0
+        for i, log in enumerate(items):
+            if i < start:
+                continue
+            yield ServerSentEvent(data=log, id=str(i))
+
+    def write_notification(email: str, message: str):
+        with open("log.txt", mode="w") as email_file:
+            message = f"notification for {email}: {message}"
+            email_file.write(message)
+
+    def write_log(message: str):
+        with open("log.txt", mode="a") as log:
+            log.write(f"{message}\n")
+
+    def get_query(background_task: BackgroundTasks, q: str | None = None):
+        if q:
+            message = f"found query: {q}\n"
+            background_task.add_task(write_log, message)
+        return q
+
+    @my_app.post("/send-notifications/{email}")
+    async def notifications(email: str, background_tasks: BackgroundTasks, q: Annotated[str, Depends(get_query)]):
+        message = f"Message to {email}\n"
+        background_tasks.add_task(write_log, message)
+        return {"msg": "Message sent"}
+
+    @my_app.post("/send-notification/{email}")
+    async def send_notification(email: str, background_tasks: BackgroundTasks):
+        background_tasks.add_task(write_notification, email, message="some notification")
+        return {"message":"Notification sent in the background"}
+
+    def process_data(data: User):
+        time.sleep(5.0)
+        print(f"processing data: {data}")
+
+    @my_app.post("/process_data")
+    async def process_endpoint(data: User, background_task: BackgroundTasks):
+        background_task.add_task(process_data, data)
+        return {"msg":"Task submitted successfully"}
+
 
 
     return my_app
