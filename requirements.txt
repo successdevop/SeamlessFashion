@@ -4,3 +4,5 @@ pyjwt[crypto]
 pwdlib[argon2]
 alembic
 asyncpg
+fastapi-mail
+celery[redis]
