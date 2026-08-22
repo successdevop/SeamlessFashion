@@ -45,3 +45,5 @@ def validate_date_of_birth(dob: date | None, minimum_age: int = 10):
         raise ValueError(f"User must be at least {minimum_age} years old")
 
     return dob
+
+# If an account exists for this email, you will receive an email.
