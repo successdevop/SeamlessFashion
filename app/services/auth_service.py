@@ -16,9 +16,9 @@ class AuthService:
         self._session = session
 
     async def register_user(self, user_data: UserCreate) -> User:
-        async with AuthUnitOfWork(session=self._session) as auth:
+        async with AuthUnitOfWork(session=self._session) as authUoW:
 
-            existing_user = await auth.get_by_email_including_deleted(email=user_data.email)
+            existing_user = await authUoW.users.get_by_email_including_deleted(email=user_data.email)
             if existing_user:
                 if existing_user.is_deleted and existing_user.deleted_at:
                     days = datetime.now(tz=timezone.utc) - existing_user.deleted_at
@@ -28,11 +28,11 @@ class AuthService:
                 # customer has an active account and doesn't need activation
                 raise EmailAlreadyExistsError()
 
-            existing_username = await auth.get_by_username(username=user_data.username)
+            existing_username = await authUoW.users.get_by_username(username=user_data.username)
             if existing_username:
                 raise UsernameAlreadyTakenError()
 
-            existing_phone_number = await auth.get_by_phone_number(phone_number=user_data.phone_number)
+            existing_phone_number = await authUoW.users.get_by_phone_number(phone_number=user_data.phone_number)
             if existing_phone_number:
                 raise PhoneNumberAlreadyExistsError()
 
@@ -50,9 +50,15 @@ class AuthService:
             )
 
             try:
-                await auth.save(new_user)
-                await auth.commit()
-                await auth.refresh(new_user)
+                await authUoW.users.save(new_user)
+
+                await authUoW.outbox_message.save(
+                    event_type="user.registration",
+                    payload={"user_id": str(new_user.id), "email": new_user.email}
+                )
+
+                await authUoW.commit()
+                await authUoW.refresh(new_user)
 
                 return new_user
 

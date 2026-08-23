@@ -37,3 +37,10 @@ class AddressTypeEnum(str, Enum):
 class GenderEnum(str, Enum):
     MALE = "male"
     FEMALE = "female"
+
+
+class OutboxStatus(str, Enum):
+    PENDING = "pending"
+    PROCESSING = "processing"
+    PROCESSED = "processed"
+    FAILED = "failed"
