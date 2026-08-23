@@ -1,6 +1,6 @@
 from sqlmodel.ext.asyncio.session import AsyncSession
 
-from app.database.transactions_mgt.base import UnitOfWork
+from app.transactions_mgt.base import UnitOfWork
 from app.repositories.outbox import OutBoxRepository
 from app.repositories.user_repo import UserRepository
 
