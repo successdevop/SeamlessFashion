@@ -9,7 +9,7 @@ from alembic import context
 from sqlmodel import SQLModel
 
 import app.models
-from app.database.db_engine import db_settings
+from app.config.config import db_settings
 
 
 # this is the Alembic Config object, which provides
