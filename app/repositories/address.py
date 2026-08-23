@@ -1,3 +1,5 @@
+from uuid import UUID
+
 from sqlmodel.ext.asyncio.session import AsyncSession
 
 from app.models import Address
@@ -9,9 +11,10 @@ class AddressRepository(BaseRepository[Address]):
     def __init__(self, session: AsyncSession):
         super().__init__(model=Address, session=session)
 
-    def create_address(self, address: AddressCreate):
+    async def create_address(self, address: AddressCreate) -> Address:
         address_dict = address.model_dump(exclude_unset=True)
         new_address = self.model(**address_dict)
 
-        self.save(new_address)
-        self.session.flush()
+        await self.save(new_address)
+        await self.session.flush()
+        return new_address

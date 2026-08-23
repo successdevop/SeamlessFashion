@@ -13,7 +13,7 @@ class OutBoxMessage(UUIDPrimaryKeyMixin, SQLModel, table=True):
 
     event_type: str = Field(
         index=True,
-        nullable=Field()
+        nullable=False
     )
     payload: dict[str, Any] = Field(
         sa_column=Column(
