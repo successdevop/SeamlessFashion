@@ -3,7 +3,7 @@ from datetime import datetime, timezone
 from sqlalchemy.exc import IntegrityError
 from sqlmodel.ext.asyncio.session import AsyncSession
 
-from app.database.transactions_mgt.auth import AuthUnitOfWork
+from app.transactions_mgt.auth import AuthUnitOfWork
 from app.exceptions.exceptions import EmailAlreadyExistsError, UsernameAlreadyTakenError, PhoneNumberAlreadyExistsError, \
     InvalidPasswordError, DatabaseIntegrityError
 from app.models import User
