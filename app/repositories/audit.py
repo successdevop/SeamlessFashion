@@ -9,7 +9,7 @@ class AuditLogRepository:
         self._session = session
 
     async def add_and_flush(self, audit_schema: AuditLogCreate) -> AuditLog:
-        audit_dict = audit_schema.model_dump(exclude_unset=True)
+        audit_dict = audit_schema.model_dump(mode="json", exclude_unset=True)
         new_log = AuditLog(
             **audit_dict
         )

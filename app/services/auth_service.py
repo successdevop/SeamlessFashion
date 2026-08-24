@@ -59,11 +59,11 @@ class AuthService:
             )
 
             audit = {
-                "user_id": new_user.id, "audit_action":"USER_REGISTERED",
+                "actor_id": new_user.id, "audit_action":"USER_REGISTERED",
                 "resource_type":"User", "resource_id":new_user.id
             }
 
-            await authUoW.audit_log.save(
+            await authUoW.audit_log.add_and_flush(
                 audit_schema=AuditLogCreate(**audit)
             )
 
