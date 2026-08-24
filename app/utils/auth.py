@@ -20,6 +20,11 @@ def verify_hash_password(login_password: str, stored_hash_password: str) -> bool
 
 def validate_password(password: str) -> tuple[bool, str]:
     special_characters = "!@#$%^&*()_+-=[]{}|;:,.<>?"
+    password_min_length = 12
+    password_max_length = 128
+
+    if len(password) < password_min_length or len(password) > password_max_length:
+        return False, "Password must be at least 12 characters long and 128 characters long at most"
 
     if not any(c.isupper() for c in password) or not any(c.islower() for c in password):
         return False, "Password must contain at least one capital letter and one small letter"

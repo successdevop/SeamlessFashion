@@ -10,14 +10,14 @@ ModelT = TypeVar("ModelT", bound=SQLModel)
 
 class BaseRepository(Generic[ModelT]):
     def __init__(self, model: type[ModelT], session: AsyncSession) -> None:
-        self.model = model
-        self.session = session
+        self._model = model
+        self._session = session
 
     async def get_by_id_including_deleted(self, uid: UUID) -> ModelT | None:
-        return await self.session.get(self.model, uid)
+        return await self._session.get(self._model, uid)
 
     async def get_by_id(self, uid: UUID) -> ModelT | None:
-        entity = await self.session.get(self.model, uid)
+        entity = await self._session.get(self._model, uid)
         if entity is None:
             return None
 
@@ -26,16 +26,12 @@ class BaseRepository(Generic[ModelT]):
 
         return entity
 
-    async def save(self, entity: ModelT) -> ModelT:
-        self.session.add(entity)
-        await self.session.flush()
+    async def add_and_flush(self, entity: ModelT) -> ModelT:
+        self._session.add(entity)
+        await self._session.flush()
         return entity
 
-    async def refresh(self, entity: ModelT) -> ModelT:
-        await self.session.refresh(entity)
-        return entity
-
-    async def delete(self, entity: ModelT) -> None:
+    async def delete_and_flush(self, entity: ModelT) -> None:
         if hasattr(entity, "is_deleted"):
             entity.is_deleted = True
 
@@ -46,7 +42,7 @@ class BaseRepository(Generic[ModelT]):
                 entity.is_active = False
 
         else:
-            await self.session.delete(entity)
+            await self._session.delete(entity)
 
-        await self.session.flush()
+        await self._session.flush()
 

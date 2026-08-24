@@ -11,44 +11,47 @@ class UserRepository(BaseRepository[User]):
 
     async def get_by_email_including_deleted(self, email: str) -> User | None:
         return (
-            await self.session.exec(
-                select(self.model).where(self.model.email == email)
+            await self._session.exec(
+                select(self._model).where(self._model.email == email)
             )
         ).first()
 
     async def get_by_email(self, email: str) -> User | None:
         return (
-            await self.session.exec(
-                select(self.model).where(
-                    self.model.email == email,
-                    self.model.is_deleted.is_(False)
+            await self._session.exec(
+                select(self._model).where(
+                    self._model.email == email,
+                    self._model.is_deleted.is_(False)
                 )
             )
         ).first()
 
     async def get_by_username(self, username: str) -> User | None:
         return (
-            await self.session.exec(
-                select(self.model).where(
-                    self.model.username == username,
-                    self.model.is_deleted.is_(False)
+            await self._session.exec(
+                select(self._model).where(
+                    self._model.username == username,
+                    self._model.is_deleted.is_(False)
                 )
             )
         ).first()
 
     async def get_by_phone_number(self, phone_number: str) -> User | None:
         return (
-            await self.session.exec(
-                select(self.model).where(
-                    self.model.phone_number == phone_number,
-                    self.model.is_deleted.is_(False)
+            await self._session.exec(
+                select(self._model).where(
+                    self._model.phone_number == phone_number,
+                    self._model.is_deleted.is_(False)
                 )
             )
         ).first()
 
     async def get_users_by_active_status(self, is_active: bool) -> list[User]:
-        users = await self.session.exec(
-            select(self.model).where(self.model.is_active == is_active)
+        users = await self._session.exec(
+            select(self._model).where(
+                self._model.is_active == is_active,
+                self._model.is_deleted.is_(False)
+            )
         )
 
         return list(users.all())

@@ -8,7 +8,7 @@ from phonenumbers import NumberParseException
 def validate_username(username: str) -> str:
     username_pattern = re.compile(r"^[A-Za-z][A-Za-z0-9_]{2,29}$")
 
-    username = username.strip()
+    username = username.strip().lower()
 
     if not username_pattern.fullmatch(username):
         raise ValueError(

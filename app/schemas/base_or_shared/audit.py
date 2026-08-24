@@ -5,7 +5,7 @@ from app.schemas.base_or_shared.orm_base import ORMBaseSchema
 
 
 class AuditLogCreate(ORMBaseSchema):
-    user_id: UUID
+    action_id: UUID
     action: str  # CREATE, UPDATE, DELETE, LOGIN, etc.
     resource_type: str  # User, Organisation, Store, etc.
     resource_id: UUID

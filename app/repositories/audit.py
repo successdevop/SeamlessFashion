@@ -6,13 +6,13 @@ from base_models.audit import AuditLog
 
 class AuditLogRepository:
     def __init__(self, session: AsyncSession) -> None:
-        self.session = session
+        self._session = session
 
-    async def save(self, audit_schema: AuditLogCreate) -> AuditLog:
+    async def add_and_flush(self, audit_schema: AuditLogCreate) -> AuditLog:
         audit_dict = audit_schema.model_dump(exclude_unset=True)
         new_log = AuditLog(
             **audit_dict
         )
-        self.session.add(new_log)
-        await self.session.flush()
+        self._session.add(new_log)
+        await self._session.flush()
         return new_log

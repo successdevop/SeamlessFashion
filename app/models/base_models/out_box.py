@@ -8,12 +8,15 @@ from app.enums.user_enums import OutboxStatus
 from base_models.base_models import UUIDPrimaryKeyMixin
 
 
-class OutBoxMessage(UUIDPrimaryKeyMixin, SQLModel, table=True):
+class OutboxMessage(UUIDPrimaryKeyMixin, SQLModel, table=True):
     __tablename__ = "outbox_message"
 
     event_type: str = Field(
         index=True,
         nullable=False
+    )
+    version: int = Field(
+        default=1
     )
     payload: dict[str, Any] = Field(
         sa_column=Column(
@@ -39,6 +42,9 @@ class OutBoxMessage(UUIDPrimaryKeyMixin, SQLModel, table=True):
         default_factory=lambda : datetime.now(tz=timezone.utc),
         index=True,
         nullable=False
+    )
+    occurred_at: datetime | None = Field(
+        default=None
     )
     processed_at: datetime | None= Field(
         default=None

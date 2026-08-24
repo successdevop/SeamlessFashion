@@ -6,6 +6,7 @@ from pydantic import Field, EmailStr, model_validator, field_validator, HttpUrl
 
 from app.enums.user_enums import GenderEnum, AddressTypeEnum, VerificationStatusEnum, DocumentTypeEnum
 from app.schemas.base_or_shared.orm_base import ORMBaseSchema
+from app.utils.auth import validate_password
 from app.utils.utils import validate_username, validate_phone_number, validate_date_of_birth
 
 if TYPE_CHECKING:
@@ -122,6 +123,14 @@ class UserProfilePicture(ORMBaseSchema):
 
 class UserCreate(UserSummary):
     password: str = Field(min_length=8, max_length=128)
+
+    @field_validator("password")
+    @classmethod
+    def validate_password_field(cls, value: str):
+        is_valid, message = validate_password(value)
+        if not is_valid:
+            raise ValueError(message)
+        return value
 
 
 class UserProfileUpdate(ORMBaseSchema):
