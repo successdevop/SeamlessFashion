@@ -35,7 +35,7 @@ class OutboxRepository:
 
         result = self._session.exec(stmt)
 
-        messages = result.all()
+        messages = list(result.all())
 
         for message in messages:
             message.status = OutboxStatus.PROCESSING
