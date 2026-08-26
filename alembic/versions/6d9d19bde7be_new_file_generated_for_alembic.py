@@ -1,8 +1,8 @@
-"""first migration
+"""new file generated for alembic
 
-Revision ID: 3ace9c731bc0
+Revision ID: 6d9d19bde7be
 Revises: 
-Create Date: 2026-08-13 14:41:17.946455
+Create Date: 2026-08-26 14:41:58.391927
 
 """
 from typing import Sequence, Union
@@ -13,7 +13,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision: str = '3ace9c731bc0'
+revision: str = '6d9d19bde7be'
 down_revision: Union[str, Sequence[str], None] = None
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
@@ -46,6 +46,24 @@ def upgrade() -> None:
     op.create_index(op.f('ix_address_created_at'), 'address', ['created_at'], unique=False)
     op.create_index(op.f('ix_address_is_deleted'), 'address', ['is_deleted'], unique=False)
     op.create_index(op.f('ix_address_updated_at'), 'address', ['updated_at'], unique=False)
+    op.create_table('outbox_message',
+    sa.Column('id', sa.Uuid(), nullable=False),
+    sa.Column('event_type', sqlmodel.sql.sqltypes.AutoString(), nullable=False),
+    sa.Column('version', sa.Integer(), nullable=False),
+    sa.Column('payload', sa.JSON(), nullable=False),
+    sa.Column('status', sa.Enum('PENDING', 'PROCESSING', 'PROCESSED', 'FAILED', name='outboxstatus'), nullable=False),
+    sa.Column('attempts', sa.Integer(), nullable=False),
+    sa.Column('available_at', sa.DateTime(), nullable=False),
+    sa.Column('created_at', sa.DateTime(), nullable=False),
+    sa.Column('occurred_at', sa.DateTime(), nullable=True),
+    sa.Column('processed_at', sa.DateTime(), nullable=True),
+    sa.Column('last_error', sqlmodel.sql.sqltypes.AutoString(), nullable=True),
+    sa.PrimaryKeyConstraint('id')
+    )
+    op.create_index(op.f('ix_outbox_message_available_at'), 'outbox_message', ['available_at'], unique=False)
+    op.create_index(op.f('ix_outbox_message_created_at'), 'outbox_message', ['created_at'], unique=False)
+    op.create_index(op.f('ix_outbox_message_event_type'), 'outbox_message', ['event_type'], unique=False)
+    op.create_index(op.f('ix_outbox_message_status'), 'outbox_message', ['status'], unique=False)
     op.create_table('user',
     sa.Column('is_deleted', sa.Boolean(), nullable=False),
     sa.Column('deleted_at', sa.DateTime(), nullable=True),
@@ -71,9 +89,32 @@ def upgrade() -> None:
     op.create_index(op.f('ix_user_email'), 'user', ['email'], unique=True)
     op.create_index(op.f('ix_user_is_active'), 'user', ['is_active'], unique=False)
     op.create_index(op.f('ix_user_is_deleted'), 'user', ['is_deleted'], unique=False)
-    op.create_index(op.f('ix_user_phone_number'), 'user', ['phone_number'], unique=False)
+    op.create_index(op.f('ix_user_phone_number'), 'user', ['phone_number'], unique=True)
     op.create_index(op.f('ix_user_updated_at'), 'user', ['updated_at'], unique=False)
     op.create_index(op.f('ix_user_username'), 'user', ['username'], unique=True)
+    op.create_table('audit_log',
+    sa.Column('created_at', sa.DateTime(), nullable=False),
+    sa.Column('updated_at', sa.DateTime(), nullable=True),
+    sa.Column('id', sa.Uuid(), nullable=False),
+    sa.Column('actor_id', sa.Uuid(), nullable=False),
+    sa.Column('audit_action', sqlmodel.sql.sqltypes.AutoString(), nullable=False),
+    sa.Column('resource_type', sqlmodel.sql.sqltypes.AutoString(), nullable=False),
+    sa.Column('resource_id', sa.Uuid(), nullable=False),
+    sa.Column('old_state', sa.JSON(), nullable=True),
+    sa.Column('new_state', sa.JSON(), nullable=True),
+    sa.Column('ip_address', sqlmodel.sql.sqltypes.AutoString(), nullable=True),
+    sa.Column('user_agent', sqlmodel.sql.sqltypes.AutoString(), nullable=True),
+    sa.Column('metadata_changes', sa.JSON(), nullable=True),
+    sa.ForeignKeyConstraint(['actor_id'], ['user.id'], ),
+    sa.PrimaryKeyConstraint('id')
+    )
+    op.create_index('idx_audit_action', 'audit_log', ['audit_action', 'created_at'], unique=False)
+    op.create_index('idx_audit_resource', 'audit_log', ['resource_type', 'resource_id'], unique=False)
+    op.create_index('idx_audit_user_time', 'audit_log', ['actor_id', 'created_at'], unique=False)
+    op.create_index(op.f('ix_audit_log_actor_id'), 'audit_log', ['actor_id'], unique=False)
+    op.create_index(op.f('ix_audit_log_created_at'), 'audit_log', ['created_at'], unique=False)
+    op.create_index(op.f('ix_audit_log_resource_id'), 'audit_log', ['resource_id'], unique=False)
+    op.create_index(op.f('ix_audit_log_updated_at'), 'audit_log', ['updated_at'], unique=False)
     op.create_table('identityverification',
     sa.Column('is_deleted', sa.Boolean(), nullable=False),
     sa.Column('deleted_at', sa.DateTime(), nullable=True),
@@ -490,6 +531,14 @@ def downgrade() -> None:
     op.drop_index(op.f('ix_identityverification_is_deleted'), table_name='identityverification')
     op.drop_index(op.f('ix_identityverification_created_at'), table_name='identityverification')
     op.drop_table('identityverification')
+    op.drop_index(op.f('ix_audit_log_updated_at'), table_name='audit_log')
+    op.drop_index(op.f('ix_audit_log_resource_id'), table_name='audit_log')
+    op.drop_index(op.f('ix_audit_log_created_at'), table_name='audit_log')
+    op.drop_index(op.f('ix_audit_log_actor_id'), table_name='audit_log')
+    op.drop_index('idx_audit_user_time', table_name='audit_log')
+    op.drop_index('idx_audit_resource', table_name='audit_log')
+    op.drop_index('idx_audit_action', table_name='audit_log')
+    op.drop_table('audit_log')
     op.drop_index(op.f('ix_user_username'), table_name='user')
     op.drop_index(op.f('ix_user_updated_at'), table_name='user')
     op.drop_index(op.f('ix_user_phone_number'), table_name='user')
@@ -498,6 +547,11 @@ def downgrade() -> None:
     op.drop_index(op.f('ix_user_email'), table_name='user')
     op.drop_index(op.f('ix_user_created_at'), table_name='user')
     op.drop_table('user')
+    op.drop_index(op.f('ix_outbox_message_status'), table_name='outbox_message')
+    op.drop_index(op.f('ix_outbox_message_event_type'), table_name='outbox_message')
+    op.drop_index(op.f('ix_outbox_message_created_at'), table_name='outbox_message')
+    op.drop_index(op.f('ix_outbox_message_available_at'), table_name='outbox_message')
+    op.drop_table('outbox_message')
     op.drop_index(op.f('ix_address_updated_at'), table_name='address')
     op.drop_index(op.f('ix_address_is_deleted'), table_name='address')
     op.drop_index(op.f('ix_address_created_at'), table_name='address')

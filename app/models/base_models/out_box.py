@@ -5,7 +5,7 @@ from sqlalchemy import Column, JSON
 from sqlmodel import SQLModel, Field
 
 from app.enums.user_enums import OutboxStatus
-from base_models.base_models import UUIDPrimaryKeyMixin
+from app.models.base_models.base_models import UUIDPrimaryKeyMixin
 
 
 class OutboxMessage(UUIDPrimaryKeyMixin, SQLModel, table=True):
