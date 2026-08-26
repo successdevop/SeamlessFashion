@@ -33,7 +33,7 @@ class OutboxRepository:
             .with_for_update(skip_locked=True)
         )
 
-        result = self._session.exec(stmt)
+        result = await self._session.exec(stmt)
 
         messages = list(result.all())
 
