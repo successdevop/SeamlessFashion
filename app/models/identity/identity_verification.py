@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Optional
 from uuid import UUID
 
 from sqlalchemy import Column, DateTime
@@ -28,7 +28,7 @@ class IdentityVerification(UUIDPrimaryKeyMixin, TimestampMixin, SoftDeleteMixin,
     )
 
     verified_by: UUID | None = Field(default=None, foreign_key="user.id")
-    verifier: "User | None" = Relationship(
+    verifier: Optional["User"] = Relationship(
         sa_relationship_kwargs={"foreign_keys":"[IdentityVerification.verified_by]"}
     )
 

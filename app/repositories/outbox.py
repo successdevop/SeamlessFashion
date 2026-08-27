@@ -5,7 +5,7 @@ from sqlmodel import select
 from sqlmodel.ext.asyncio.session import AsyncSession
 
 from app.enums.user_enums import OutboxStatus
-from base_models.out_box import OutboxMessage
+from app.models.base_models.out_box import OutboxMessage
 
 
 class OutboxRepository:

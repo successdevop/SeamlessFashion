@@ -16,16 +16,6 @@ if TYPE_CHECKING:
 class OrganisationMember(SQLModel, table=True):
     __tablename__ = "organisation_member"
 
-    user_id: UUID = Field(
-        foreign_key="user.id",
-        primary_key=True
-    )
-
-    organisation_id: UUID = Field(
-        foreign_key="organisation.id",
-        primary_key=True
-    )
-
     employee_email: str | None = Field(default=None)
     employee_number: str = Field(unique=True, index=True)
 
@@ -36,12 +26,34 @@ class OrganisationMember(SQLModel, table=True):
     )
     left_date: datetime | None = None
 
+    user_id: UUID = Field(
+        foreign_key="user.id",
+        primary_key=True
+    )
+
+    organisation_id: UUID = Field(
+        foreign_key="organisation.id",
+        primary_key=True
+    )
+
     user: "User" = Relationship(back_populates="user_organisations")
 
     organisation: "Organisation" = Relationship(back_populates="employees")
 
     role_assignments: list["RoleAssignment"] = Relationship(
-        back_populates="membership", sa_relationship_kwargs={"lazy":"selectin", "cascade":"all, delete-orphan"}
+        back_populates="membership",
+        sa_relationship_kwargs={
+            "foreign_keys":"[RoleAssignment.user_id], RoleAssignment.organisation_id",
+            "lazy":"selectin", "cascade":"all, delete-orphan"
+        }
+    )
+
+    roles_assigned: list["RoleAssignment"] = Relationship(
+        back_populates="assigned_by_user",
+        sa_relationship_kwargs={
+            "foreign_keys":"[RoleAssignment.assigned_by, RoleAssignment.organisation_id]",
+            "lazy":"selectin", "cascade":"all, delete-orphan"
+        }
     )
 
     stores_created: list["Store"] = Relationship(

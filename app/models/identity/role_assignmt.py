@@ -12,20 +12,28 @@ if TYPE_CHECKING:
 
 
 class RoleAssignment(UUIDPrimaryKeyMixin, SQLModel, table=True):
-    user_id: UUID = Field(foreign_key="user.id", index=True)
+    # the user receiving the role
+    user_id: UUID = Field(
+        foreign_key="user.id",
+        index=True
+    )
 
+    # the role being assigned
     role_id: UUID = Field(
         foreign_key="role.id",
         index=True
     )
 
-    # For organization scoped roles (a default organization would be created for the platform to prevent null values
-    # in organization id for platform role assignment)
-    organisation_id: UUID = Field(foreign_key="organisation.id", index=True)
+    # organization in which the role is assigned
+    organisation_id: UUID = Field(
+        foreign_key="organisation.id",
+        index=True
+    )
 
-    # Audit fields
-    assigned_by: UUID = Field(foreign_key="user.id")
+    # user/member who assigns the role
+    assigned_by: UUID
 
+    # time role was assigned
     assigned_at: datetime = Field(
         sa_column=Column(
             DateTime(timezone=True),
@@ -42,25 +50,31 @@ class RoleAssignment(UUIDPrimaryKeyMixin, SQLModel, table=True):
             server_default=func.now()
         )
     )
+
+    # expiry period
     valid_until: datetime | None = None
 
-    # Status
+    # Role Status
     is_active: bool = Field(default=True, index=True)
 
     # Relationships
+    # the organization member receiving the role
     membership: "OrganisationMember" = Relationship(
-        back_populates="role_assignments"
+        back_populates="role_assignments",
+        sa_relationship_kwargs={"foreign_keys":"[RoleAssignment.user_id, RoleAssignment.organisation_id]"}
     )
 
+    # the role assigned
     role: "Role" = Relationship(back_populates="role_assignments")
 
+    # Direct user relationship
     user: "User" = Relationship(
         back_populates="role_assignments",
         sa_relationship_kwargs={"foreign_keys":"[RoleAssignment.user_id]"}
     )
-
-    assigned_by_user: "User" = Relationship(
-        sa_relationship_kwargs={"foreign_keys":"[RoleAssignment.assigned_by]"}
+    # OrganisationMember who assigned the role
+    assigned_by_member: "OrganisationMember" = Relationship(
+        sa_relationship_kwargs={"foreign_keys":"[RoleAssignment.assigned_by, RoleAssignment.organisation_id]"}
     )
 
     __table_args__ = (

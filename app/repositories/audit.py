@@ -1,7 +1,7 @@
 from sqlmodel.ext.asyncio.session import AsyncSession
 
 from app.schemas.base_or_shared.audit import AuditLogCreate
-from base_models.audit import AuditLog
+from app.models.base_models.audit import AuditLog
 
 
 class AuditLogRepository:
