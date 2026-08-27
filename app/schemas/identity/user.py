@@ -111,14 +111,16 @@ class UserBase(ORMBaseSchema):
 
 
 class UserSummary(UserBase):
+    avatar_url: HttpUrl | None = None
     first_name: str | None = Field(default=None, max_length=100)
     last_name: str | None = Field(default=None, max_length=100)
     gender: GenderEnum | None = None
     date_of_birth: date | None = None
 
-
-class UserProfilePicture(ORMBaseSchema):
-    avatar_url: str | None = None
+    @field_validator("date_of_birth")
+    @classmethod
+    def validate_dob_field(cls, value: date) -> date | None:
+        return validate_date_of_birth(value)
 
 
 class UserCreate(UserSummary):
@@ -148,7 +150,7 @@ class UserProfileUpdate(ORMBaseSchema):
 
     @field_validator("date_of_birth")
     @classmethod
-    def validate_dob_field(cls, value: date) -> str:
+    def validate_dob_field(cls, value: date) -> date | None:
         return validate_date_of_birth(value)
 
 
@@ -163,7 +165,6 @@ class UserRead(UserSummary):
     is_active: bool
     email_verified: bool
     phone_verified: bool
-    avatar: UserProfilePicture
 
 
 class UserAddressCreate(ORMBaseSchema):

@@ -42,7 +42,7 @@ class AuthService:
             raise PhoneNumberAlreadyExistsError()
 
         # exclude plain password from being passed to model
-        user_dict = user_data.model_dump(mode="json", exclude={"password"})
+        user_dict = user_data.model_dump(exclude={"password"})
 
         # create new user
         new_user = User(

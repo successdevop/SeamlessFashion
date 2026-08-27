@@ -32,7 +32,7 @@ def validate_phone_number(phone_number: str, default_region: str = "NG") -> str:
         raise ValueError("Invalid phone number")
 
 
-def validate_date_of_birth(dob: date | None, minimum_age: int = 10):
+def validate_date_of_birth(dob: date | None, minimum_age: int = 10) -> date | None:
     if dob is None:
         return None
 

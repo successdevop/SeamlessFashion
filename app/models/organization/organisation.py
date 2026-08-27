@@ -69,12 +69,19 @@ class OrganisationMember(SQLModel, table=True):
     )
 
     store_assignments: list["StoreStaff"] = Relationship(
-        back_populates="staff", sa_relationship_kwargs={"lazy":"selectin"}
+        back_populates="staff",
+        sa_relationship_kwargs={
+            "foreign_keys":"[StoreStaff.staff_id, StoreStaff.organisation_id]",
+            "lazy":"selectin"
+        }
     )
 
     warehouses_created: list["Warehouse"] = Relationship(
         back_populates="created_by_user",
-        sa_relationship_kwargs={"foreign_keys":"[Warehouse.created_by]", "lazy":"selectin"}
+        sa_relationship_kwargs={
+            "foreign_keys":"[Warehouse.created_by]",
+            "lazy":"selectin"
+        }
     )
 
     warehouses_managed: list["Warehouse"] = Relationship(
@@ -82,7 +89,10 @@ class OrganisationMember(SQLModel, table=True):
         sa_relationship_kwargs={"foreign_keys":"[Warehouse.manager_id]", "lazy":"selectin"})
 
     warehouse_assignments: list["WarehouseStaff"] = Relationship(
-        back_populates="staff", sa_relationship_kwargs={"lazy":"selectin"}
+        back_populates="staff", sa_relationship_kwargs={
+            "foreign_keys":"[WarehouseStaff.staff_id, WarehouseStaff.organisation_id]",
+            "lazy":"selectin"
+        }
     )
 
     __table_args__ = (

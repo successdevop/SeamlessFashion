@@ -1,6 +1,7 @@
 from datetime import datetime, timezone
 from typing import Any
 
+import sqlalchemy as sa
 from sqlalchemy import Column, JSON
 from sqlmodel import SQLModel, Field
 
@@ -35,19 +36,23 @@ class OutboxMessage(UUIDPrimaryKeyMixin, SQLModel, table=True):
     )
     available_at: datetime = Field(
         default_factory=lambda : datetime.now(tz=timezone.utc),
+        sa_type=sa.DateTime(timezone=True),
         index=True,
         nullable=False
     )
     created_at: datetime = Field(
         default_factory=lambda : datetime.now(tz=timezone.utc),
+        sa_type=sa.DateTime(timezone=True),
         index=True,
         nullable=False
     )
     occurred_at: datetime | None = Field(
-        default=None
+        default=None,
+        sa_type=sa.DateTime(timezone=True)
     )
     processed_at: datetime | None= Field(
-        default=None
+        default=None,
+        sa_type=sa.DateTime(timezone=True)
     )
     last_error: str | None = Field(
         default=None

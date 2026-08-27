@@ -2,6 +2,7 @@ from datetime import datetime, date, timezone
 from uuid import UUID, uuid4
 
 from sqlmodel import SQLModel, Field
+import sqlalchemy as sa
 
 from app.enums.org_enums import StaffAssignmentStatus
 from app.enums.user_enums import GenderEnum
@@ -31,29 +32,43 @@ class UserInfoMixin(SQLModel):
 
 class StaffAssignmentMixin(SQLModel):
     assigned_at: datetime = Field(
-        default_factory=lambda : datetime.now(timezone.utc)
+        default_factory=lambda : datetime.now(timezone.utc),
+        sa_type=sa.DateTime(timezone=True),
     )
-    removed_at: datetime | None = None
+
+    removed_at: datetime | None = Field(
+        default=None,
+        sa_type=sa.DateTime(timezone=True),
+    )
+
     assigned_by: UUID
     removed_by: UUID | None = None
     status: StaffAssignmentStatus
 
 
 class SoftDeleteMixin(SQLModel):
-    is_deleted: bool = Field(default=False, index=True)
-    deleted_at: datetime | None = None
+    is_deleted: bool = Field(
+        default=False,
+        index=True
+    )
+    deleted_at: datetime | None = Field(
+        default=None,
+        sa_type=sa.DateTime(timezone=True),
+    )
     deleted_by: UUID | None = None
 
 
 class TimestampMixin(SQLModel):
     created_at: datetime = Field(
         default_factory=lambda : datetime.now(timezone.utc),
+        sa_type=sa.DateTime(timezone=True),
         nullable=False,
         index=True
     )
 
     updated_at: datetime | None = Field(
         default=None,
+        sa_type=sa.DateTime(timezone=True),
         nullable=True,
         index=True
     )
