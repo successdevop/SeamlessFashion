@@ -23,17 +23,21 @@ class Store(UUIDPrimaryKeyMixin, SoftDeleteMixin, TimestampMixin, SQLModel, tabl
     email: str | None = Field(default=None, index=True)
 
     created_by: UUID = Field(index=True)
+
     manager_id: UUID | None = Field(default=None, index=True)
+    manager_organisation_id: UUID | None = Field(default=None)
 
     updated_by: UUID | None = None
+    updater_organisation_id: UUID | None = None
 
-    created_by_user: "OrganisationMember" = Relationship(
+    created_by_member: "OrganisationMember" = Relationship(
         back_populates="stores_created",
         sa_relationship_kwargs={
             "primaryjoin":"and_("
                           "Store.created_by==OrganisationMember.user_id, "
                           "Store.organisation_id==OrganisationMember.organisation_id"
-                          ")"
+                          ")",
+            "foreign_keys":"[Store.created_by, Store.organisation_id]"
         }
     )
 
@@ -43,7 +47,19 @@ class Store(UUIDPrimaryKeyMixin, SoftDeleteMixin, TimestampMixin, SQLModel, tabl
             "primaryjoin":"and_("
                           "Store.manager_id==OrganisationMember.user_id, "
                           "Store.organisation_id==OrganisationMember.organisation_id"
-                          ")"
+                          ")",
+            "foreign_keys":"[Store.manager_id, Store.manager_organisation_id]"
+        }
+    )
+
+    updater: "OrganisationMember" = Relationship(
+        back_populates="stores_updated",
+        sa_relationship_kwargs={
+            "primaryjoin":"and_("
+                          "Store.updated_by==OrganisationMember.user_id, "
+                          "Store.organisation_id==OrganisationMember.organisation_id"
+                          ")",
+            "foreign_keys":"[Store.updated_by, Store.updater_organisation_id]"
         }
     )
 
@@ -79,13 +95,13 @@ class Store(UUIDPrimaryKeyMixin, SoftDeleteMixin, TimestampMixin, SQLModel, tabl
         ),
 
         ForeignKeyConstraint(
-            ["manager_id", "organisation_id"],
+            ["manager_id", "manager_organisation_id"],
             ["organisation_member.user_id", "organisation_member.organisation_id"],
             name="fk_store_manager_membership"
         ),
 
         ForeignKeyConstraint(
-            ["updated_by", "organisation_id"],
+            ["updated_by", "updater_organisation_id"],
             ["organisation_member.user_id", "organisation_member.organisation_id"],
             name="fk_store_updated_by"
         ),

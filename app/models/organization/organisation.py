@@ -51,7 +51,7 @@ class OrganisationMember(SQLModel, table=True):
     roles_assigned: list["RoleAssignment"] = Relationship(
         back_populates="assigned_by_member",
         sa_relationship_kwargs={
-            "foreign_keys":"[RoleAssignment.assigned_by, RoleAssignment.organisation_id]",
+            "foreign_keys":"[RoleAssignment.assigned_by_user_id, RoleAssignment.assigned_by_organisation_id]",
             "lazy":"selectin", "cascade":"all, delete-orphan"
         }
     )
@@ -59,13 +59,19 @@ class OrganisationMember(SQLModel, table=True):
     stores_created: list["Store"] = Relationship(
         back_populates="created_by_user",
         sa_relationship_kwargs={
-            "foreign_keys": "[Store.created_by]", "lazy":"selectin"
+            "foreign_keys":"[Store.created_by, Store.organisation_id]",
+            "lazy":"selectin"
         }
     )
 
     stores_managed: list["Store"] = Relationship(
         back_populates="manager",
-        sa_relationship_kwargs={"foreign_keys":"[Store.manager_id]", "lazy":"selectin"}
+        sa_relationship_kwargs={"foreign_keys":"[Store.manager_id, Store.manager_organisation_id]", "lazy":"selectin"}
+    )
+
+    stores_updated: list["Store"] = Relationship(
+        back_populates="updater",
+        sa_relationship_kwargs={"foreign_keys":"[Store.updated_by, Store.updater_organisation_id]"}
     )
 
     store_assignments: list["StoreStaff"] = Relationship(

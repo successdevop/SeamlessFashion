@@ -68,7 +68,7 @@ class User(UUIDPrimaryKeyMixin, UserInfoMixin, TimestampMixin, SoftDeleteMixin, 
     # a user can perform many roles/have many roles assigned to it(User-Role relationship)
     role_assignments: list["RoleAssignment"] = Relationship(
         back_populates="user",
-        sa_relationship_kwargs={"foreign_keys":"RoleAssignment.user_id", "lazy":"selectin"}
+        sa_relationship_kwargs={"foreign_keys":"[RoleAssignment.user_id]", "lazy":"selectin"}
     )
 
     def __repr__(self):

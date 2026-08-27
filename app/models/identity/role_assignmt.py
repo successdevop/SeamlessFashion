@@ -31,7 +31,10 @@ class RoleAssignment(UUIDPrimaryKeyMixin, SQLModel, table=True):
     )
 
     # user/member who assigns the role
-    assigned_by: UUID
+    assigned_by_user_id: UUID
+
+    # user/member organisation
+    assigned_by_organisation_id: UUID
 
     # time role was assigned
     assigned_at: datetime = Field(
@@ -70,12 +73,14 @@ class RoleAssignment(UUIDPrimaryKeyMixin, SQLModel, table=True):
     # Direct user relationship
     user: "User" = Relationship(
         back_populates="role_assignments",
-        sa_relationship_kwargs={"foreign_keys":"RoleAssignment.user_id"}
+        sa_relationship_kwargs={"foreign_keys":"[RoleAssignment.user_id]"}
     )
     # OrganisationMember who assigned the role
     assigned_by_member: "OrganisationMember" = Relationship(
         back_populates="roles_assigned",
-        sa_relationship_kwargs={"foreign_keys":"[RoleAssignment.assigned_by, RoleAssignment.organisation_id]"}
+        sa_relationship_kwargs={
+            "foreign_keys":"[RoleAssignment.assigned_by_user_id, RoleAssignment.assigned_by_organisation_id]"
+        }
     )
 
     __table_args__ = (
@@ -96,7 +101,7 @@ class RoleAssignment(UUIDPrimaryKeyMixin, SQLModel, table=True):
         ),
 
         ForeignKeyConstraint(
-            ["assigned_by", "organisation_id"],
+            ["assigned_by_user_id", "assigned_by_organisation_id"],
             ["organisation_member.user_id", "organisation_member.organisation_id"],
             name="fk_assigner_role_assignment_membership"
         ),
