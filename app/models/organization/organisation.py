@@ -43,7 +43,7 @@ class OrganisationMember(SQLModel, table=True):
     role_assignments: list["RoleAssignment"] = Relationship(
         back_populates="membership",
         sa_relationship_kwargs={
-            "foreign_keys":"[RoleAssignment.user_id], RoleAssignment.organisation_id",
+            "foreign_keys":"[RoleAssignment.user_id, RoleAssignment.organisation_id]",
             "lazy":"selectin", "cascade":"all, delete-orphan"
         }
     )

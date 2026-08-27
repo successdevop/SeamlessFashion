@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Optional
 from uuid import UUID
 
 from sqlalchemy import Column, DateTime, func, Index
@@ -51,13 +51,13 @@ class User(UUIDPrimaryKeyMixin, UserInfoMixin, TimestampMixin, SoftDeleteMixin, 
     )
 
     # keeps record of all login security information
-    login_security: "UserSecurityProfile | None" = Relationship(
+    login_security: Optional["UserSecurityProfile"] = Relationship(
         back_populates="user", sa_relationship_kwargs={"lazy":"selectin", "cascade":"all, delete-orphan"}
     )
 
     organisations_created: list["Organisation"] = Relationship(
         back_populates="created_by_user",
-        sa_relationship_kwargs={"lazy":"selectin", "cascade":"all, delete-orphan"}
+        sa_relationship_kwargs={"foreign_keys":"[Organisation.created_by]", "lazy":"selectin", "cascade":"all, delete-orphan"}
     )
 
     # one user can belong to many organization(Organisation-User relationship)
@@ -68,7 +68,7 @@ class User(UUIDPrimaryKeyMixin, UserInfoMixin, TimestampMixin, SoftDeleteMixin, 
     # a user can perform many roles/have many roles assigned to it(User-Role relationship)
     role_assignments: list["RoleAssignment"] = Relationship(
         back_populates="user",
-        sa_relationship_kwargs={"foreign_keys":"[RoleAssignment.user_id]", "lazy":"selectin"}
+        sa_relationship_kwargs={"foreign_keys":"RoleAssignment.user_id", "lazy":"selectin"}
     )
 
     def __repr__(self):

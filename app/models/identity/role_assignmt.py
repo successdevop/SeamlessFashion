@@ -70,7 +70,7 @@ class RoleAssignment(UUIDPrimaryKeyMixin, SQLModel, table=True):
     # Direct user relationship
     user: "User" = Relationship(
         back_populates="role_assignments",
-        sa_relationship_kwargs={"foreign_keys":"[RoleAssignment.user_id]"}
+        sa_relationship_kwargs={"foreign_keys":"RoleAssignment.user_id"}
     )
     # OrganisationMember who assigned the role
     assigned_by_member: "OrganisationMember" = Relationship(
