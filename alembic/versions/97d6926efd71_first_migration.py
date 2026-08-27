@@ -1,8 +1,8 @@
-"""new file generated for alembic
+"""first migration
 
-Revision ID: 6d9d19bde7be
+Revision ID: 97d6926efd71
 Revises: 
-Create Date: 2026-08-26 14:41:58.391927
+Create Date: 2026-08-27 10:28:57.185737
 
 """
 from typing import Sequence, Union
@@ -13,7 +13,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision: str = '6d9d19bde7be'
+revision: str = '97d6926efd71'
 down_revision: Union[str, Sequence[str], None] = None
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
@@ -280,13 +280,13 @@ def upgrade() -> None:
     op.create_index(op.f('ix_identitydocument_document_number_hash'), 'identitydocument', ['document_number_hash'], unique=False)
     op.create_index(op.f('ix_identitydocument_is_deleted'), 'identitydocument', ['is_deleted'], unique=False)
     op.create_table('organisation_member',
-    sa.Column('user_id', sa.Uuid(), nullable=False),
-    sa.Column('organisation_id', sa.Uuid(), nullable=False),
     sa.Column('employee_email', sqlmodel.sql.sqltypes.AutoString(), nullable=True),
     sa.Column('employee_number', sqlmodel.sql.sqltypes.AutoString(), nullable=False),
     sa.Column('status', sa.Enum('INVITED', 'PENDING', 'ACTIVE', 'SUSPENDED', 'LEFT', 'REMOVED', name='membershipstatus'), nullable=False),
     sa.Column('joined_date', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
     sa.Column('left_date', sa.DateTime(), nullable=True),
+    sa.Column('user_id', sa.Uuid(), nullable=False),
+    sa.Column('organisation_id', sa.Uuid(), nullable=False),
     sa.ForeignKeyConstraint(['organisation_id'], ['organisation.id'], ),
     sa.ForeignKeyConstraint(['user_id'], ['user.id'], ),
     sa.PrimaryKeyConstraint('user_id', 'organisation_id'),
@@ -322,7 +322,6 @@ def upgrade() -> None:
     sa.Column('is_active', sa.Boolean(), nullable=False),
     sa.CheckConstraint('valid_until IS NULL OR valid_until > valid_from', name='ck_role_assignment_valid_period'),
     sa.ForeignKeyConstraint(['assigned_by', 'organisation_id'], ['organisation_member.user_id', 'organisation_member.organisation_id'], name='fk_assigner_role_assignment_membership'),
-    sa.ForeignKeyConstraint(['assigned_by'], ['user.id'], ),
     sa.ForeignKeyConstraint(['organisation_id'], ['organisation.id'], ),
     sa.ForeignKeyConstraint(['role_id'], ['role.id'], ),
     sa.ForeignKeyConstraint(['user_id', 'organisation_id'], ['organisation_member.user_id', 'organisation_member.organisation_id'], name='fk_user_role_assignment_membership', ondelete='CASCADE'),
