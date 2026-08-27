@@ -74,6 +74,7 @@ class RoleAssignment(UUIDPrimaryKeyMixin, SQLModel, table=True):
     )
     # OrganisationMember who assigned the role
     assigned_by_member: "OrganisationMember" = Relationship(
+        back_populates="roles_assigned",
         sa_relationship_kwargs={"foreign_keys":"[RoleAssignment.assigned_by, RoleAssignment.organisation_id]"}
     )
 
