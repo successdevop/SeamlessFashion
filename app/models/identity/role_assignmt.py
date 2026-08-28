@@ -12,6 +12,8 @@ if TYPE_CHECKING:
 
 
 class RoleAssignment(UUIDPrimaryKeyMixin, SQLModel, table=True):
+    __tablename__ = "role_assignment"
+
     # the user receiving the role
     user_id: UUID = Field(
         foreign_key="user.id",

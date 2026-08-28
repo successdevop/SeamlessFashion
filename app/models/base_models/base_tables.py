@@ -11,6 +11,8 @@ if TYPE_CHECKING:
 
 
 class Address(UUIDPrimaryKeyMixin, SoftDeleteMixin, TimestampMixin, SQLModel, table=True):
+    __tablename__ = "address"
+
     street: str
     city: str
     state: str

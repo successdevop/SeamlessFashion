@@ -33,12 +33,12 @@ class UserInfoMixin(SQLModel):
 class StaffAssignmentMixin(SQLModel):
     assigned_at: datetime = Field(
         default_factory=lambda : datetime.now(timezone.utc),
-        sa_type=sa.DateTime(timezone=True),
+        sa_type=sa.DateTime(timezone=True) # type: ignore
     )
 
     removed_at: datetime | None = Field(
         default=None,
-        sa_type=sa.DateTime(timezone=True),
+        sa_type=sa.DateTime(timezone=True), # type: ignore
     )
 
     assigned_by: UUID
@@ -53,7 +53,7 @@ class SoftDeleteMixin(SQLModel):
     )
     deleted_at: datetime | None = Field(
         default=None,
-        sa_type=sa.DateTime(timezone=True),
+        sa_type=sa.DateTime(timezone=True), # type: ignore
     )
     deleted_by: UUID | None = None
 
@@ -61,14 +61,14 @@ class SoftDeleteMixin(SQLModel):
 class TimestampMixin(SQLModel):
     created_at: datetime = Field(
         default_factory=lambda : datetime.now(timezone.utc),
-        sa_type=sa.DateTime(timezone=True),
+        sa_type=sa.DateTime(timezone=True), # type: ignore
         nullable=False,
         index=True
     )
 
     updated_at: datetime | None = Field(
         default=None,
-        sa_type=sa.DateTime(timezone=True),
+        sa_type=sa.DateTime(timezone=True), # type: ignore
         nullable=True,
         index=True
     )

@@ -11,6 +11,8 @@ if TYPE_CHECKING:
 
 
 class Permission(UUIDPrimaryKeyMixin, TimestampMixin, SQLModel, table=True):
+    __tablename__ = "permission"
+
     code: str = Field(unique=True, index=True)
     module: str
     resource: str

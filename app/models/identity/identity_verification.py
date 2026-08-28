@@ -13,6 +13,8 @@ if TYPE_CHECKING:
 
 
 class IdentityVerification(UUIDPrimaryKeyMixin, TimestampMixin, SoftDeleteMixin, SQLModel, table=True):
+    __tablename__ = "identity_verification"
+
     verification_status: VerificationStatusEnum
 
     verified_at: datetime | None = Field(default=None, sa_column=Column(DateTime(timezone=True), nullable=True))
@@ -43,6 +45,8 @@ class IdentityVerification(UUIDPrimaryKeyMixin, TimestampMixin, SoftDeleteMixin,
 
 
 class IdentityDocument(UUIDPrimaryKeyMixin, SoftDeleteMixin, SQLModel, table=True):
+    __tablename__ = "identity_document"
+
     document_type: DocumentTypeEnum
     document_number_encrypted: str
     document_number_hash: str = Field(index=True)

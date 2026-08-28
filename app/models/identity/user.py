@@ -14,6 +14,8 @@ if TYPE_CHECKING:
 
 
 class UserAddress(SoftDeleteMixin, SQLModel, table=True):
+    __tablename__ = "user_address"
+
     user_id: UUID = Field(
         foreign_key="user.id",
         primary_key=True
@@ -36,6 +38,7 @@ class UserAddress(SoftDeleteMixin, SQLModel, table=True):
 
 
 class User(UUIDPrimaryKeyMixin, UserInfoMixin, TimestampMixin, SoftDeleteMixin, SQLModel, table=True):
+    __tablename__ = "user"
 
     identity_verification: "IdentityVerification" = Relationship(
         back_populates="user",
@@ -46,7 +49,7 @@ class User(UUIDPrimaryKeyMixin, UserInfoMixin, TimestampMixin, SoftDeleteMixin, 
     user_addresses: list[UserAddress] = Relationship(back_populates="user")
 
     # keeps record of all login information
-    login_events: list["LoginEventInfo"] = Relationship(
+    login_events: list["UserLoginEventInfo"] = Relationship(
         back_populates="user", sa_relationship_kwargs={"lazy":"selectin", "cascade":"all, delete-orphan"}
     )
 
@@ -76,6 +79,8 @@ class User(UUIDPrimaryKeyMixin, UserInfoMixin, TimestampMixin, SoftDeleteMixin, 
 
 
 class UserSecurityProfile(UUIDPrimaryKeyMixin, TimestampMixin, SQLModel, table=True):
+    __tablename__ = "user_security_profile"
+
     last_login: datetime= Field(
         sa_column=Column(
             DateTime(timezone=True),
@@ -99,7 +104,9 @@ class UserSecurityProfile(UUIDPrimaryKeyMixin, TimestampMixin, SQLModel, table=T
         return f"<UserSecurityProfile(id={self.id} | last_login={self.last_login})>"
 
 
-class LoginEventInfo(UUIDPrimaryKeyMixin, SQLModel, table=True):
+class UserLoginEventInfo(UUIDPrimaryKeyMixin, SQLModel, table=True):
+    __tablename__ = "user_login_events_info"
+
     occurred_at: datetime = Field(
         sa_column=Column(
             DateTime(timezone=True),

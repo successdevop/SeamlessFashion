@@ -11,6 +11,8 @@ if TYPE_CHECKING:
 
 
 class Role(UUIDPrimaryKeyMixin, TimestampMixin, SQLModel, table=True):
+    __tablename__ = "role"
+
     display_name: str | None = Field(default=None, index=True)
     name: str = Field(index=True)
     description: str | None = None

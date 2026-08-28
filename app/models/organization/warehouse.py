@@ -13,6 +13,8 @@ if TYPE_CHECKING:
 
 
 class Warehouse(UUIDPrimaryKeyMixin, SoftDeleteMixin, TimestampMixin, SQLModel, table=True):
+    __tablename__ = "warehouse"
+
     name: str
     warehouse_code: str = Field(index=True)
     max_storage_units: Decimal
@@ -91,6 +93,8 @@ class Warehouse(UUIDPrimaryKeyMixin, SoftDeleteMixin, TimestampMixin, SQLModel, 
 
 
 class WarehouseStaff(StaffAssignmentMixin, SQLModel, table=True):
+    __tablename__ = "warehouse_staff"
+
     staff_id: UUID = Field(primary_key=True)
     organisation_id: UUID = Field(primary_key=True)
     warehouse_id: UUID = Field(primary_key=True)

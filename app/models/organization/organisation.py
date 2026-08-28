@@ -115,6 +115,8 @@ class OrganisationMember(SQLModel, table=True):
 
 
 class Organisation(UUIDPrimaryKeyMixin, SoftDeleteMixin, TimestampMixin, SQLModel, table=True):
+    __tablename__ = "organisation"
+
     organisation_name: str = Field(unique=True, index=True)
     logo_url: str | None = None
     email: str = Field(index=True, unique=True)

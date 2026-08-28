@@ -13,6 +13,8 @@ if TYPE_CHECKING:
 
 
 class Store(UUIDPrimaryKeyMixin, SoftDeleteMixin, TimestampMixin, SQLModel, table=True):
+    __tablename__ = "store"
+
     name: str
     store_code: str = Field(index=True)
     currency: CurrencyEnum
@@ -113,6 +115,8 @@ class Store(UUIDPrimaryKeyMixin, SoftDeleteMixin, TimestampMixin, SQLModel, tabl
 
 
 class StoreStaff(StaffAssignmentMixin, SQLModel, table=True):
+    __tablename__ = "store_staff"
+
     staff_id: UUID = Field(primary_key=True)
     organisation_id: UUID = Field(primary_key=True)
     store_id: UUID = Field(primary_key=True)
@@ -130,7 +134,7 @@ class StoreStaff(StaffAssignmentMixin, SQLModel, table=True):
 
     staff: "OrganisationMember" = Relationship(
         back_populates="store_assignments",
-        sa_relationship_kwargs={"foreign_keys":"[StoreStaff.staff_id, StoreStaff.organisation_id]"}
+        sa_relationship_kwargs={"foreign_keys":"[StoreStaff.staff_id, StoreStaff.store_id, StoreStaff.organisation_id]"}
     )
 
     assigned_by_employee: "OrganisationMember" = Relationship(
@@ -143,8 +147,8 @@ class StoreStaff(StaffAssignmentMixin, SQLModel, table=True):
 
     __table_args__ = (
         ForeignKeyConstraint(
-            ["staff_id", "organisation_id"],
-            ["organisation_member.user_id", "organisation_member.organisation_id"]
+            ["staff_id", "store_id", "organisation_id"],
+            ["organisation_member.user_id", "store_staff.store_id", "organisation_member.organisation_id"]
         ),
         ForeignKeyConstraint(
             ["store_id", "organisation_id"],
