@@ -1,7 +1,7 @@
 from pathlib import Path
 
 from pydantic import SecretStr, AnyHttpUrl
-from pydantic_settings import BaseSettings, SettingsConfigDict  
+from pydantic_settings import BaseSettings, SettingsConfigDict
 from sqlalchemy.engine import URL
 
 
@@ -92,8 +92,8 @@ redis_settings = RedisSettings() # type: ignore[call-arg] #loaded from .env file
 
 # JWT SECURITY KEY
 security = SecuritySetting()  # type: ignore[call-arg] #loaded from .env file
-PRIVATE_KEY = security.JWT_PRIVATE_KEY.replace("\\n", "\n")
-PUBLIC_KEY = security.JWT_PUBLIC_KEY.replace("\\n", "\n")
+PRIVATE_KEY = security.JWT_PRIVATE_KEY.get_secret_value().replace("\\n", "\n")
+PUBLIC_KEY = security.JWT_PUBLIC_KEY.get_secret_value().replace("\\n", "\n")
 
 # EMAIL SETTINGS
 email_settings = EmailSettings() # type: ignore[call-arg] #loaded from .env file

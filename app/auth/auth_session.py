@@ -1,0 +1,74 @@
+from datetime import datetime, timezone
+from enum import Enum
+from uuid import UUID, uuid4
+
+from sqlmodel import SQLModel, Field
+import sqlalchemy as sa
+
+from base_models.base_models import UUIDPrimaryKeyMixin
+
+
+class AuthSessionStatus(str, Enum):
+    ACTIVE = "active"
+    REVOKED = "revoked"
+    EXPIRED = "expired"
+
+
+class AuthSession(UUIDPrimaryKeyMixin, SQLModel, table=True):
+    __tablename__ = "auth_session"
+
+    user_id: UUID = Field(
+        foreign_key="user.id",
+        index=True,
+        nullable=False
+    )
+
+    token_family_id: UUID = Field(
+        default_factory=uuid4,
+        unique=True,
+        index=True
+    )
+
+    status: AuthSessionStatus = Field(
+        default=AuthSessionStatus.ACTIVE,
+        index=True,
+        nullable=False
+    )
+
+    created_at: datetime = Field(
+        default_factory=lambda : datetime.now(tz=timezone.utc),
+        sa_type=sa.DateTime(timezone=True), #type: ignore
+        nullable=False
+    )
+
+    expires_at: datetime = Field(
+        sa_type=sa.DateTime(timezone=True), #type: ignore
+        nullable=False,
+        index=True
+    )
+
+    last_used_at: datetime | None = Field(
+        default=None,
+        sa_type=sa.DateTime(timezone=True), #type: ignore
+    )
+
+    revoked_at: datetime | None = Field(
+        default=None,
+        sa_type=sa.DateTime(timezone=True), #type: ignore
+    )
+
+    revoked_reason: str | None = Field(
+        default=None
+    )
+
+    device_name: str | None = Field(
+        default=None
+    )
+
+    user_agent: str | None = Field(
+        default=None
+    )
+
+    ip_address: str | None = Field(
+        default=None
+    )

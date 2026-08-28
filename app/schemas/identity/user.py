@@ -2,7 +2,7 @@ from datetime import date, datetime
 from typing import TYPE_CHECKING
 from uuid import UUID
 
-from pydantic import Field, EmailStr, model_validator, field_validator, HttpUrl
+from pydantic import Field, EmailStr, model_validator, field_validator, HttpUrl, AnyHttpUrl, AnyUrl
 
 from app.enums.user_enums import GenderEnum, AddressTypeEnum, VerificationStatusEnum, DocumentTypeEnum
 from app.schemas.base_or_shared.orm_base import ORMBaseSchema
@@ -116,6 +116,11 @@ class UserSummary(UserBase):
     last_name: str | None = Field(default=None, max_length=100)
     gender: GenderEnum | None = None
     date_of_birth: date | None = None
+
+    @field_validator("avatar_url")
+    @classmethod
+    def normalize_avatar_url(cls, value: HttpUrl | AnyHttpUrl | AnyUrl) -> str | None:
+        return str(value).strip().lower()
 
     @field_validator("date_of_birth")
     @classmethod
