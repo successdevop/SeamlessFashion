@@ -61,7 +61,7 @@ class IdentityDocument(UUIDPrimaryKeyMixin, SoftDeleteMixin, SQLModel, table=Tru
 
     uploaded_at: datetime= Field(sa_column=Column(DateTime(timezone=True), nullable=True))
 
-    verification_id: UUID = Field(foreign_key="identityverification.id", ondelete="CASCADE")
+    verification_id: UUID = Field(foreign_key="identity_verification.id", ondelete="CASCADE")
     verification: IdentityVerification = Relationship(back_populates="documents")
 
     def __repr__(self):

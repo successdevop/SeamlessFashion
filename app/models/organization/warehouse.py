@@ -24,17 +24,21 @@ class Warehouse(UUIDPrimaryKeyMixin, SoftDeleteMixin, TimestampMixin, SQLModel, 
     email: str | None = Field(default=None, index=True)
 
     created_by: UUID = Field(index=True)
-    manager_id: UUID = Field(index=True)
+
+    manager_id: UUID | None = Field(default=None, index=True)
+    manager_organisation_id: UUID | None = Field(default=None)
 
     updated_by: UUID | None = None
+    updater_organisation_id: UUID | None = None
 
-    created_by_user: "OrganisationMember" = Relationship(
+    created_by_member: "OrganisationMember" = Relationship(
         back_populates="warehouses_created",
         sa_relationship_kwargs={
             "primaryjoin":"and_("
                           "Warehouse.created_by==OrganisationMember.user_id, "
                           "Warehouse.organisation_id==OrganisationMember.organisation_id"
-                          ")"
+                          ")",
+            "foreign_keys":"[Warehouse.created_by, Warehouse.organisation_id]"
         }
     )
     manager: "OrganisationMember" = Relationship(
@@ -43,7 +47,19 @@ class Warehouse(UUIDPrimaryKeyMixin, SoftDeleteMixin, TimestampMixin, SQLModel, 
             "primaryjoin":"and_("
                           "Warehouse.manager_id==OrganisationMember.user_id, "
                           "Warehouse.organisation_id==OrganisationMember.organisation_id"
-                          ")"
+                          ")",
+            "foreign_keys":"[Warehouse.manager_id, Warehouse.manager_organisation_id]"
+        }
+    )
+
+    updater: "OrganisationMember" = Relationship(
+        back_populates="warehouse_updated",
+        sa_relationship_kwargs={
+            "primaryjoin":"and_("
+                          "Warehouse.updated_by==OrganisationMember.user_id, "
+                          "Warehouse.organisation_id==OrganisationMember.organisation_id"
+                          ")",
+            "foreign_keys":"[Warehouse.updated_by, Warehouse.updater_organisation_id]"
         }
     )
 
@@ -76,12 +92,12 @@ class Warehouse(UUIDPrimaryKeyMixin, SoftDeleteMixin, TimestampMixin, SQLModel, 
             name="fk_warehouse_creator_membership"
         ),
         ForeignKeyConstraint(
-            ["manager_id", "organisation_id"],
+            ["manager_id", "manager_organisation_id"],
             ["organisation_member.user_id", "organisation_member.organisation_id"],
             name="fk_warehouse_manager_membership"
         ),
         ForeignKeyConstraint(
-            ["updated_by", "organisation_id"],
+            ["updated_by", "updater_organisation_id"],
             ["organisation_member.user_id", "organisation_member.organisation_id"],
             name="fk_warehouse_updated_by"
         ),

@@ -5,7 +5,7 @@ from app.models.base_models.out_box import OutboxMessage
 from app.models.identity.identity_verification import IdentityDocument, IdentityVerification
 from app.models.identity.role_assignmt import RoleAssignment
 from app.models.identity.role_permission import RolePermission
-from app.models.identity.user import (UserAddress, User, LoginEventInfo, UserSecurityProfile)
+from app.models.identity.user import (UserAddress, User, UserSecurityProfile, UserLoginEventInfo)
 from app.models.identity.role import Role
 from app.models.identity.permission import Permission
 from app.models.organization.organisation import (OrganisationMember, Organisation)
@@ -20,7 +20,7 @@ __all__ = [
     "IdentityDocument",
     "UserAddress",
     "User",
-    "LoginEventInfo",
+    "UserLoginEventInfo",
     "UserSecurityProfile",
     "RolePermission",
     "Role",

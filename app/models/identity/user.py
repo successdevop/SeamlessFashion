@@ -136,4 +136,4 @@ class UserLoginEventInfo(UUIDPrimaryKeyMixin, SQLModel, table=True):
     )
 
     def __repr__(self):
-        return f"<LoginEventInfo(id={self.id} | occurred_at={self.occurred_at})>"
+        return f"<UserLoginEventInfo(id={self.id} | occurred_at={self.occurred_at})>"

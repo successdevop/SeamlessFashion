@@ -134,7 +134,7 @@ class StoreStaff(StaffAssignmentMixin, SQLModel, table=True):
 
     staff: "OrganisationMember" = Relationship(
         back_populates="store_assignments",
-        sa_relationship_kwargs={"foreign_keys":"[StoreStaff.staff_id, StoreStaff.store_id, StoreStaff.organisation_id]"}
+        sa_relationship_kwargs={"foreign_keys":"[StoreStaff.staff_id, StoreStaff.organisation_id]"}
     )
 
     assigned_by_employee: "OrganisationMember" = Relationship(
@@ -147,8 +147,8 @@ class StoreStaff(StaffAssignmentMixin, SQLModel, table=True):
 
     __table_args__ = (
         ForeignKeyConstraint(
-            ["staff_id", "store_id", "organisation_id"],
-            ["organisation_member.user_id", "store_staff.store_id", "organisation_member.organisation_id"]
+            ["staff_id", "organisation_id"],
+            ["organisation_member.user_id", "organisation_member.organisation_id"]
         ),
         ForeignKeyConstraint(
             ["store_id", "organisation_id"],
