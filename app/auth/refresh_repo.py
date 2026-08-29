@@ -47,5 +47,20 @@ class RefreshTokenRepository:
 
         await self._session.flush()
 
-    async def revoke_token_family(self, token_family_id: UUID):
+    async def revoke_token_family(self, token_family_id: UUID, reason: str) -> None:
+        tokens = (
+            await self._session.exec(
+                select(RefreshToken).where(RefreshToken.token_family_id == token_family_id)
+            )
+        ).all()
 
+        now = datetime.now(tz=timezone.utc)
+
+        for token in tokens:
+            if token.revoked_at is None:
+                token.revoked_at = now
+
+            if token.used_at is None:
+                token.used_at = now
+
+        await self._session.flush()

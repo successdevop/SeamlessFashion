@@ -55,7 +55,7 @@ class AuthService:
             # manage transaction using unit_of_work pattern to make registration atomic
             await self._authUoW.users.add_and_flush(new_user)
 
-            await self._authUoW.outbox_message.add_and_flush(
+            await self._authUoW.outbox_messages.add_and_flush(
                 event_type="user.registration",
                 payload={"user_id": str(new_user.id), "email": new_user.email}
             )
@@ -65,7 +65,7 @@ class AuthService:
                 "resource_type":"User", "resource_id":new_user.id
             }
 
-            await self._authUoW.audit_log.add_and_flush(
+            await self._authUoW.audit_logs.add_and_flush(
                 audit_schema=AuditLogCreate(**audit)
             )
 
@@ -80,5 +80,6 @@ class AuthService:
         except Exception:
             await self._authUoW.rollback()
             raise
+
 
 
