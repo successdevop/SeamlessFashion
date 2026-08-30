@@ -60,6 +60,9 @@ class SecuritySetting(BaseSettings):
     JWT_PRIVATE_KEY: SecretStr
     JWT_PUBLIC_KEY: SecretStr
     JWT_ALGORITHM: str
+    JWT_ISSUER: str
+    JWT_AUDIENCE: str
+    JWT_CURRENT_KID: str
     ACCESS_TOKEN_EXPIRE_MINUTES: int
     REFRESH_TOKEN_EXPIRE_DAYS: int
 

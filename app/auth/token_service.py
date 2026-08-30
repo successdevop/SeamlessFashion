@@ -18,7 +18,6 @@ class SigningKey:
 
 class KeyManager:
     def __init__(self, current_kid: str, private_key: str, public_key: str, algorithm: str) -> None:
-        self._algorithm = "RS256"
         self._current_kid = current_kid
         self._keys = {
             current_kid: SigningKey(
@@ -56,23 +55,23 @@ class TokenService:
             access_token_lifetime: timedelta,
             refresh_token_lifetime: timedelta
     ) -> None:
-        self._key_manager = key_manager
-        self._issuer = issuer
-        self._audience = audience
-        self._access_token_lifetime = access_token_lifetime
-        self._refresh_token_lifetime = refresh_token_lifetime
+        self.key_manager = key_manager
+        self.issuer = issuer
+        self.audience = audience
+        self.access_token_lifetime = access_token_lifetime
+        self.refresh_token_lifetime = refresh_token_lifetime
 
     def create_access_token(self, user_id: UUID) -> str:
         now = datetime.now(tz=timezone.utc)
 
-        expires_at = now + self._access_token_lifetime
+        expires_at = now + self.access_token_lifetime
         jti = str(uuid4())
-        key = self._key_manager.get_current_signing_key()
+        key = self.key_manager.get_current_signing_key()
 
         payload = {
             "sub": str(user_id),
-            "iss": self._issuer,
-            "aud": self._audience,
+            "iss": self.issuer,
+            "aud": self.audience,
             "iat": now,
             "nbf": now,
             "exp": expires_at,
@@ -92,16 +91,16 @@ class TokenService:
 
         return token
 
-    def create_refresh_token(self, user_id: UUID, session_id: UUID, token_family_id: UUID) -> str:
+    def create_refresh_token(self, user_id: UUID, session_id: UUID, token_family_id: UUID, token_id: UUID) -> str:
         now = datetime.now(tz=timezone.utc)
-        expires_at = now + self._refresh_token_lifetime
-        jti = str(uuid4())
-        key = self._key_manager.get_current_signing_key()
+        expires_at = now + self.refresh_token_lifetime
+        jti = str(token_id)
+        key = self.key_manager.get_current_signing_key()
 
         payload = {
             "sub": str(user_id),
-            "iss": self._issuer,
-            "aud": self._audience,
+            "iss": self.issuer,
+            "aud": self.audience,
             "iat": now,
             "nbf": now,
             "exp": expires_at,
@@ -137,20 +136,30 @@ class TokenService:
     def _decode(self, token: str) -> dict[str, Any]:
         kid = self._get_kid(token=token)
 
-        public_key = self._key_manager.get_public_key(kid=kid)
+        public_key = self.key_manager.get_public_key(kid=kid)
 
         if public_key is None:
             raise InvalidTokenError("Unknown signing key")
 
-        algorithm = self._key_manager.get_current_signing_key()
+        algorithm = self.key_manager.get_current_signing_key()
 
         try:
             return jwt.decode(
                 jwt=token,
                 key=public_key,
                 algorithms=[algorithm],
-                issuer=self._issuer,
-                audience=self._audience
+                issuer=self.issuer,
+                audience=self.audience,
+                options={
+                    "require": ["sub",
+                                "iss",
+                                "aud",
+                                "iat",
+                                "nbf",
+                                "exp",
+                                "jti",
+                                "type"]
+                }
             )
         except InvalidTokenError:
             raise

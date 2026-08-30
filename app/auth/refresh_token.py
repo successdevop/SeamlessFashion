@@ -36,6 +36,7 @@ class RefreshToken(UUIDPrimaryKeyMixin, SQLModel, table=True):
 
     expires_at: datetime = Field(
         nullable=False,
+        sa_type=sa.DateTime(timezone=True), #type:ignore
         index=True
     )
 

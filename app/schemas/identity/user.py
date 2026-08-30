@@ -4,9 +4,9 @@ from uuid import UUID
 
 from pydantic import Field, EmailStr, model_validator, field_validator, HttpUrl, AnyHttpUrl, AnyUrl
 
+from app.auth.passwd_policy import PasswordPolicy
 from app.enums.user_enums import GenderEnum, AddressTypeEnum, VerificationStatusEnum, DocumentTypeEnum
 from app.schemas.base_or_shared.orm_base import ORMBaseSchema
-from app.utils.auth import validate_password
 from app.utils.utils import validate_username, validate_phone_number, validate_date_of_birth
 
 if TYPE_CHECKING:
@@ -129,12 +129,12 @@ class UserSummary(UserBase):
 
 
 class UserCreate(UserSummary):
-    password: str = Field(min_length=8, max_length=128)
+    password: str
 
     @field_validator("password")
     @classmethod
     def validate_password_field(cls, value: str):
-        is_valid, message = validate_password(value)
+        is_valid, message = PasswordPolicy.validate(password=value)
         if not is_valid:
             raise ValueError(message)
         return value
@@ -184,4 +184,11 @@ class UserAddressRead(UserAddressCreate):
 
 class UserAddressDetails(UserAddressRead):
     address: "AddressRead"
+
+
+class TokenResponse(ORMBaseSchema):
+    access_token: str
+    refresh_token: str
+    token_type: str = "bearer"
+    expires_in: int
 
