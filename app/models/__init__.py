@@ -1,4 +1,7 @@
 from sqlmodel import SQLModel
+
+from app.auth.auth_session import AuthSession
+from app.auth.refresh_token import RefreshToken
 from app.models.base_models.base_tables import Address
 from app.models.base_models.audit import AuditLog
 from app.models.base_models.out_box import OutboxMessage
@@ -16,6 +19,10 @@ from app.models.organization.warehouse import Warehouse, WarehouseStaff
 __all__ = [
     "SQLModel",
     "Address",
+    "AuditLog",
+    "AuthSession",
+    "OutboxMessage",
+    "RefreshToken",
     "IdentityVerification",
     "IdentityDocument",
     "UserAddress",
@@ -32,8 +39,6 @@ __all__ = [
     "StoreStaff",
     "Warehouse",
     "WarehouseStaff",
-    "AuditLog",
-    "OutboxMessage"
 ]
 
 

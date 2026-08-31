@@ -5,8 +5,6 @@ from uuid import UUID, uuid4
 from sqlmodel import SQLModel, Field
 import sqlalchemy as sa
 
-from base_models.base_models import UUIDPrimaryKeyMixin
-
 
 class AuthSessionStatus(str, Enum):
     ACTIVE = "active"
@@ -14,8 +12,13 @@ class AuthSessionStatus(str, Enum):
     EXPIRED = "expired"
 
 
-class AuthSession(UUIDPrimaryKeyMixin, SQLModel, table=True):
+class AuthSession(SQLModel, table=True):
     __tablename__ = "auth_session"
+
+    id: UUID = Field(
+        default_factory=uuid4,
+        primary_key=True
+    )
 
     user_id: UUID = Field(
         foreign_key="user.id",

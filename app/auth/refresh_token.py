@@ -4,11 +4,19 @@ from uuid import UUID, uuid4
 from sqlmodel import SQLModel, Field
 import sqlalchemy as sa
 
-from base_models.base_models import UUIDPrimaryKeyMixin
 
-
-class RefreshToken(UUIDPrimaryKeyMixin, SQLModel, table=True):
+class RefreshToken(SQLModel, table=True):
     __tablename__ = "refresh_tokens"
+
+    id: UUID = Field(
+        primary_key=True
+    )
+
+    user_id: UUID = Field(
+        foreign_key="user.id",
+        nullable=False,
+        index=True
+    )
 
     session_id: UUID = Field(
         foreign_key="auth_session.id",
@@ -17,7 +25,6 @@ class RefreshToken(UUIDPrimaryKeyMixin, SQLModel, table=True):
     )
 
     token_family_id: UUID = Field(
-        default_factory=uuid4,
         index=True,
         nullable=False
     )

@@ -52,8 +52,8 @@ class TokenService:
             key_manager: KeyManager,
             issuer: str,
             audience: str,
-            access_token_lifetime: timedelta,
-            refresh_token_lifetime: timedelta
+            access_token_lifetime: int,
+            refresh_token_lifetime: int
     ) -> None:
         self.key_manager = key_manager
         self.issuer = issuer
@@ -64,7 +64,7 @@ class TokenService:
     def create_access_token(self, user_id: UUID) -> str:
         now = datetime.now(tz=timezone.utc)
 
-        expires_at = now + self.access_token_lifetime
+        expires_at = now + timedelta(minutes=self.access_token_lifetime)
         jti = str(uuid4())
         key = self.key_manager.get_current_signing_key()
 
@@ -93,7 +93,8 @@ class TokenService:
 
     def create_refresh_token(self, user_id: UUID, session_id: UUID, token_family_id: UUID, token_id: UUID) -> str:
         now = datetime.now(tz=timezone.utc)
-        expires_at = now + self.refresh_token_lifetime
+
+        expires_at = now + timedelta(days=self.refresh_token_lifetime)
         jti = str(token_id)
         key = self.key_manager.get_current_signing_key()
 
@@ -141,7 +142,7 @@ class TokenService:
         if public_key is None:
             raise InvalidTokenError("Unknown signing key")
 
-        algorithm = self.key_manager.get_current_signing_key()
+        algorithm = self.key_manager.get_current_signing_key().algorithm
 
         try:
             return jwt.decode(

@@ -15,3 +15,15 @@ class InvalidPasswordError(SeamlessFashionErrors):
 
 class DatabaseIntegrityError(SeamlessFashionErrors):
     pass
+
+class InvalidCredentialsError(SeamlessFashionErrors):
+    pass
+
+class EmailNotVerifiedError(SeamlessFashionErrors):
+    pass
+
+class InactiveAccountError(SeamlessFashionErrors):
+    pass
+
+class InvalidRefreshTokenError(SeamlessFashionErrors):
+    pass

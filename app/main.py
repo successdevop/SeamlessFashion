@@ -14,7 +14,6 @@ from jwt import InvalidTokenError
 from pydantic import BaseModel
 
 from pwdlib import PasswordHash
-from sqlalchemy.util import ellipses_string
 from sqlmodel import SQLModel
 
 from app.api import api_routes
