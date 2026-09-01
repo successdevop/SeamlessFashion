@@ -24,7 +24,7 @@ class RefreshToken(SQLModel, table=True):
         nullable=True
     )
 
-    token_family_id: UUID = Field(
+    family_token_id: UUID = Field(
         index=True,
         nullable=False
     )

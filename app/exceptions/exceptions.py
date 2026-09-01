@@ -30,3 +30,6 @@ class InvalidRefreshTokenError(SeamlessFashionErrors):
 
 class RefreshTokenReuseDetected(SeamlessFashionErrors):
     pass
+
+class InvalidAccessTokenError(SeamlessFashionErrors):
+    pass

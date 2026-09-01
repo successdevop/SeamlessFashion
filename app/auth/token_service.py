@@ -61,7 +61,7 @@ class TokenService:
         self.access_token_lifetime = access_token_lifetime
         self.refresh_token_lifetime = refresh_token_lifetime
 
-    def create_access_token(self, user_id: UUID) -> str:
+    def create_access_token(self, user_id: UUID, session_id: UUID) -> str:
         now = datetime.now(tz=timezone.utc)
 
         expires_at = now + timedelta(minutes=self.access_token_lifetime)
@@ -70,6 +70,7 @@ class TokenService:
 
         payload = {
             "sub": str(user_id),
+            "sid": str(session_id),
             "iss": self.issuer,
             "aud": self.audience,
             "iat": now,
@@ -91,7 +92,7 @@ class TokenService:
 
         return token
 
-    def create_refresh_token(self, user_id: UUID, session_id: UUID, token_family_id: UUID, token_id: UUID) -> str:
+    def create_refresh_token(self, user_id: UUID, session_id: UUID, family_token_id: UUID, token_id: UUID) -> str:
         now = datetime.now(tz=timezone.utc)
 
         expires_at = now + timedelta(days=self.refresh_token_lifetime)
@@ -108,7 +109,7 @@ class TokenService:
             "jti": jti,
             "type": TokenType.REFRESH,
             "sid": str(session_id),
-            "fid": str(token_family_id)
+            "fid": str(family_token_id)
         }
 
         return jwt.encode(

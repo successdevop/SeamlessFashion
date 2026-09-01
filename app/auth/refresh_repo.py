@@ -57,20 +57,17 @@ class RefreshTokenRepository:
 
         await self._session.flush()
 
-    async def revoke_token_family(self, token_family_id: UUID, revoked_at: datetime) -> None:
-        # tokens = await self._session.exec(
-        #     update(RefreshToken).where(
-        #         RefreshToken.id == token_family_id,
-        #         RefreshToken.revoked_at.is_(None)
-        #     )
-        #     .values(revoked_at=revoked_at)
-        # )
+    async def revoke_tokens_by_session(self, session_id: UUID, revoked_at: datetime) -> None:
+        smtm = update(RefreshToken).where(
+            RefreshToken.session_id == session_id,
+            RefreshToken.revoked_at.is_(None)
+        ).values(revoked_at=revoked_at)
 
-        tokens = (
-            await self._session.exec(
-                select(RefreshToken).where(RefreshToken.token_family_id == token_family_id)
-            )
-        ).all()
+        await self._session.exec(smtm)
+
+    async def revoke_token_family(self, token_family_id: UUID, revoked_at: datetime) -> None:
+        smtm = select(RefreshToken).where(RefreshToken.family_token_id == token_family_id)
+        tokens = (await self._session.exec(smtm)).all()
 
         for token in tokens:
             if token.revoked_at is None:

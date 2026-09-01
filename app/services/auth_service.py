@@ -2,6 +2,7 @@ import hmac
 from datetime import datetime, timezone, timedelta
 from uuid import uuid4, UUID
 
+import jwt
 from sqlalchemy.exc import IntegrityError
 
 from app.auth.auth_session import AuthSession
@@ -14,7 +15,7 @@ from app.schemas.base_or_shared.audit import AuditLogCreate
 from app.transactions_mgt.auth import AuthUnitOfWork
 from app.exceptions.exceptions import EmailAlreadyExistsError, UsernameAlreadyTakenError, PhoneNumberAlreadyExistsError, \
     DatabaseIntegrityError, InvalidPasswordError, InvalidCredentialsError, EmailNotVerifiedError, InactiveAccountError, \
-    InvalidRefreshTokenError, RefreshTokenReuseDetected
+    InvalidRefreshTokenError, RefreshTokenReuseDetected, InvalidAccessTokenError
 from app.models import User
 from app.schemas.identity.user import UserCreate, TokenResponse
 from app.utils.auth import hash_refresh_token
@@ -130,7 +131,7 @@ class AuthService:
 
         session = AuthSession(
             user_id=user.id,
-            token_family_id=family_id,
+            family_token_id=family_id,
             expires_at=now + refresh_token_lifetime_in_days
         )
 
@@ -140,7 +141,7 @@ class AuthService:
             refresh_token = self._token_service.create_refresh_token(
                 user_id=user.id,
                 session_id=session.id,
-                token_family_id=family_id,
+                family_token_id=family_id,
                 token_id=refresh_token_id
             )
 
@@ -157,7 +158,7 @@ class AuthService:
 
             await self._authUoW.refresh_tokens.add_and_flush(token=new_refresh_token)
 
-            access_token = self._token_service.create_access_token(user_id=user.id)
+            access_token = self._token_service.create_access_token(user_id=user.id, session_id=session.id)
 
             audit = {
                 "actor_id": user.id, "audit_action":"USER_LOGIN",
@@ -227,12 +228,12 @@ class AuthService:
                 raise InvalidRefreshTokenError()
 
             if refresh_token_record.used_at is not None:
-                await self._authUoW.refresh_tokens.revoke_token_family(token_family_id=family_id, revoked_at=now)
+                await self._authUoW.refresh_tokens.revoke_token_family(family_token_id=family_id, revoked_at=now)
                 await self._authUoW.security_event.add_and_flush(security_data=SecurityEvent(
                     user_id=user_id,
                     event_type="refresh_token_reuse_detected",
                     session_id=session_id,
-                    token_family_id=family_id,
+                    family_token_id=family_id,
                     occurred_at=now
                 ))
                 await self._authUoW.commit()
@@ -245,21 +246,21 @@ class AuthService:
             new_token_id = uuid4()
 
             new_refresh_token = self._token_service.create_refresh_token(
-                user_id=user_id, session_id=session_id, token_family_id=family_id, token_id=new_token_id
+                user_id=user_id, session_id=session_id, family_token_id=family_id, token_id=new_token_id
             )
 
             new_refresh_token_record = RefreshToken(
                 id=new_token_id,
                 user_id=user_id,
                 session_id=session_id,
-                token_family_id=family_id,
+                family_token_id=family_id,
                 token_hash=hash_refresh_token(token=new_refresh_token),
                 expires_at=now + timedelta(days=self._token_service.refresh_token_lifetime)
             )
 
             self._authUoW.refresh_tokens.add_and_flush(token=new_refresh_token_record)
 
-            new_access_token = self._token_service.create_access_token(user_id=user_id)
+            new_access_token = self._token_service.create_access_token(user_id=user_id, session_id=session_id)
 
             await self._authUoW.commit()
 
@@ -277,6 +278,45 @@ class AuthService:
         except Exception:
             await self._authUoW.rollback()
             raise
+
+    ## LOGOUT USER
+    async def logout(self, access_token: str):
+        payload = self._token_service.decode_access_token(token=access_token)
+
+        try:
+            user_id = UUID(payload["sub"])
+            session_id = UUID(payload["sid"])
+
+        except(KeyError, ValueError, TypeError):
+            raise InvalidAccessTokenError()
+
+        now = datetime.now(tz=timezone.utc)
+
+        try:
+            session = await self._authUoW.auth_sessions.get_by_id_for_user(user_id=user_id, session_id=session_id)
+
+            if session is None:
+                raise InvalidAccessTokenError()
+
+            if session.revoked_at is not None:
+                return None
+
+            await self._authUoW.refresh_tokens.revoke_a_session(auth_session=session, reason="logout")
+
+            await self._authUoW.refresh_tokens.revoke_token_family(token_family_id=session.family_token_id, revoked_at=now)
+
+            await self._authUoW.commit()
+
+        except IntegrityError as exc:
+            await self._authUoW.rollback()
+
+            raise DatabaseIntegrityError from exc
+
+        except Exception:
+            await self._authUoW.rollback()
+            raise
+
+
 
 
 
