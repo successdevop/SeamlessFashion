@@ -2,6 +2,7 @@ from sqlmodel import SQLModel
 
 from app.auth.auth_session import AuthSession
 from app.auth.refresh_token import RefreshToken
+from app.auth.security_event import SecurityEvent
 from app.models.base_models.base_tables import Address
 from app.models.base_models.audit import AuditLog
 from app.models.base_models.out_box import OutboxMessage
@@ -23,6 +24,7 @@ __all__ = [
     "AuthSession",
     "OutboxMessage",
     "RefreshToken",
+    "SecurityEvent",
     "IdentityVerification",
     "IdentityDocument",
     "UserAddress",
@@ -40,5 +42,3 @@ __all__ = [
     "Warehouse",
     "WarehouseStaff",
 ]
-
-

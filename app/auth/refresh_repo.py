@@ -57,28 +57,26 @@ class RefreshTokenRepository:
 
         await self._session.flush()
 
-    async def revoke_token_family(self, token_family_id: UUID, revoked_at: datetime,  reason: str) -> None:
-        tokens = await self._session.exec(
-            update(RefreshToken).where(
-                RefreshToken.id == token_family_id,
-                RefreshToken.revoked_at.is_(None)
-            )
-            .values(revoked_at=revoked_at)
-        )
-
-        # tokens = (
-        #     await self._session.exec(
-        #         select(RefreshToken).where(RefreshToken.token_family_id == token_family_id)
+    async def revoke_token_family(self, token_family_id: UUID, revoked_at: datetime) -> None:
+        # tokens = await self._session.exec(
+        #     update(RefreshToken).where(
+        #         RefreshToken.id == token_family_id,
+        #         RefreshToken.revoked_at.is_(None)
         #     )
-        # ).all()
-        #
-        # now = datetime.now(tz=timezone.utc)
-        #
-        # for token in tokens:
-        #     if token.revoked_at is None:
-        #         token.revoked_at = now
-        # 
-        #     if token.used_at is None:
-        #         token.used_at = now
+        #     .values(revoked_at=revoked_at)
+        # )
+
+        tokens = (
+            await self._session.exec(
+                select(RefreshToken).where(RefreshToken.token_family_id == token_family_id)
+            )
+        ).all()
+
+        for token in tokens:
+            if token.revoked_at is None:
+                token.revoked_at = revoked_at
+
+            if token.used_at is None:
+                token.used_at = revoked_at
 
         await self._session.flush()

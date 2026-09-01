@@ -27,7 +27,6 @@ class AuthSession(SQLModel, table=True):
     )
 
     token_family_id: UUID = Field(
-        default_factory=uuid4,
         unique=True,
         index=True
     )

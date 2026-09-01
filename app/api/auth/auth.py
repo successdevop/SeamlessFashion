@@ -24,4 +24,4 @@ async def sign_in_user(auth_service: AuthServiceDep, login_data: Annotated[OAuth
 
 @auth_router.post("/refresh", response_model=TokenResponse, status_code=status.HTTP_200_OK)
 async def refresh_token(auth_service: AuthServiceDep, token: str):
-    return await auth_service.refresh_token_generation(token=token)
+    return await auth_service.refresh_token_generation(refresh_token=token)

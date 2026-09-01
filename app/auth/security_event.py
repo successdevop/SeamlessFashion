@@ -5,7 +5,7 @@ from sqlmodel import SQLModel, Field
 import sqlalchemy as sa
 
 
-class SecurityAudit(SQLModel, table=True):
+class SecurityEvent(SQLModel, table=True):
     id: UUID = Field(
         default_factory=uuid4,
         primary_key=True

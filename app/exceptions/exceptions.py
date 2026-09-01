@@ -27,3 +27,6 @@ class InactiveAccountError(SeamlessFashionErrors):
 
 class InvalidRefreshTokenError(SeamlessFashionErrors):
     pass
+
+class RefreshTokenReuseDetected(SeamlessFashionErrors):
+    pass
