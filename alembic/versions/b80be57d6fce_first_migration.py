@@ -1,19 +1,19 @@
-"""initial schema
+"""first migration
 
-Revision ID: 77bb72702180
+Revision ID: b80be57d6fce
 Revises: 
-Create Date: 2026-08-27 17:15:32.456019
+Create Date: 2026-08-30 14:47:12.694152
 
 """
 from typing import Sequence, Union
 
-import sqlmodel
 from alembic import op
 import sqlalchemy as sa
+import sqlmodel
 
 
 # revision identifiers, used by Alembic.
-revision: str = '77bb72702180'
+revision: str = 'b80be57d6fce'
 down_revision: Union[str, Sequence[str], None] = None
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
@@ -115,7 +115,27 @@ def upgrade() -> None:
     op.create_index(op.f('ix_audit_log_created_at'), 'audit_log', ['created_at'], unique=False)
     op.create_index(op.f('ix_audit_log_resource_id'), 'audit_log', ['resource_id'], unique=False)
     op.create_index(op.f('ix_audit_log_updated_at'), 'audit_log', ['updated_at'], unique=False)
-    op.create_table('identityverification',
+    op.create_table('auth_session',
+    sa.Column('id', sa.Uuid(), nullable=False),
+    sa.Column('user_id', sa.Uuid(), nullable=False),
+    sa.Column('token_family_id', sa.Uuid(), nullable=False),
+    sa.Column('status', sa.Enum('ACTIVE', 'REVOKED', 'EXPIRED', name='authsessionstatus'), nullable=False),
+    sa.Column('created_at', sa.DateTime(timezone=True), nullable=False),
+    sa.Column('expires_at', sa.DateTime(timezone=True), nullable=False),
+    sa.Column('last_used_at', sa.DateTime(timezone=True), nullable=True),
+    sa.Column('revoked_at', sa.DateTime(timezone=True), nullable=True),
+    sa.Column('revoked_reason', sqlmodel.sql.sqltypes.AutoString(), nullable=True),
+    sa.Column('device_name', sqlmodel.sql.sqltypes.AutoString(), nullable=True),
+    sa.Column('user_agent', sqlmodel.sql.sqltypes.AutoString(), nullable=True),
+    sa.Column('ip_address', sqlmodel.sql.sqltypes.AutoString(), nullable=True),
+    sa.ForeignKeyConstraint(['user_id'], ['user.id'], ),
+    sa.PrimaryKeyConstraint('id')
+    )
+    op.create_index(op.f('ix_auth_session_expires_at'), 'auth_session', ['expires_at'], unique=False)
+    op.create_index(op.f('ix_auth_session_status'), 'auth_session', ['status'], unique=False)
+    op.create_index(op.f('ix_auth_session_token_family_id'), 'auth_session', ['token_family_id'], unique=True)
+    op.create_index(op.f('ix_auth_session_user_id'), 'auth_session', ['user_id'], unique=False)
+    op.create_table('identity_verification',
     sa.Column('is_deleted', sa.Boolean(), nullable=False),
     sa.Column('deleted_at', sa.DateTime(timezone=True), nullable=True),
     sa.Column('deleted_by', sa.Uuid(), nullable=True),
@@ -133,30 +153,10 @@ def upgrade() -> None:
     sa.ForeignKeyConstraint(['verified_by'], ['user.id'], ),
     sa.PrimaryKeyConstraint('id')
     )
-    op.create_index(op.f('ix_identityverification_created_at'), 'identityverification', ['created_at'], unique=False)
-    op.create_index(op.f('ix_identityverification_is_deleted'), 'identityverification', ['is_deleted'], unique=False)
-    op.create_index(op.f('ix_identityverification_updated_at'), 'identityverification', ['updated_at'], unique=False)
-    op.create_index(op.f('ix_identityverification_user_id'), 'identityverification', ['user_id'], unique=True)
-    op.create_table('logineventinfo',
-    sa.Column('id', sa.Uuid(), nullable=False),
-    sa.Column('occurred_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
-    sa.Column('ip_address', sqlmodel.sql.sqltypes.AutoString(), nullable=True),
-    sa.Column('device', sqlmodel.sql.sqltypes.AutoString(), nullable=True),
-    sa.Column('browser', sqlmodel.sql.sqltypes.AutoString(), nullable=True),
-    sa.Column('operating_system', sqlmodel.sql.sqltypes.AutoString(), nullable=True),
-    sa.Column('country', sqlmodel.sql.sqltypes.AutoString(), nullable=True),
-    sa.Column('city', sqlmodel.sql.sqltypes.AutoString(), nullable=True),
-    sa.Column('user_agent', sqlmodel.sql.sqltypes.AutoString(), nullable=True),
-    sa.Column('session_id_hash', sqlmodel.sql.sqltypes.AutoString(), nullable=True),
-    sa.Column('is_successful', sa.Boolean(), nullable=False),
-    sa.Column('user_id', sa.Uuid(), nullable=False),
-    sa.ForeignKeyConstraint(['user_id'], ['user.id'], ondelete='CASCADE'),
-    sa.PrimaryKeyConstraint('id')
-    )
-    op.create_index('idx_login_ip', 'logineventinfo', ['ip_address'], unique=False)
-    op.create_index('idx_login_success', 'logineventinfo', ['is_successful', 'occurred_at'], unique=False)
-    op.create_index('idx_login_user_time', 'logineventinfo', ['user_id', 'occurred_at'], unique=False)
-    op.create_index(op.f('ix_logineventinfo_occurred_at'), 'logineventinfo', ['occurred_at'], unique=False)
+    op.create_index(op.f('ix_identity_verification_created_at'), 'identity_verification', ['created_at'], unique=False)
+    op.create_index(op.f('ix_identity_verification_is_deleted'), 'identity_verification', ['is_deleted'], unique=False)
+    op.create_index(op.f('ix_identity_verification_updated_at'), 'identity_verification', ['updated_at'], unique=False)
+    op.create_index(op.f('ix_identity_verification_user_id'), 'identity_verification', ['user_id'], unique=True)
     op.create_table('organisation',
     sa.Column('created_at', sa.DateTime(timezone=True), nullable=False),
     sa.Column('updated_at', sa.DateTime(timezone=True), nullable=True),
@@ -226,7 +226,7 @@ def upgrade() -> None:
     op.create_index(op.f('ix_role_name'), 'role', ['name'], unique=False)
     op.create_index(op.f('ix_role_scope'), 'role', ['scope'], unique=False)
     op.create_index(op.f('ix_role_updated_at'), 'role', ['updated_at'], unique=False)
-    op.create_table('useraddress',
+    op.create_table('user_address',
     sa.Column('is_deleted', sa.Boolean(), nullable=False),
     sa.Column('deleted_at', sa.DateTime(timezone=True), nullable=True),
     sa.Column('deleted_by', sa.Uuid(), nullable=True),
@@ -238,9 +238,29 @@ def upgrade() -> None:
     sa.ForeignKeyConstraint(['user_id'], ['user.id'], ),
     sa.PrimaryKeyConstraint('user_id', 'address_id')
     )
-    op.create_index(op.f('ix_useraddress_address_type'), 'useraddress', ['address_type'], unique=False)
-    op.create_index(op.f('ix_useraddress_is_deleted'), 'useraddress', ['is_deleted'], unique=False)
-    op.create_table('usersecurityprofile',
+    op.create_index(op.f('ix_user_address_address_type'), 'user_address', ['address_type'], unique=False)
+    op.create_index(op.f('ix_user_address_is_deleted'), 'user_address', ['is_deleted'], unique=False)
+    op.create_table('user_login_events_info',
+    sa.Column('id', sa.Uuid(), nullable=False),
+    sa.Column('occurred_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
+    sa.Column('ip_address', sqlmodel.sql.sqltypes.AutoString(), nullable=True),
+    sa.Column('device', sqlmodel.sql.sqltypes.AutoString(), nullable=True),
+    sa.Column('browser', sqlmodel.sql.sqltypes.AutoString(), nullable=True),
+    sa.Column('operating_system', sqlmodel.sql.sqltypes.AutoString(), nullable=True),
+    sa.Column('country', sqlmodel.sql.sqltypes.AutoString(), nullable=True),
+    sa.Column('city', sqlmodel.sql.sqltypes.AutoString(), nullable=True),
+    sa.Column('user_agent', sqlmodel.sql.sqltypes.AutoString(), nullable=True),
+    sa.Column('session_id_hash', sqlmodel.sql.sqltypes.AutoString(), nullable=True),
+    sa.Column('is_successful', sa.Boolean(), nullable=False),
+    sa.Column('user_id', sa.Uuid(), nullable=False),
+    sa.ForeignKeyConstraint(['user_id'], ['user.id'], ondelete='CASCADE'),
+    sa.PrimaryKeyConstraint('id')
+    )
+    op.create_index('idx_login_ip', 'user_login_events_info', ['ip_address'], unique=False)
+    op.create_index('idx_login_success', 'user_login_events_info', ['is_successful', 'occurred_at'], unique=False)
+    op.create_index('idx_login_user_time', 'user_login_events_info', ['user_id', 'occurred_at'], unique=False)
+    op.create_index(op.f('ix_user_login_events_info_occurred_at'), 'user_login_events_info', ['occurred_at'], unique=False)
+    op.create_table('user_security_profile',
     sa.Column('created_at', sa.DateTime(timezone=True), nullable=False),
     sa.Column('updated_at', sa.DateTime(timezone=True), nullable=True),
     sa.Column('id', sa.Uuid(), nullable=False),
@@ -254,11 +274,11 @@ def upgrade() -> None:
     sa.ForeignKeyConstraint(['user_id'], ['user.id'], ondelete='CASCADE'),
     sa.PrimaryKeyConstraint('id')
     )
-    op.create_index(op.f('ix_usersecurityprofile_created_at'), 'usersecurityprofile', ['created_at'], unique=False)
-    op.create_index(op.f('ix_usersecurityprofile_last_login'), 'usersecurityprofile', ['last_login'], unique=False)
-    op.create_index(op.f('ix_usersecurityprofile_updated_at'), 'usersecurityprofile', ['updated_at'], unique=False)
-    op.create_index(op.f('ix_usersecurityprofile_user_id'), 'usersecurityprofile', ['user_id'], unique=True)
-    op.create_table('identitydocument',
+    op.create_index(op.f('ix_user_security_profile_created_at'), 'user_security_profile', ['created_at'], unique=False)
+    op.create_index(op.f('ix_user_security_profile_last_login'), 'user_security_profile', ['last_login'], unique=False)
+    op.create_index(op.f('ix_user_security_profile_updated_at'), 'user_security_profile', ['updated_at'], unique=False)
+    op.create_index(op.f('ix_user_security_profile_user_id'), 'user_security_profile', ['user_id'], unique=True)
+    op.create_table('identity_document',
     sa.Column('is_deleted', sa.Boolean(), nullable=False),
     sa.Column('deleted_at', sa.DateTime(timezone=True), nullable=True),
     sa.Column('deleted_by', sa.Uuid(), nullable=True),
@@ -274,11 +294,11 @@ def upgrade() -> None:
     sa.Column('expires_at', sa.DateTime(), nullable=True),
     sa.Column('uploaded_at', sa.DateTime(timezone=True), nullable=True),
     sa.Column('verification_id', sa.Uuid(), nullable=False),
-    sa.ForeignKeyConstraint(['verification_id'], ['identityverification.id'], ondelete='CASCADE'),
+    sa.ForeignKeyConstraint(['verification_id'], ['identity_verification.id'], ondelete='CASCADE'),
     sa.PrimaryKeyConstraint('id')
     )
-    op.create_index(op.f('ix_identitydocument_document_number_hash'), 'identitydocument', ['document_number_hash'], unique=False)
-    op.create_index(op.f('ix_identitydocument_is_deleted'), 'identitydocument', ['is_deleted'], unique=False)
+    op.create_index(op.f('ix_identity_document_document_number_hash'), 'identity_document', ['document_number_hash'], unique=False)
+    op.create_index(op.f('ix_identity_document_is_deleted'), 'identity_document', ['is_deleted'], unique=False)
     op.create_table('organisation_member',
     sa.Column('employee_email', sqlmodel.sql.sqltypes.AutoString(), nullable=True),
     sa.Column('employee_number', sqlmodel.sql.sqltypes.AutoString(), nullable=False),
@@ -296,7 +316,24 @@ def upgrade() -> None:
     op.create_index('idx_org_member_status', 'organisation_member', ['organisation_id', 'status'], unique=False)
     op.create_index('idx_org_member_user_status', 'organisation_member', ['user_id', 'status'], unique=False)
     op.create_index(op.f('ix_organisation_member_employee_number'), 'organisation_member', ['employee_number'], unique=True)
-    op.create_table('rolepermission',
+    op.create_table('refresh_tokens',
+    sa.Column('id', sa.Uuid(), nullable=False),
+    sa.Column('session_id', sa.Uuid(), nullable=True),
+    sa.Column('token_family_id', sa.Uuid(), nullable=False),
+    sa.Column('token_hash', sqlmodel.sql.sqltypes.AutoString(), nullable=False),
+    sa.Column('issued_at', sa.DateTime(timezone=True), nullable=False),
+    sa.Column('expires_at', sa.DateTime(timezone=True), nullable=False),
+    sa.Column('used_at', sa.DateTime(timezone=True), nullable=True),
+    sa.Column('revoked_at', sa.DateTime(timezone=True), nullable=True),
+    sa.Column('replaced_by_token_id', sa.Uuid(), nullable=True),
+    sa.ForeignKeyConstraint(['session_id'], ['auth_session.id'], ),
+    sa.PrimaryKeyConstraint('id')
+    )
+    op.create_index(op.f('ix_refresh_tokens_expires_at'), 'refresh_tokens', ['expires_at'], unique=False)
+    op.create_index(op.f('ix_refresh_tokens_session_id'), 'refresh_tokens', ['session_id'], unique=False)
+    op.create_index(op.f('ix_refresh_tokens_token_family_id'), 'refresh_tokens', ['token_family_id'], unique=False)
+    op.create_index(op.f('ix_refresh_tokens_token_hash'), 'refresh_tokens', ['token_hash'], unique=True)
+    op.create_table('role_permission',
     sa.Column('created_at', sa.DateTime(timezone=True), nullable=False),
     sa.Column('updated_at', sa.DateTime(timezone=True), nullable=True),
     sa.Column('role_id', sa.Uuid(), nullable=False),
@@ -307,36 +344,37 @@ def upgrade() -> None:
     sa.ForeignKeyConstraint(['role_id'], ['role.id'], ),
     sa.PrimaryKeyConstraint('role_id', 'permission_id')
     )
-    op.create_index('idx_role_permission', 'rolepermission', ['permission_id'], unique=False)
-    op.create_index(op.f('ix_rolepermission_created_at'), 'rolepermission', ['created_at'], unique=False)
-    op.create_index(op.f('ix_rolepermission_updated_at'), 'rolepermission', ['updated_at'], unique=False)
-    op.create_table('roleassignment',
+    op.create_index('idx_role_permission', 'role_permission', ['permission_id'], unique=False)
+    op.create_index(op.f('ix_role_permission_created_at'), 'role_permission', ['created_at'], unique=False)
+    op.create_index(op.f('ix_role_permission_updated_at'), 'role_permission', ['updated_at'], unique=False)
+    op.create_table('role_assignment',
     sa.Column('id', sa.Uuid(), nullable=False),
     sa.Column('user_id', sa.Uuid(), nullable=False),
     sa.Column('role_id', sa.Uuid(), nullable=False),
     sa.Column('organisation_id', sa.Uuid(), nullable=False),
-    sa.Column('assigned_by', sa.Uuid(), nullable=False),
+    sa.Column('assigned_by_user_id', sa.Uuid(), nullable=False),
+    sa.Column('assigned_by_organisation_id', sa.Uuid(), nullable=False),
     sa.Column('assigned_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
     sa.Column('valid_from', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
     sa.Column('valid_until', sa.DateTime(), nullable=True),
     sa.Column('is_active', sa.Boolean(), nullable=False),
     sa.CheckConstraint('valid_until IS NULL OR valid_until > valid_from', name='ck_role_assignment_valid_period'),
-    sa.ForeignKeyConstraint(['assigned_by', 'organisation_id'], ['organisation_member.user_id', 'organisation_member.organisation_id'], name='fk_assigner_role_assignment_membership'),
+    sa.ForeignKeyConstraint(['assigned_by_user_id', 'assigned_by_organisation_id'], ['organisation_member.user_id', 'organisation_member.organisation_id'], name='fk_assigner_role_assignment_membership'),
     sa.ForeignKeyConstraint(['organisation_id'], ['organisation.id'], ),
     sa.ForeignKeyConstraint(['role_id'], ['role.id'], ),
     sa.ForeignKeyConstraint(['user_id', 'organisation_id'], ['organisation_member.user_id', 'organisation_member.organisation_id'], name='fk_user_role_assignment_membership', ondelete='CASCADE'),
     sa.ForeignKeyConstraint(['user_id'], ['user.id'], ),
     sa.PrimaryKeyConstraint('id')
     )
-    op.create_index('idx_role_assign_active_period', 'roleassignment', ['is_active', 'valid_from', 'valid_until'], unique=False)
-    op.create_index('idx_role_assign_dates', 'roleassignment', ['valid_from', 'valid_until'], unique=False)
-    op.create_index('idx_role_assign_user_current', 'roleassignment', ['user_id', 'is_active'], unique=False)
-    op.create_index('idx_role_assign_user_role', 'roleassignment', ['user_id', 'role_id'], unique=False)
-    op.create_index('idx_role_assignment_org_role', 'roleassignment', ['organisation_id', 'role_id'], unique=False)
-    op.create_index(op.f('ix_roleassignment_is_active'), 'roleassignment', ['is_active'], unique=False)
-    op.create_index(op.f('ix_roleassignment_organisation_id'), 'roleassignment', ['organisation_id'], unique=False)
-    op.create_index(op.f('ix_roleassignment_role_id'), 'roleassignment', ['role_id'], unique=False)
-    op.create_index(op.f('ix_roleassignment_user_id'), 'roleassignment', ['user_id'], unique=False)
+    op.create_index('idx_role_assign_active_period', 'role_assignment', ['is_active', 'valid_from', 'valid_until'], unique=False)
+    op.create_index('idx_role_assign_dates', 'role_assignment', ['valid_from', 'valid_until'], unique=False)
+    op.create_index('idx_role_assign_user_current', 'role_assignment', ['user_id', 'is_active'], unique=False)
+    op.create_index('idx_role_assign_user_role', 'role_assignment', ['user_id', 'role_id'], unique=False)
+    op.create_index('idx_role_assignment_org_role', 'role_assignment', ['organisation_id', 'role_id'], unique=False)
+    op.create_index(op.f('ix_role_assignment_is_active'), 'role_assignment', ['is_active'], unique=False)
+    op.create_index(op.f('ix_role_assignment_organisation_id'), 'role_assignment', ['organisation_id'], unique=False)
+    op.create_index(op.f('ix_role_assignment_role_id'), 'role_assignment', ['role_id'], unique=False)
+    op.create_index(op.f('ix_role_assignment_user_id'), 'role_assignment', ['user_id'], unique=False)
     op.create_table('store',
     sa.Column('created_at', sa.DateTime(timezone=True), nullable=False),
     sa.Column('updated_at', sa.DateTime(timezone=True), nullable=True),
@@ -353,14 +391,16 @@ def upgrade() -> None:
     sa.Column('email', sqlmodel.sql.sqltypes.AutoString(), nullable=True),
     sa.Column('created_by', sa.Uuid(), nullable=False),
     sa.Column('manager_id', sa.Uuid(), nullable=True),
+    sa.Column('manager_organisation_id', sa.Uuid(), nullable=True),
     sa.Column('updated_by', sa.Uuid(), nullable=True),
+    sa.Column('updater_organisation_id', sa.Uuid(), nullable=True),
     sa.Column('address_id', sa.Uuid(), nullable=False),
     sa.Column('organisation_id', sa.Uuid(), nullable=False),
     sa.ForeignKeyConstraint(['address_id'], ['address.id'], ),
     sa.ForeignKeyConstraint(['created_by', 'organisation_id'], ['organisation_member.user_id', 'organisation_member.organisation_id'], name='fk_store_creator_membership'),
-    sa.ForeignKeyConstraint(['manager_id', 'organisation_id'], ['organisation_member.user_id', 'organisation_member.organisation_id'], name='fk_store_manager_membership'),
+    sa.ForeignKeyConstraint(['manager_id', 'manager_organisation_id'], ['organisation_member.user_id', 'organisation_member.organisation_id'], name='fk_store_manager_membership'),
     sa.ForeignKeyConstraint(['organisation_id'], ['organisation.id'], ),
-    sa.ForeignKeyConstraint(['updated_by', 'organisation_id'], ['organisation_member.user_id', 'organisation_member.organisation_id'], name='fk_store_updated_by'),
+    sa.ForeignKeyConstraint(['updated_by', 'updater_organisation_id'], ['organisation_member.user_id', 'organisation_member.organisation_id'], name='fk_store_updated_by'),
     sa.PrimaryKeyConstraint('id'),
     sa.UniqueConstraint('id', 'organisation_id', name='uq_store_id_organisation'),
     sa.UniqueConstraint('organisation_id', 'store_code', name='uq_store_organisation_code')
@@ -387,15 +427,17 @@ def upgrade() -> None:
     sa.Column('phone_number', sqlmodel.sql.sqltypes.AutoString(), nullable=True),
     sa.Column('email', sqlmodel.sql.sqltypes.AutoString(), nullable=True),
     sa.Column('created_by', sa.Uuid(), nullable=False),
-    sa.Column('manager_id', sa.Uuid(), nullable=False),
+    sa.Column('manager_id', sa.Uuid(), nullable=True),
+    sa.Column('manager_organisation_id', sa.Uuid(), nullable=True),
     sa.Column('updated_by', sa.Uuid(), nullable=True),
+    sa.Column('updater_organisation_id', sa.Uuid(), nullable=True),
     sa.Column('address_id', sa.Uuid(), nullable=False),
     sa.Column('organisation_id', sa.Uuid(), nullable=False),
     sa.ForeignKeyConstraint(['address_id'], ['address.id'], ),
     sa.ForeignKeyConstraint(['created_by', 'organisation_id'], ['organisation_member.user_id', 'organisation_member.organisation_id'], name='fk_warehouse_creator_membership'),
-    sa.ForeignKeyConstraint(['manager_id', 'organisation_id'], ['organisation_member.user_id', 'organisation_member.organisation_id'], name='fk_warehouse_manager_membership'),
+    sa.ForeignKeyConstraint(['manager_id', 'manager_organisation_id'], ['organisation_member.user_id', 'organisation_member.organisation_id'], name='fk_warehouse_manager_membership'),
     sa.ForeignKeyConstraint(['organisation_id'], ['organisation.id'], ),
-    sa.ForeignKeyConstraint(['updated_by', 'organisation_id'], ['organisation_member.user_id', 'organisation_member.organisation_id'], name='fk_warehouse_updated_by'),
+    sa.ForeignKeyConstraint(['updated_by', 'updater_organisation_id'], ['organisation_member.user_id', 'organisation_member.organisation_id'], name='fk_warehouse_updated_by'),
     sa.PrimaryKeyConstraint('id'),
     sa.UniqueConstraint('id', 'organisation_id', name='uq_warehouse_id_organisation'),
     sa.UniqueConstraint('organisation_id', 'warehouse_code', name='uq_warehouse_organisation_code')
@@ -408,7 +450,7 @@ def upgrade() -> None:
     op.create_index(op.f('ix_warehouse_manager_id'), 'warehouse', ['manager_id'], unique=False)
     op.create_index(op.f('ix_warehouse_updated_at'), 'warehouse', ['updated_at'], unique=False)
     op.create_index(op.f('ix_warehouse_warehouse_code'), 'warehouse', ['warehouse_code'], unique=False)
-    op.create_table('storestaff',
+    op.create_table('store_staff',
     sa.Column('assigned_at', sa.DateTime(timezone=True), nullable=False),
     sa.Column('removed_at', sa.DateTime(timezone=True), nullable=True),
     sa.Column('assigned_by', sa.Uuid(), nullable=False),
@@ -424,9 +466,9 @@ def upgrade() -> None:
     sa.ForeignKeyConstraint(['store_id', 'organisation_id'], ['store.id', 'store.organisation_id'], ),
     sa.PrimaryKeyConstraint('staff_id', 'organisation_id', 'store_id')
     )
-    op.create_index('idx_store_staff', 'storestaff', ['staff_id', 'organisation_id'], unique=False)
-    op.create_index('idx_store_staff_store', 'storestaff', ['store_id', 'organisation_id'], unique=False)
-    op.create_table('warehousestaff',
+    op.create_index('idx_store_staff', 'store_staff', ['staff_id', 'organisation_id'], unique=False)
+    op.create_index('idx_store_staff_store', 'store_staff', ['store_id', 'organisation_id'], unique=False)
+    op.create_table('warehouse_staff',
     sa.Column('assigned_at', sa.DateTime(timezone=True), nullable=False),
     sa.Column('removed_at', sa.DateTime(timezone=True), nullable=True),
     sa.Column('assigned_by', sa.Uuid(), nullable=False),
@@ -441,20 +483,20 @@ def upgrade() -> None:
     sa.ForeignKeyConstraint(['warehouse_id', 'organisation_id'], ['warehouse.id', 'warehouse.organisation_id'], ),
     sa.PrimaryKeyConstraint('staff_id', 'organisation_id', 'warehouse_id')
     )
-    op.create_index('idx_warehouse_staff', 'warehousestaff', ['staff_id', 'organisation_id'], unique=False)
-    op.create_index('idx_warehouse_staff_warehouse', 'warehousestaff', ['warehouse_id', 'organisation_id'], unique=False)
+    op.create_index('idx_warehouse_staff', 'warehouse_staff', ['staff_id', 'organisation_id'], unique=False)
+    op.create_index('idx_warehouse_staff_warehouse', 'warehouse_staff', ['warehouse_id', 'organisation_id'], unique=False)
     # ### end Alembic commands ###
 
 
 def downgrade() -> None:
     """Downgrade schema."""
     # ### commands auto generated by Alembic - please adjust! ###
-    op.drop_index('idx_warehouse_staff_warehouse', table_name='warehousestaff')
-    op.drop_index('idx_warehouse_staff', table_name='warehousestaff')
-    op.drop_table('warehousestaff')
-    op.drop_index('idx_store_staff_store', table_name='storestaff')
-    op.drop_index('idx_store_staff', table_name='storestaff')
-    op.drop_table('storestaff')
+    op.drop_index('idx_warehouse_staff_warehouse', table_name='warehouse_staff')
+    op.drop_index('idx_warehouse_staff', table_name='warehouse_staff')
+    op.drop_table('warehouse_staff')
+    op.drop_index('idx_store_staff_store', table_name='store_staff')
+    op.drop_index('idx_store_staff', table_name='store_staff')
+    op.drop_table('store_staff')
     op.drop_index(op.f('ix_warehouse_warehouse_code'), table_name='warehouse')
     op.drop_index(op.f('ix_warehouse_updated_at'), table_name='warehouse')
     op.drop_index(op.f('ix_warehouse_manager_id'), table_name='warehouse')
@@ -473,36 +515,46 @@ def downgrade() -> None:
     op.drop_index(op.f('ix_store_created_at'), table_name='store')
     op.drop_index('idx_store_org', table_name='store')
     op.drop_table('store')
-    op.drop_index(op.f('ix_roleassignment_user_id'), table_name='roleassignment')
-    op.drop_index(op.f('ix_roleassignment_role_id'), table_name='roleassignment')
-    op.drop_index(op.f('ix_roleassignment_organisation_id'), table_name='roleassignment')
-    op.drop_index(op.f('ix_roleassignment_is_active'), table_name='roleassignment')
-    op.drop_index('idx_role_assignment_org_role', table_name='roleassignment')
-    op.drop_index('idx_role_assign_user_role', table_name='roleassignment')
-    op.drop_index('idx_role_assign_user_current', table_name='roleassignment')
-    op.drop_index('idx_role_assign_dates', table_name='roleassignment')
-    op.drop_index('idx_role_assign_active_period', table_name='roleassignment')
-    op.drop_table('roleassignment')
-    op.drop_index(op.f('ix_rolepermission_updated_at'), table_name='rolepermission')
-    op.drop_index(op.f('ix_rolepermission_created_at'), table_name='rolepermission')
-    op.drop_index('idx_role_permission', table_name='rolepermission')
-    op.drop_table('rolepermission')
+    op.drop_index(op.f('ix_role_assignment_user_id'), table_name='role_assignment')
+    op.drop_index(op.f('ix_role_assignment_role_id'), table_name='role_assignment')
+    op.drop_index(op.f('ix_role_assignment_organisation_id'), table_name='role_assignment')
+    op.drop_index(op.f('ix_role_assignment_is_active'), table_name='role_assignment')
+    op.drop_index('idx_role_assignment_org_role', table_name='role_assignment')
+    op.drop_index('idx_role_assign_user_role', table_name='role_assignment')
+    op.drop_index('idx_role_assign_user_current', table_name='role_assignment')
+    op.drop_index('idx_role_assign_dates', table_name='role_assignment')
+    op.drop_index('idx_role_assign_active_period', table_name='role_assignment')
+    op.drop_table('role_assignment')
+    op.drop_index(op.f('ix_role_permission_updated_at'), table_name='role_permission')
+    op.drop_index(op.f('ix_role_permission_created_at'), table_name='role_permission')
+    op.drop_index('idx_role_permission', table_name='role_permission')
+    op.drop_table('role_permission')
+    op.drop_index(op.f('ix_refresh_tokens_token_hash'), table_name='refresh_tokens')
+    op.drop_index(op.f('ix_refresh_tokens_token_family_id'), table_name='refresh_tokens')
+    op.drop_index(op.f('ix_refresh_tokens_session_id'), table_name='refresh_tokens')
+    op.drop_index(op.f('ix_refresh_tokens_expires_at'), table_name='refresh_tokens')
+    op.drop_table('refresh_tokens')
     op.drop_index(op.f('ix_organisation_member_employee_number'), table_name='organisation_member')
     op.drop_index('idx_org_member_user_status', table_name='organisation_member')
     op.drop_index('idx_org_member_status', table_name='organisation_member')
     op.drop_index('idx_org_member_joined', table_name='organisation_member')
     op.drop_table('organisation_member')
-    op.drop_index(op.f('ix_identitydocument_is_deleted'), table_name='identitydocument')
-    op.drop_index(op.f('ix_identitydocument_document_number_hash'), table_name='identitydocument')
-    op.drop_table('identitydocument')
-    op.drop_index(op.f('ix_usersecurityprofile_user_id'), table_name='usersecurityprofile')
-    op.drop_index(op.f('ix_usersecurityprofile_updated_at'), table_name='usersecurityprofile')
-    op.drop_index(op.f('ix_usersecurityprofile_last_login'), table_name='usersecurityprofile')
-    op.drop_index(op.f('ix_usersecurityprofile_created_at'), table_name='usersecurityprofile')
-    op.drop_table('usersecurityprofile')
-    op.drop_index(op.f('ix_useraddress_is_deleted'), table_name='useraddress')
-    op.drop_index(op.f('ix_useraddress_address_type'), table_name='useraddress')
-    op.drop_table('useraddress')
+    op.drop_index(op.f('ix_identity_document_is_deleted'), table_name='identity_document')
+    op.drop_index(op.f('ix_identity_document_document_number_hash'), table_name='identity_document')
+    op.drop_table('identity_document')
+    op.drop_index(op.f('ix_user_security_profile_user_id'), table_name='user_security_profile')
+    op.drop_index(op.f('ix_user_security_profile_updated_at'), table_name='user_security_profile')
+    op.drop_index(op.f('ix_user_security_profile_last_login'), table_name='user_security_profile')
+    op.drop_index(op.f('ix_user_security_profile_created_at'), table_name='user_security_profile')
+    op.drop_table('user_security_profile')
+    op.drop_index(op.f('ix_user_login_events_info_occurred_at'), table_name='user_login_events_info')
+    op.drop_index('idx_login_user_time', table_name='user_login_events_info')
+    op.drop_index('idx_login_success', table_name='user_login_events_info')
+    op.drop_index('idx_login_ip', table_name='user_login_events_info')
+    op.drop_table('user_login_events_info')
+    op.drop_index(op.f('ix_user_address_is_deleted'), table_name='user_address')
+    op.drop_index(op.f('ix_user_address_address_type'), table_name='user_address')
+    op.drop_table('user_address')
     op.drop_index(op.f('ix_role_updated_at'), table_name='role')
     op.drop_index(op.f('ix_role_scope'), table_name='role')
     op.drop_index(op.f('ix_role_name'), table_name='role')
@@ -520,16 +572,16 @@ def downgrade() -> None:
     op.drop_index(op.f('ix_organisation_email'), table_name='organisation')
     op.drop_index(op.f('ix_organisation_created_at'), table_name='organisation')
     op.drop_table('organisation')
-    op.drop_index(op.f('ix_logineventinfo_occurred_at'), table_name='logineventinfo')
-    op.drop_index('idx_login_user_time', table_name='logineventinfo')
-    op.drop_index('idx_login_success', table_name='logineventinfo')
-    op.drop_index('idx_login_ip', table_name='logineventinfo')
-    op.drop_table('logineventinfo')
-    op.drop_index(op.f('ix_identityverification_user_id'), table_name='identityverification')
-    op.drop_index(op.f('ix_identityverification_updated_at'), table_name='identityverification')
-    op.drop_index(op.f('ix_identityverification_is_deleted'), table_name='identityverification')
-    op.drop_index(op.f('ix_identityverification_created_at'), table_name='identityverification')
-    op.drop_table('identityverification')
+    op.drop_index(op.f('ix_identity_verification_user_id'), table_name='identity_verification')
+    op.drop_index(op.f('ix_identity_verification_updated_at'), table_name='identity_verification')
+    op.drop_index(op.f('ix_identity_verification_is_deleted'), table_name='identity_verification')
+    op.drop_index(op.f('ix_identity_verification_created_at'), table_name='identity_verification')
+    op.drop_table('identity_verification')
+    op.drop_index(op.f('ix_auth_session_user_id'), table_name='auth_session')
+    op.drop_index(op.f('ix_auth_session_token_family_id'), table_name='auth_session')
+    op.drop_index(op.f('ix_auth_session_status'), table_name='auth_session')
+    op.drop_index(op.f('ix_auth_session_expires_at'), table_name='auth_session')
+    op.drop_table('auth_session')
     op.drop_index(op.f('ix_audit_log_updated_at'), table_name='audit_log')
     op.drop_index(op.f('ix_audit_log_resource_id'), table_name='audit_log')
     op.drop_index(op.f('ix_audit_log_created_at'), table_name='audit_log')
