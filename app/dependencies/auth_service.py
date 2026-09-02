@@ -2,10 +2,10 @@ from typing import Annotated
 
 from fastapi import Depends
 
-from app.auth.service.passwd_service import PasswordService
-from app.auth.service.token_service import TokenService, KeyManager
 from app.config.config import security, PRIVATE_KEY, PUBLIC_KEY
 from app.database.db_session import DatabaseSessionDep
+from app.security.service.passwd_service import PasswordService
+from app.security.service.token_service import KeyManager, TokenService
 from app.services.auth_service import AuthService
 from app.transactions_mgt.auth import AuthUnitOfWork
 

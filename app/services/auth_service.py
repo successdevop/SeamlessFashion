@@ -4,17 +4,17 @@ from uuid import uuid4, UUID
 
 from sqlalchemy.exc import IntegrityError
 
-from app.auth.model.auth_session import AuthSession
-from app.auth.service.passwd_policy import PasswordPolicy
-from app.auth.service.passwd_service import PasswordService
-from app.auth.model.refresh_token import RefreshToken
-from app.auth.model.security_event import SecurityEvent
-from app.auth.service.token_service import TokenService
 from app.schemas.base_or_shared.audit import AuditLogCreate
+from app.security.model.auth_session import AuthSession
+from app.security.model.refresh_token import RefreshToken
+from app.security.model.security_event import SecurityEvent
+from app.security.service.passwd_policy import PasswordPolicy
+from app.security.service.passwd_service import PasswordService
+from app.security.service.token_service import TokenService
 from app.transactions_mgt.auth import AuthUnitOfWork
 from app.exceptions.exceptions import EmailAlreadyExistsError, UsernameAlreadyTakenError, PhoneNumberAlreadyExistsError, \
     DatabaseIntegrityError, InvalidPasswordError, InvalidCredentialsError, InactiveAccountError, \
-    InvalidRefreshTokenError, RefreshTokenReuseDetected, InvalidAccessTokenError
+    InvalidRefreshTokenError, RefreshTokenReuseDetected, InvalidAccessTokenError, EmailNotVerifiedError
 from app.models import User
 from app.schemas.identity.user import UserCreate, TokenResponse
 from app.utils.auth import hash_refresh_token
@@ -106,15 +106,19 @@ class AuthService:
         email = email.strip().lower()
 
         user = await self._authUoW.users.get_by_email_including_deleted(email=email)
-        if not user or not self._password_service.verify(password=password, hashed=user.password_hash):
+        if not user:
             raise InvalidCredentialsError()
 
-        # if user and not user.email_verified:
-        #     raise EmailNotVerifiedError()
+        if user and not self._password_service.verify(password=password, hashed=user.password_hash):
+            raise InvalidCredentialsError()
+
+        if user and not user.email_verified:
+            raise EmailNotVerifiedError()
 
         if user:
             if not user.is_deleted and not user.is_active:
                 raise InactiveAccountError()
+
             elif user.is_deleted and user.deleted_at:
                 deletion_days = datetime.now(tz=timezone.utc) - user.deleted_at
                 if deletion_days < timedelta(days=30):
@@ -150,7 +154,7 @@ class AuthService:
                 id=refresh_token_id,
                 session_id=session.id,
                 user_id=user.id,
-                token_family_id=family_id,
+                family_token_id=family_id,
                 token_hash=refresh_token_hash,
                 expires_at=now + refresh_token_lifetime_in_days
             )

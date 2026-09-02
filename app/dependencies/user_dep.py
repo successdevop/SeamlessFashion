@@ -1,41 +1,72 @@
-from typing import Annotated, Any
-from uuid import UUID
+from typing import Annotated
 
 from fastapi import HTTPException, Depends, status
-from fastapi.security import OAuth2PasswordBearer
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 
-from app.database.db_session import databaseSessionDep
+from app.database.db_session import DatabaseSessionDep
+from app.exceptions.exceptions import InvalidAccessTokenError
 from app.models import User
-from app.utils.auth import decode_token
+from app.security.schema.auth import CurrentAuth
+from app.security.service.token_service import TokenService
+
+bearer_scheme = HTTPBearer(auto_error=False)
 
 
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login")
-
-
-def _get_access_token(token: Annotated[str, Depends(oauth2_scheme)]) -> dict[str, Any]:
-    token_data = decode_token(token)
-    if token_data is None:
+async def _get_current_auth(
+        credentials: Annotated[HTTPAuthorizationCredentials | None, Depends(bearer_scheme)],
+        token_service: TokenService
+) -> CurrentAuth:
+    if credentials is None:
         raise HTTPException(
-            status_code=403,
-            detail="Invalid or expired token"
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Not Authenticated",
+            headers={"WWW-Authenticate": "Bearer"}
         )
 
-    return token_data
+    if credentials.scheme.lower() != "bearer":
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid Authentication credentials",
+            headers={"WWW-Authenticate": "Bearer"}
+        )
+
+    try:
+
+        return token_service.parse_access_token(token=str(credentials.credentials))
+
+    except InvalidAccessTokenError:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid Authentication credentials",
+            headers={"WWW-Authenticate": "Bearer"}
+        )
 
 
-def _get_user_id_from_access_token(token_data: Annotated[dict, Depends(_get_access_token)]) -> UUID:
-    user_id = UUID(token_data.get("sub"))
-    return user_id
-
-
-async def _get_active_user(
-        user_id: Annotated[UUID, Depends(_get_user_id_from_access_token)],
-        session: databaseSessionDep
-):
-    user = await session.get(User, user_id)
+async def _get_current_active_user(current_auth: CurrentAuthDep, session: DatabaseSessionDep) -> User:
+    user = await session.get(User, current_auth.user_id)
     if user is None:
-        return HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="could not validate credentials")
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid authentication credentials",
+            headers={"WWW-Authenticate": "Bearer"}
+        )
+
+    if user.is_deleted:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid authentication credentials",
+            headers={"WWW-Authenticate": "Bearer"}
+        )
 
     if not user.is_active:
-        return HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Inactive user")
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Inactive User",
+            headers={"WWW-Authenticate": "Bearer"}
+        )
+
     return user
+
+
+CurrentAuthDep = Annotated[CurrentAuth, Depends(_get_current_auth)]
+CurrentUserDep = Annotated[User, Depends(_get_current_active_user)]

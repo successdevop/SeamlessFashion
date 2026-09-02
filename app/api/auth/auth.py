@@ -4,6 +4,7 @@ from fastapi import APIRouter, status, Depends
 from fastapi.security import OAuth2PasswordRequestForm
 
 from app.dependencies.auth_service import AuthServiceDep
+from app.dependencies.user_dep import CurrentAuthDep
 from app.schemas.identity.user import UserCreate, UserRead, TokenResponse
 
 auth_router = APIRouter(
@@ -33,5 +34,5 @@ async def logout(auth_service: AuthServiceDep, token: str):
 
 
 @auth_router.get("/me")
-async def get_me(current_auth: str):
+async def get_me(current_auth: CurrentAuthDep):
     return current_auth

@@ -1,19 +1,13 @@
-from dataclasses import dataclass
 from datetime import timedelta, datetime, timezone
-from enum import StrEnum
 from typing import Any
 from uuid import UUID, uuid4
 
 import jwt
-from jwt import InvalidTokenError
+from jwt import InvalidTokenError, ExpiredSignatureError, InvalidAudienceError, InvalidIssuerError
 
-
-@dataclass(frozen=True)
-class SigningKey:
-    kid: str
-    private_key: str
-    public_key: str
-    algorithm: str
+from app.exceptions.exceptions import InvalidAccessTokenError, InvalidRefreshTokenError, \
+    InvalidAuthenticationCredentials
+from app.security.schema.auth import CurrentAuth, SigningKey, TokenType
 
 
 class KeyManager:
@@ -39,11 +33,6 @@ class KeyManager:
             return None
 
         return key.public_key
-
-
-class TokenType(StrEnum):
-    ACCESS = "access"
-    REFRESH = "refresh"
 
 
 class TokenService:
@@ -124,14 +113,15 @@ class TokenService:
 
     def decode_access_token(self, token: str) -> dict[str, Any]:
         payload = self._decode(token=token)
+
         if payload.get("type") != TokenType.ACCESS:
-            raise InvalidTokenError("Invalid token type")
+            raise InvalidAccessTokenError("Invalid token type")
         return payload
 
     def decode_refresh_token(self, token: str) -> dict[str, Any]:
         payload = self._decode(token=token)
         if payload.get("type") != TokenType.REFRESH:
-            raise InvalidTokenError("Invalid token type")
+            raise InvalidRefreshTokenError("Invalid token type")
 
         return payload
 
@@ -154,6 +144,7 @@ class TokenService:
                 audience=self.audience,
                 options={
                     "require": ["sub",
+                                "sid",
                                 "iss",
                                 "aud",
                                 "iat",
@@ -163,10 +154,31 @@ class TokenService:
                                 "type"]
                 }
             )
-        except InvalidTokenError:
-            raise
+        except ExpiredSignatureError:
+            raise InvalidAuthenticationCredentials("Invalid Authentication Credentials")
 
-    def _get_kid(self, token: str) -> str:
+        except (InvalidAudienceError, InvalidIssuerError, InvalidTokenError):
+            raise InvalidAuthenticationCredentials("Invalid Authentication Credentials")
+
+    def parse_access_token(self, token: str) -> CurrentAuth:
+        payload = self.decode_access_token(token=token)
+
+        try:
+            user_id = UUID(payload["sub"])
+            session_id = UUID(payload["sid"])
+            token_id = UUID(payload["jti"])
+
+        except (KeyError, ValueError, TypeError) as exc:
+            raise InvalidAccessTokenError() from exc
+
+        return CurrentAuth(
+            user_id=user_id,
+            session_id=session_id,
+            token_id=token_id
+        )
+
+    @staticmethod
+    def _get_kid(token: str) -> str:
         header = jwt.get_unverified_header(token)
 
         kid = header.get("kid")
