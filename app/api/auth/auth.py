@@ -28,5 +28,10 @@ async def refresh_token(auth_service: AuthServiceDep, token: str):
 
 
 @auth_router.get("/logout", status_code=status.HTTP_204_NO_CONTENT)
-async def logout(auth_service: AuthServiceDep):
-    return await auth_service.logout()
+async def logout(auth_service: AuthServiceDep, token: str):
+    return await auth_service.logout(access_token=token)
+
+
+@auth_router.get("/me")
+async def get_me(current_auth: str):
+    return current_auth

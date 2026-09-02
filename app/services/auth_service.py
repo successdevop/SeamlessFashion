@@ -2,19 +2,18 @@ import hmac
 from datetime import datetime, timezone, timedelta
 from uuid import uuid4, UUID
 
-import jwt
 from sqlalchemy.exc import IntegrityError
 
-from app.auth.auth_session import AuthSession
-from app.auth.passwd_policy import PasswordPolicy
-from app.auth.passwd_service import PasswordService
-from app.auth.refresh_token import RefreshToken
-from app.auth.security_event import SecurityEvent
-from app.auth.token_service import TokenService
+from app.auth.model.auth_session import AuthSession
+from app.auth.service.passwd_policy import PasswordPolicy
+from app.auth.service.passwd_service import PasswordService
+from app.auth.model.refresh_token import RefreshToken
+from app.auth.model.security_event import SecurityEvent
+from app.auth.service.token_service import TokenService
 from app.schemas.base_or_shared.audit import AuditLogCreate
 from app.transactions_mgt.auth import AuthUnitOfWork
 from app.exceptions.exceptions import EmailAlreadyExistsError, UsernameAlreadyTakenError, PhoneNumberAlreadyExistsError, \
-    DatabaseIntegrityError, InvalidPasswordError, InvalidCredentialsError, EmailNotVerifiedError, InactiveAccountError, \
+    DatabaseIntegrityError, InvalidPasswordError, InvalidCredentialsError, InactiveAccountError, \
     InvalidRefreshTokenError, RefreshTokenReuseDetected, InvalidAccessTokenError
 from app.models import User
 from app.schemas.identity.user import UserCreate, TokenResponse
@@ -299,7 +298,7 @@ class AuthService:
                 raise InvalidAccessTokenError()
 
             if session.revoked_at is not None:
-                return None
+                return
 
             await self._authUoW.refresh_tokens.revoke_a_session(auth_session=session, reason="logout")
 
@@ -316,8 +315,6 @@ class AuthService:
             await self._authUoW.rollback()
             raise
 
-
-
-
-
+    async def logout_of_all_devices(self, session_id: UUID, user_id: UUID):
+        pass
 

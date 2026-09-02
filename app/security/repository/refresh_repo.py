@@ -4,8 +4,8 @@ from uuid import UUID
 from sqlmodel import select, update
 from sqlmodel.ext.asyncio.session import AsyncSession
 
-from app.auth.auth_session import AuthSession, AuthSessionStatus
-from app.auth.refresh_token import RefreshToken
+from app.auth.model.auth_session import AuthSession, AuthSessionStatus
+from app.auth.model.refresh_token import RefreshToken
 
 
 class RefreshTokenRepository:
@@ -77,3 +77,6 @@ class RefreshTokenRepository:
                 token.used_at = revoked_at
 
         await self._session.flush()
+
+    async def revoke_tokens_for_user(self, user_id: UUID, revoked_at: datetime):
+        pass

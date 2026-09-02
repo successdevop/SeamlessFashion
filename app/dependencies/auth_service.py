@@ -2,8 +2,8 @@ from typing import Annotated
 
 from fastapi import Depends
 
-from app.auth.passwd_service import PasswordService
-from app.auth.token_service import TokenService, KeyManager
+from app.auth.service.passwd_service import PasswordService
+from app.auth.service.token_service import TokenService, KeyManager
 from app.config.config import security, PRIVATE_KEY, PUBLIC_KEY
 from app.database.db_session import DatabaseSessionDep
 from app.services.auth_service import AuthService

@@ -1,10 +1,11 @@
-from datetime import datetime, timezone
+from datetime import datetime
 from uuid import UUID
 
+from sqlalchemy import update
 from sqlmodel import select
 from sqlmodel.ext.asyncio.session import AsyncSession
 
-from app.auth.auth_session import AuthSession, AuthSessionStatus
+from app.auth.model.auth_session import AuthSession
 
 
 class AuthSessionRepository:
@@ -44,3 +45,15 @@ class AuthSessionRepository:
 
         return session.one_or_none()
 
+    async def revoke_all_session_for_user(self, user_id: UUID, revoked_at: datetime, revoked_reason: str):
+        smtm = (
+            update(AuthSession).where(
+                AuthSession.user_id == user_id,
+                AuthSession.revoked_at.is_(None)
+            ).values(
+                revoked_at=revoked_at,
+                revoked_reason=revoked_reason
+            )
+        )
+
+        await self._session.exec(smtm)

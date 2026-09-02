@@ -1,6 +1,6 @@
 from sqlmodel.ext.asyncio.session import AsyncSession
 
-from app.auth.security_event import SecurityEvent
+from app.auth.model.security_event import SecurityEvent
 
 
 class SecurityRepository:
