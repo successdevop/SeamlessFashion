@@ -4,8 +4,7 @@ from uuid import UUID
 from sqlmodel import select, update
 from sqlmodel.ext.asyncio.session import AsyncSession
 
-from app.auth.model.auth_session import AuthSession, AuthSessionStatus
-from app.auth.model.refresh_token import RefreshToken
+from app.security.model.refresh_token import RefreshToken
 
 
 class RefreshTokenRepository:
@@ -50,24 +49,21 @@ class RefreshTokenRepository:
         new_token.replaced_by_token_id = new_token.id
         await self._session.flush()
 
-    async def revoke_a_session(self, auth_session: AuthSession, reason: str) -> None:
-        auth_session.status = AuthSessionStatus.REVOKED
-        auth_session.revoked_at = datetime.now(tz=timezone.utc)
-        auth_session.revoked_reason = reason
-
-        await self._session.flush()
-
     async def revoke_tokens_by_session(self, session_id: UUID, revoked_at: datetime) -> None:
-        smtm = update(RefreshToken).where(
-            RefreshToken.session_id == session_id,
-            RefreshToken.revoked_at.is_(None)
-        ).values(revoked_at=revoked_at)
+        stmt = (
+            update(RefreshToken).where(
+                RefreshToken.session_id == session_id,      #type: ignore
+                RefreshToken.revoked_at.is_(None)                       #type: ignore
+        ).values(
+                revoked_at=revoked_at
+            )
+        )
 
-        await self._session.exec(smtm)
+        await self._session.exec(stmt)
 
-    async def revoke_token_family(self, token_family_id: UUID, revoked_at: datetime) -> None:
-        smtm = select(RefreshToken).where(RefreshToken.family_token_id == token_family_id)
-        tokens = (await self._session.exec(smtm)).all()
+    async def revoke_token_family(self, family_id: UUID, revoked_at: datetime) -> None:
+        stmt = select(RefreshToken).where(RefreshToken.family_token_id == family_id)
+        tokens = (await self._session.exec(stmt)).all()
 
         for token in tokens:
             if token.revoked_at is None:
@@ -78,5 +74,22 @@ class RefreshTokenRepository:
 
         await self._session.flush()
 
-    async def revoke_tokens_for_user(self, user_id: UUID, revoked_at: datetime):
-        pass
+    async def delete_token_family(self, family_id: UUID) -> None:
+        stmt = select(RefreshToken).where(RefreshToken.family_token_id == family_id)
+        tokens = (await self._session.exec(stmt)).all()
+
+        for token in tokens:
+            await self._session.delete(instance=token)
+
+        await self._session.flush()
+
+    async def revoke_all_session_tokens_for_user(self, user_id: UUID, revoked_at: datetime):
+        stmt = (update(RefreshToken).where(
+            RefreshToken.user_id == user_id,    #type: ignore
+            RefreshToken.revoked_at.is_(None)               #type: ignore
+        )
+        .values(
+            revoked_at=revoked_at
+        ))
+
+        await self._session.exec(stmt)

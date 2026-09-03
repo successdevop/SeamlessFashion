@@ -1,9 +1,9 @@
 from sqlmodel.ext.asyncio.session import AsyncSession
 
-from app.auth.repository.auth_repo import AuthSessionRepository
-from app.auth.repository.refresh_repo import RefreshTokenRepository
-from app.auth.repository.security_repo import SecurityRepository
 from app.repositories.audit import AuditLogRepository
+from app.security.repository.auth_repo import AuthSessionRepository
+from app.security.repository.refresh_repo import RefreshTokenRepository
+from app.security.repository.security_repo import SecurityRepository
 from app.transactions_mgt.base import UnitOfWork
 from app.repositories.outbox import OutboxRepository
 from app.repositories.user_repo import UserRepository

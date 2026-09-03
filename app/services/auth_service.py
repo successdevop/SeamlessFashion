@@ -283,15 +283,7 @@ class AuthService:
             raise
 
     ## LOGOUT USER
-    async def logout(self, access_token: str):
-        payload = self._token_service.decode_access_token(token=access_token)
-
-        try:
-            user_id = UUID(payload["sub"])
-            session_id = UUID(payload["sid"])
-
-        except(KeyError, ValueError, TypeError):
-            raise InvalidAccessTokenError()
+    async def logout(self, user_id: UUID, session_id: UUID):
 
         now = datetime.now(tz=timezone.utc)
 
@@ -299,14 +291,18 @@ class AuthService:
             session = await self._authUoW.auth_sessions.get_by_id_for_user(user_id=user_id, session_id=session_id)
 
             if session is None:
-                raise InvalidAccessTokenError()
+                return
 
             if session.revoked_at is not None:
                 return
 
-            await self._authUoW.refresh_tokens.revoke_a_session(auth_session=session, reason="logout")
+            await self._authUoW.refresh_tokens.revoke_token_family(family_id=session.family_token_id, revoked_at=now)
 
-            await self._authUoW.refresh_tokens.revoke_token_family(token_family_id=session.family_token_id, revoked_at=now)
+            await self._authUoW.auth_sessions.revoke_a_session(auth_session=session, reason="logout")
+
+            await self._authUoW.audit_logs.add_and_flush(audit_schema=AuditLogCreate(
+                actor_id=user_id, audit_action="LOGOUT", resource_type="AuthSession", resource_id=session_id
+            ))
 
             await self._authUoW.commit()
 
@@ -319,6 +315,72 @@ class AuthService:
             await self._authUoW.rollback()
             raise
 
-    async def logout_of_all_devices(self, session_id: UUID, user_id: UUID):
-        pass
+    ## LOGOUT OF ALL SESSION/DEVICES
+    async def logout_of_all_sessions(self, user_id: UUID):
+        now = datetime.now(tz=timezone.utc)
 
+        try:
+            await self._authUoW.auth_sessions.revoke_all_session_for_user(
+                user_id=user_id, revoked_at=now, revoked_reason="logout/revoke all sessions"
+            )
+
+            await self._authUoW.refresh_tokens.revoke_all_session_tokens_for_user(
+                user_id=user_id, revoked_at=now
+            )
+
+            await self._authUoW.commit()
+
+        except IntegrityError as exc:
+            await self._authUoW.rollback()
+
+            raise DatabaseIntegrityError from exc
+
+        except Exception:
+            await self._authUoW.rollback()
+            raise
+
+    ## GET ALL SESSION/DEVICES
+    async def get_all_sessions(self, user_id: UUID):
+
+        try:
+            await self._authUoW.auth_sessions.get_all_sessions_by_user_id(user_id=user_id)
+        except IntegrityError as exc:
+            await self._authUoW.rollback()
+
+            raise DatabaseIntegrityError from exc
+
+        except Exception:
+            await self._authUoW.rollback()
+            raise
+
+    ## DELETE A SESSION
+    async def revoke_a_session(self, user_id: UUID, session_id: UUID):
+        now = datetime.now(tz=timezone.utc)
+
+        try:
+            session = await self._authUoW.auth_sessions.get_by_id_for_user(user_id=user_id, session_id=session_id)
+            if session is None:
+                return
+
+            if session.revoked_at is not None:
+                return
+
+            await self._authUoW.auth_sessions.revoke_a_session(auth_session=session, reason="user_revoked_session")
+
+            await self._authUoW.refresh_tokens.revoke_token_family(family_id=session.family_token_id, revoked_at=now)
+
+            await self._authUoW.audit_logs.add_and_flush(audit_schema=AuditLogCreate(
+                actor_id=user_id, audit_action="SESSION_REVOKED", resource_type="AuthSession", resource_id=session_id
+            ))
+
+            await self._authUoW.commit()
+
+        except IntegrityError as exc:
+            await self._authUoW.rollback()
+
+            raise DatabaseIntegrityError from exc
+
+        except Exception:
+            await self._authUoW.rollback()
+            raise
+        pass

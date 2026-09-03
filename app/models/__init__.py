@@ -1,8 +1,5 @@
 from sqlmodel import SQLModel
 
-from app.auth.model.auth_session import AuthSession
-from app.auth.model.refresh_token import RefreshToken
-from app.auth.model.security_event import SecurityEvent
 from app.models.base_models.base_tables import Address
 from app.models.base_models.audit import AuditLog
 from app.models.base_models.out_box import OutboxMessage
@@ -15,6 +12,9 @@ from app.models.identity.permission import Permission
 from app.models.organization.organisation import (OrganisationMember, Organisation)
 from app.models.organization.store import Store, StoreStaff
 from app.models.organization.warehouse import Warehouse, WarehouseStaff
+from app.security.model.auth_session import AuthSession
+from app.security.model.refresh_token import RefreshToken
+from app.security.model.security_event import SecurityEvent
 
 
 __all__ = [
@@ -42,3 +42,4 @@ __all__ = [
     "Warehouse",
     "WarehouseStaff",
 ]
+

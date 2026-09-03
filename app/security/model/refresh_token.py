@@ -1,5 +1,5 @@
 from datetime import datetime, timezone
-from uuid import UUID, uuid4
+from uuid import UUID
 
 from sqlmodel import SQLModel, Field
 import sqlalchemy as sa

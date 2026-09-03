@@ -4,17 +4,17 @@ from fastapi import HTTPException, Depends, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 
 from app.database.db_session import DatabaseSessionDep
+from app.dependencies.auth_service import TokenServiceDep
 from app.exceptions.exceptions import InvalidAccessTokenError
 from app.models import User
 from app.security.schema.auth import CurrentAuth
-from app.security.service.token_service import TokenService
 
 bearer_scheme = HTTPBearer(auto_error=False)
 
 
 async def _get_current_auth(
         credentials: Annotated[HTTPAuthorizationCredentials | None, Depends(bearer_scheme)],
-        token_service: TokenService
+        token_service: TokenServiceDep
 ) -> CurrentAuth:
     if credentials is None:
         raise HTTPException(
@@ -40,6 +40,8 @@ async def _get_current_auth(
             detail="Invalid Authentication credentials",
             headers={"WWW-Authenticate": "Bearer"}
         )
+
+CurrentAuthDep = Annotated[CurrentAuth, Depends(_get_current_auth)]
 
 
 async def _get_current_active_user(current_auth: CurrentAuthDep, session: DatabaseSessionDep) -> User:
@@ -67,6 +69,4 @@ async def _get_current_active_user(current_auth: CurrentAuthDep, session: Databa
 
     return user
 
-
-CurrentAuthDep = Annotated[CurrentAuth, Depends(_get_current_auth)]
 CurrentUserDep = Annotated[User, Depends(_get_current_active_user)]

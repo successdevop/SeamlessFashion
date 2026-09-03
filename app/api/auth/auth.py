@@ -6,6 +6,7 @@ from fastapi.security import OAuth2PasswordRequestForm
 from app.dependencies.auth_service import AuthServiceDep
 from app.dependencies.user_dep import CurrentAuthDep
 from app.schemas.identity.user import UserCreate, UserRead, TokenResponse
+from app.security.schema.auth import AuthSessionRead
 
 auth_router = APIRouter(
     prefix="/auth",
@@ -28,9 +29,19 @@ async def refresh_token(auth_service: AuthServiceDep, token: str):
     return await auth_service.refresh_token_generation(refresh_token=token)
 
 
-@auth_router.get("/logout", status_code=status.HTTP_204_NO_CONTENT)
-async def logout(auth_service: AuthServiceDep, token: str):
-    return await auth_service.logout(access_token=token)
+@auth_router.post("/logout", status_code=status.HTTP_204_NO_CONTENT)
+async def logout(auth_service: AuthServiceDep, current_auth: CurrentAuthDep):
+    return await auth_service.logout(user_id=current_auth.user_id, session_id=current_auth.session_id)
+
+
+@auth_router.post("/logout_all", status_code=status.HTTP_204_NO_CONTENT)
+async def logout_all(auth_service: AuthServiceDep, current_auth: CurrentAuthDep):
+    return await auth_service.logout_of_all_sessions(user_id=current_auth.user_id)
+
+
+@auth_router.get("/sessions", response_model=AuthSessionRead, status_code=status.HTTP_200_OK)
+async def get_sessions(auth_service: AuthServiceDep, current_auth: CurrentAuthDep):
+    return await auth_service.get_all_sessions(user_id=current_auth.user_id)
 
 
 @auth_router.get("/me")

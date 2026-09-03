@@ -1,15 +1,10 @@
 from datetime import datetime, timezone
-from enum import Enum
 from uuid import UUID, uuid4
 
 from sqlmodel import SQLModel, Field
 import sqlalchemy as sa
 
-
-class AuthSessionStatus(str, Enum):
-    ACTIVE = "active"
-    REVOKED = "revoked"
-    EXPIRED = "expired"
+from app.security.schema.auth import AuthSessionStatus
 
 
 class AuthSession(SQLModel, table=True):
